@@ -434,12 +434,20 @@ app.get('/users', async (req, res) => {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
-    const { db } = await openDatabase();
-    try {
-      const users = runQuery(db, 'SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = ? ORDER BY name', [tenant.id]);
-      res.json(users);
-    } finally {
-      db.close();
+    // Use PostgreSQL if available, otherwise SQLite
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const users = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      res.json(users.rows);
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const users = runQuery(db, 'SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = ? ORDER BY name', [tenant.id]);
+        res.json(users);
+      } finally {
+        db.close();
+      }
     }
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
