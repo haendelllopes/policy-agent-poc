@@ -2,11 +2,10 @@
   "name": "policy-agent-poc",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/server.js",
+  "main": "src/server.js",
   "scripts": {
-    "dev": "ts-node-dev --transpile-only --respawn src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
     "test": "echo \"No tests in POC\" && exit 0"
   },
   "keywords": [],
