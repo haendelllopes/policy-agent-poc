@@ -407,6 +407,23 @@
         .btn-delete:active {
             transform: scale(0.95);
         }
+
+        /* Category badges */
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .category-beneficios { background-color: #dbeafe; color: #1e40af; }
+        .category-codec { background-color: #fef3c7; color: #92400e; }
+        .category-ferias { background-color: #d1fae5; color: #065f46; }
+        .category-politicas { background-color: #e0e7ff; color: #3730a3; }
+        .category-outros { background-color: #f3f4f6; color: #374151; }
         
         .status-badge {
             padding: 0.25rem 0.75rem;
@@ -656,10 +673,6 @@
                                 </select>
                             </div>
                             
-                            <div class="form-group">
-                                <label for="docVersion">Versão</label>
-                                <input type="text" id="docVersion" name="version" value="v1">
-                            </div>
                         </div>
                         
                         <div class="form-group">
@@ -673,6 +686,15 @@
                     </form>
                     
                     <div id="uploadAlert" class="alert hidden"></div>
+                </div>
+
+                <!-- Lista de Documentos Existentes -->
+                <div class="form-section">
+                    <h3>📚 Documentos Cadastrados</h3>
+                    
+                    <div id="documentsList">
+                        <p class="text-muted">Carregando documentos...</p>
+                    </div>
                 </div>
             </div>
 
@@ -814,13 +836,89 @@
         // Load documents count
         async function loadDocumentsCount() {
             if (!currentTenant) return;
-            
+
             try {
-                const response = await fetch(`${API_BASE}/documents?tenantId=${currentTenant.id}`);
+                const response = await fetch(`${API_BASE}/documents?tenant=${currentTenant.subdomain}`);
                 const documents = await response.json();
                 document.getElementById('totalDocuments').textContent = documents.length;
             } catch (error) {
                 console.error('Erro ao carregar documentos:', error);
+            }
+        }
+
+        // Load documents list
+        async function loadDocuments() {
+            if (!currentTenant) return;
+
+            try {
+                // Adicionar timestamp para evitar cache
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${API_BASE}/documents?tenant=${currentTenant.subdomain}&_t=${timestamp}`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                const documents = await response.json();
+
+                const documentsList = document.getElementById('documentsList');
+                
+                if (documents.length === 0) {
+                    documentsList.innerHTML = '<p class="text-muted">Nenhum documento cadastrado ainda.</p>';
+                    return;
+                }
+
+                documentsList.innerHTML = documents.map(doc => `
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">${doc.title}</div>
+                            <div class="list-item-meta">
+                                <span class="category-badge category-${doc.category?.toLowerCase() || 'outros'}">${doc.category || 'Sem categoria'}</span>
+                                <span class="text-muted">• ${new Date(doc.created_at).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <a href="${API_BASE}/documents/${doc.id}/download?tenant=${currentTenant.subdomain}" 
+                               class="btn btn-sm btn-outline" 
+                               title="Download do documento">
+                                📥
+                            </a>
+                            <button class="btn-delete" 
+                                    onclick="deleteDocument('${doc.id}', '${doc.title}')" 
+                                    title="Excluir documento">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar documentos:', error);
+                document.getElementById('documentsList').innerHTML = '<p class="text-error">Erro ao carregar documentos.</p>';
+            }
+        }
+
+        // Delete document
+        async function deleteDocument(documentId, documentTitle) {
+            if (!confirm(`Tem certeza que deseja excluir o documento "${documentTitle}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/documents/${documentId}?tenant=${currentTenant.subdomain}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showAlert('uploadAlert', 'success', `Documento "${documentTitle}" excluído com sucesso!`);
+                    loadDocuments(); // Recarregar lista
+                    loadDocumentsCount(); // Atualizar contador
+                } else {
+                    const error = await response.json();
+                    showAlert('uploadAlert', 'error', error.error?.formErrors?.[0] || 'Erro ao excluir documento');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir documento:', error);
+                showAlert('uploadAlert', 'error', 'Erro ao excluir documento');
             }
         }
         
@@ -850,6 +948,7 @@
                 loadUsers();
             } else if (section === 'documents') {
                 loadDocumentsCount();
+                loadDocuments();
             }
         }
         
@@ -917,6 +1016,7 @@
                     showAlert('uploadAlert', 'success', `Documento "${result.title}" enviado com sucesso! ${result.chunks} chunks criados.`);
                     e.target.reset();
                     loadDocumentsCount();
+                    loadDocuments();
                 } else {
                     showAlert('uploadAlert', 'error', `Erro: ${result.error?.formErrors?.[0] || 'Erro desconhecido'}`);
                 }

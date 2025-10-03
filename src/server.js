@@ -476,7 +476,7 @@ app.get('/users', async (req, res) => {
 });
 
 app.post('/documents/upload', upload.single('file'), async (req, res) => {
-  const schema = z.object({ tenantId: z.string().uuid(), title: z.string().min(1), category: z.string().optional(), version: z.string().optional() });
+  const schema = z.object({ tenantId: z.string().uuid(), title: z.string().min(1), category: z.string().optional() });
   const body = schema.safeParse(req.body);
   if (!body.success) return res.status(400).json({ error: body.error.flatten() });
   if (!req.file) return res.status(400).json({ error: 'Arquivo ausente' });
@@ -491,12 +491,11 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
   // Use PostgreSQL if available, otherwise SQLite
   if (process.env.DATABASE_URL) {
     // PostgreSQL
-    await query('INSERT INTO documents (id, tenant_id, title, category, version, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)', [
+    await query('INSERT INTO documents (id, tenant_id, title, category, status, created_at) VALUES ($1, $2, $3, $4, $5, $6)', [
       documentId,
       body.data.tenantId,
       body.data.title,
       body.data.category ?? null,
-      body.data.version ?? 'v1',
       'published',
       createdAt,
     ]);
@@ -517,12 +516,11 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
     // SQLite fallback
     const { db, SQL } = await openDatabase();
     try {
-      runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, version, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+      runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, status, created_at) VALUES (?, ?, ?, ?, ?, ?)', [
         documentId,
         body.data.tenantId,
         body.data.title,
         body.data.category ?? null,
-        body.data.version ?? 'v1',
         'published',
         createdAt,
       ]);
@@ -543,6 +541,196 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
     } finally {
       db.close();
     }
+  }
+});
+
+// Endpoint para listar documentos do tenant
+app.get('/documents', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    // Use PostgreSQL if available, otherwise SQLite
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const result = await query(
+        'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
+        [tenant.id]
+      );
+      res.json(result.rows);
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const documents = runQuery(db, 'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = ? ORDER BY created_at DESC', [tenant.id]);
+        res.json(documents);
+      } finally {
+        db.close();
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao buscar documentos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+// Endpoint para excluir documento
+app.delete('/documents/:id', async (req, res) => {
+  try {
+    const documentId = req.params.id;
+    console.log('DELETE /documents - documentId:', documentId);
+    console.log('DELETE /documents - tenantSubdomain:', req.tenantSubdomain);
+
+    // Buscar tenant pelo subdomain
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    console.log('DELETE /documents - tenant:', tenant);
+
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    // Use PostgreSQL if available, otherwise SQLite
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
+      console.log('DELETE /documents - Using PostgreSQL with single connection');
+
+      const pool = getPool();
+      const client = await pool.connect();
+      try {
+        // Usar transação para garantir consistência
+        await client.query('BEGIN');
+
+        // Verificar se o documento existe
+        const checkDoc = await client.query('SELECT id, title, tenant_id FROM documents WHERE id = $1', [documentId]);
+        console.log('DELETE /documents - Check document exists:', checkDoc.rows);
+
+        if (checkDoc.rows.length === 0) {
+          console.log('DELETE /documents - Document not found in database');
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: { formErrors: ['Documento não encontrado no banco de dados'] } });
+        }
+
+        // Verificar se o documento pertence ao tenant correto
+        if (checkDoc.rows[0].tenant_id !== tenant.id) {
+          console.log('DELETE /documents - Document belongs to different tenant');
+          await client.query('ROLLBACK');
+          return res.status(403).json({ error: { formErrors: ['Documento não pertence a este tenant'] } });
+        }
+
+        // Deletar o documento (cascade vai deletar os chunks automaticamente)
+        const result = await client.query('DELETE FROM documents WHERE id = $1 AND tenant_id = $2', [documentId, tenant.id]);
+        console.log('DELETE /documents - Result rowCount:', result.rowCount);
+
+        if (result.rowCount === 0) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: { formErrors: ['Documento não encontrado'] } });
+        }
+
+        // Confirmar transação
+        await client.query('COMMIT');
+        console.log('DELETE /documents - Transaction committed successfully');
+
+      } catch (error) {
+        console.error('DELETE /documents - Error in transaction:', error);
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    } else {
+      // SQLite fallback
+      const { db, SQL } = await openDatabase();
+      try {
+        const existing = runQuery(db, 'SELECT id FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenant.id]);
+        if (existing.length === 0) {
+          return res.status(404).json({ error: { formErrors: ['Documento não encontrado'] } });
+        }
+
+        // Deletar chunks primeiro (cascade não funciona no SQLite)
+        runExec(db, 'DELETE FROM chunks WHERE document_id = ?', [documentId]);
+        runExec(db, 'DELETE FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenant.id]);
+        persistDatabase(SQL, db);
+      } finally {
+        db.close();
+      }
+    }
+
+    res.status(200).json({ message: 'Documento excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir documento:', error);
+    res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
+  }
+});
+
+// Endpoint para download de documento
+app.get('/documents/:id/download', async (req, res) => {
+  try {
+    const documentId = req.params.id;
+    console.log('GET /documents/:id/download - documentId:', documentId);
+    console.log('GET /documents/:id/download - tenantSubdomain:', req.tenantSubdomain);
+
+    // Buscar tenant pelo subdomain
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    // Use PostgreSQL if available, otherwise SQLite
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const docResult = await query(
+        'SELECT id, title, category, status FROM documents WHERE id = $1 AND tenant_id = $2',
+        [documentId, tenant.id]
+      );
+      
+      if (docResult.rows.length === 0) {
+        return res.status(404).json({ error: { formErrors: ['Documento não encontrado'] } });
+      }
+
+      const document = docResult.rows[0];
+      
+      // Buscar todos os chunks do documento
+      const chunksResult = await query(
+        'SELECT content FROM chunks WHERE document_id = $1 ORDER BY created_at',
+        [documentId]
+      );
+      
+      // Concatenar o conteúdo
+      const fullContent = chunksResult.rows.map(chunk => chunk.content).join('\n\n');
+      
+      // Configurar headers para download
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.title}.txt"`);
+      res.send(fullContent);
+      
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const document = runQuery(db, 'SELECT id, title, category, status FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenant.id]);
+        if (document.length === 0) {
+          return res.status(404).json({ error: { formErrors: ['Documento não encontrado'] } });
+        }
+
+        // Buscar todos os chunks do documento
+        const chunks = runQuery(db, 'SELECT content FROM chunks WHERE document_id = ? ORDER BY created_at', [documentId]);
+        
+        // Concatenar o conteúdo
+        const fullContent = chunks.map(chunk => chunk.content).join('\n\n');
+        
+        // Configurar headers para download
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="${document[0].title}.txt"`);
+        res.send(fullContent);
+      } finally {
+        db.close();
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao baixar documento:', error);
+    res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
   }
 });
 
