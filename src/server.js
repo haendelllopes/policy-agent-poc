@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const mammoth = require('mammoth');
+const pdfParse = require('pdf-parse');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
 const { z } = require('zod');
@@ -487,9 +488,17 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
   try {
     if (req.file.mimetype === 'text/plain') {
       text = req.file.buffer.toString('utf8');
-    } else if (req.file.mimetype === 'application/pdf') {
-      // Para PDF, por enquanto vamos retornar erro - precisa de biblioteca específica
-      return res.status(400).json({ error: 'PDF ainda não suportado. Use arquivos TXT ou Word por enquanto.' });
+    } else if (req.file.mimetype === 'application/pdf' || req.file.originalname.endsWith('.pdf')) {
+      // Para PDF usando pdf-parse
+      const pdfData = await pdfParse(req.file.buffer);
+      text = pdfData.text;
+      
+      // Log de informações do PDF
+      console.log('PDF processado:', {
+        pages: pdfData.numpages,
+        info: pdfData.info,
+        textLength: text.length
+      });
     } else if (req.file.mimetype.includes('word') || req.file.mimetype.includes('document') || 
                req.file.originalname.endsWith('.docx') || req.file.originalname.endsWith('.doc')) {
       // Para DOC/DOCX usando mammoth
@@ -501,7 +510,7 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
         console.log('Avisos ao processar Word:', result.messages);
       }
     } else {
-      return res.status(400).json({ error: 'Tipo de arquivo não suportado. Use TXT ou Word (DOC/DOCX).' });
+      return res.status(400).json({ error: 'Tipo de arquivo não suportado. Use TXT, PDF ou Word (DOC/DOCX).' });
     }
   } catch (error) {
     console.error('Erro ao processar arquivo:', error);
