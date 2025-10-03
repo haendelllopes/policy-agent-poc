@@ -56,11 +56,11 @@ function cosine(a: number[], b: number[]): number {
   return dot / denom;
 }
 
-app.get('/health', (_req, res) => {
+app.get('/health', (_req: any, res: any) => {
   res.json({ ok: true });
 });
 
-app.post('/tenants', async (req, res) => {
+app.post('/tenants', async (req: any, res: any) => {
   const schema = z.object({ name: z.string().min(1) });
   const parse = schema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
@@ -75,7 +75,7 @@ app.post('/tenants', async (req, res) => {
   }
 });
 
-app.post('/documents/upload', upload.single('file'), async (req, res) => {
+app.post('/documents/upload', upload.single('file'), async (req: any, res: any) => {
   const schema = z.object({ tenantId: z.string().uuid(), title: z.string().min(1), category: z.string().optional(), version: z.string().optional() });
   const body = schema.safeParse(req.body);
   if (!body.success) return res.status(400).json({ error: body.error.flatten() });
@@ -115,7 +115,7 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-app.post('/search/policy', async (req, res) => {
+app.post('/search/policy', async (req: any, res: any) => {
   const schema = z.object({ tenantId: z.string().uuid(), query: z.string().min(1), top_k: z.number().min(1).max(10).default(3) });
   const parse = schema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
