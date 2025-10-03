@@ -485,9 +485,11 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
 
   const documentId = uuidv4();
   const createdAt = new Date().toISOString();
-  const { db, SQL } = await openDatabase();
-  try {
-    runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, version, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+  
+  // Use PostgreSQL if available, otherwise SQLite
+  if (process.env.DATABASE_URL) {
+    // PostgreSQL
+    await query('INSERT INTO documents (id, tenant_id, title, category, version, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)', [
       documentId,
       body.data.tenantId,
       body.data.title,
@@ -496,9 +498,10 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
       'published',
       createdAt,
     ]);
+    
     for (let i = 0; i < chunks.length; i++) {
       const chunkId = uuidv4();
-      runExec(db, 'INSERT INTO chunks (id, document_id, section, content, embedding) VALUES (?, ?, ?, ?, ?)', [
+      await query('INSERT INTO chunks (id, document_id, section, content, embedding) VALUES ($1, $2, $3, $4, $5)', [
         chunkId,
         documentId,
         `section-${i + 1}`,
@@ -506,10 +509,38 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
         JSON.stringify(embeddings[i]),
       ]);
     }
-    persistDatabase(SQL, db);
+    
     res.status(201).json({ documentId, chunks: chunks.length });
-  } finally {
-    db.close();
+  } else {
+    // SQLite fallback
+    const { db, SQL } = await openDatabase();
+    try {
+      runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, version, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)', [
+        documentId,
+        body.data.tenantId,
+        body.data.title,
+        body.data.category ?? null,
+        body.data.version ?? 'v1',
+        'published',
+        createdAt,
+      ]);
+      
+      for (let i = 0; i < chunks.length; i++) {
+        const chunkId = uuidv4();
+        runExec(db, 'INSERT INTO chunks (id, document_id, section, content, embedding) VALUES (?, ?, ?, ?, ?)', [
+          chunkId,
+          documentId,
+          `section-${i + 1}`,
+          chunks[i],
+          JSON.stringify(embeddings[i]),
+        ]);
+      }
+      
+      persistDatabase(SQL, db);
+      res.status(201).json({ documentId, chunks: chunks.length });
+    } finally {
+      db.close();
+    }
   }
 });
 
