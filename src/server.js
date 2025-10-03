@@ -145,20 +145,38 @@ app.post('/tenants', async (req, res) => {
   const parse = schema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
   
-  const { db, SQL } = await openDatabase();
   try {
-    // Verificar se subdomain já existe
-    const existing = runQuery(db, 'SELECT id FROM tenants WHERE subdomain = ?', [parse.data.subdomain]);
-    if (existing.length > 0) {
-      return res.status(400).json({ error: { formErrors: ['Subdomain já existe'] } });
-    }
+    // Use PostgreSQL if available, otherwise SQLite
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', [parse.data.subdomain]);
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ error: { formErrors: ['Subdomain já existe'] } });
+      }
 
-    const id = uuidv4();
-    runExec(db, 'INSERT INTO tenants (id, name, subdomain) VALUES (?, ?, ?)', [id, parse.data.name, parse.data.subdomain]);
-    persistDatabase(SQL, db);
-    res.status(201).json({ id, name: parse.data.name, subdomain: parse.data.subdomain });
-  } finally {
-    db.close();
+      const id = uuidv4();
+      await query('INSERT INTO tenants (id, name, subdomain) VALUES ($1, $2, $3)', [id, parse.data.name, parse.data.subdomain]);
+      res.status(201).json({ id, name: parse.data.name, subdomain: parse.data.subdomain });
+    } else {
+      // SQLite fallback
+      const { db, SQL } = await openDatabase();
+      try {
+        const existing = runQuery(db, 'SELECT id FROM tenants WHERE subdomain = ?', [parse.data.subdomain]);
+        if (existing.length > 0) {
+          return res.status(400).json({ error: { formErrors: ['Subdomain já existe'] } });
+        }
+
+        const id = uuidv4();
+        runExec(db, 'INSERT INTO tenants (id, name, subdomain) VALUES (?, ?, ?)', [id, parse.data.name, parse.data.subdomain]);
+        persistDatabase(SQL, db);
+        res.status(201).json({ id, name: parse.data.name, subdomain: parse.data.subdomain });
+      } finally {
+        db.close();
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao criar tenant:', error);
+    res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
   }
 });
 
