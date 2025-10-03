@@ -98,12 +98,17 @@ async function getTenantBySubdomain(subdomain) {
 }
 
 app.get('/tenants', async (_req, res) => {
-  const { db } = await openDatabase();
   try {
-    const tenants = runQuery(db, 'SELECT id, name, subdomain FROM tenants ORDER BY name');
-    res.json(tenants);
-  } finally {
-    db.close();
+    const { db } = await openDatabase();
+    try {
+      const tenants = runQuery(db, 'SELECT id, name, subdomain FROM tenants ORDER BY name');
+      res.json(tenants);
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    console.error('Erro ao buscar tenants:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 
@@ -208,17 +213,22 @@ app.post('/users', async (req, res) => {
 
 // Endpoint para listar usuários do tenant atual
 app.get('/users', async (req, res) => {
-  const tenant = await getTenantBySubdomain(req.tenantSubdomain);
-  if (!tenant) {
-    return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
-  }
-
-  const { db } = await openDatabase();
   try {
-    const users = runQuery(db, 'SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = ? ORDER BY name', [tenant.id]);
-    res.json(users);
-  } finally {
-    db.close();
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { db } = await openDatabase();
+    try {
+      const users = runQuery(db, 'SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = ? ORDER BY name', [tenant.id]);
+      res.json(users);
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 
@@ -297,12 +307,23 @@ app.post('/search/policy', async (req, res) => {
 });
 
 async function bootstrap() {
-  const { db, SQL } = await openDatabase();
-  migrate(db);
-  persistDatabase(SQL, db);
-  db.close();
-  const port = Number(process.env.PORT || 3000);
-  app.listen(port, () => console.log(`API up on http://localhost:${port}`));
+  try {
+    console.log('Inicializando banco de dados...');
+    const { db, SQL } = await openDatabase();
+    migrate(db);
+    persistDatabase(SQL, db);
+    db.close();
+    console.log('Banco de dados inicializado com sucesso!');
+    
+    const port = Number(process.env.PORT || 3000);
+    app.listen(port, () => {
+      console.log(`API up on http://localhost:${port}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('Erro ao inicializar servidor:', error);
+    process.exit(1);
+  }
 }
 
 bootstrap();
