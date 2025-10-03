@@ -76,6 +76,16 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
+// Serve landing page as default
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/landing.html'));
+});
+
+// Serve dashboard
+app.get('/dashboard', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+});
+
 // Função auxiliar para buscar tenant por subdomain
 async function getTenantBySubdomain(subdomain) {
   const { db } = await openDatabase();

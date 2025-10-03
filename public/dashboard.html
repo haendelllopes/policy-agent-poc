@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Policy Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 2rem 0;
+            z-index: 100;
+        }
+        
+        .sidebar-header {
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+        
+        .tenant-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .tenant-info h3 {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 0.25rem;
+        }
+        
+        .tenant-info p {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 2rem;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            background: #f1f5f9;
+            color: #2563eb;
+            border-left-color: #2563eb;
+        }
+        
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+        
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .card-icon.primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+        }
+        
+        .card-icon.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .card-icon.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .card-content {
+            color: #64748b;
+            line-height: 1.6;
+        }
+        
+        /* Forms */
+        .form-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .required {
+            color: #dc2626;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Lists */
+        .list {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        
+        .list-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:hover {
+            background: #f8fafc;
+        }
+        
+        .list-item-info h4 {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .list-item-info p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">🤖</div>
+                <span>Policy Agent</span>
+            </div>
+            <div class="tenant-info">
+                <h3 id="tenantName">Carregando...</h3>
+                <p id="tenantSubdomain">Carregando...</p>
+            </div>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')">
+                    <div class="nav-icon">📊</div>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#users" class="nav-link" onclick="showSection('users')">
+                    <div class="nav-icon">👥</div>
+                    Colaboradores
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#documents" class="nav-link" onclick="showSection('documents')">
+                    <div class="nav-icon">📄</div>
+                    Documentos
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#settings" class="nav-link" onclick="showSection('settings')">
+                    <div class="nav-icon">⚙️</div>
+                    Configurações
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <span id="userName">Administrador</span>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section">
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon primary">👥</div>
+                            <div class="card-title">Total de Colaboradores</div>
+                        </div>
+                        <div class="card-content">
+                            <div style="font-size: 2rem; font-weight: 700; color: #2563eb;" id="totalUsers">0</div>
+                            <p>Colaboradores ativos na empresa</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon success">📄</div>
+                            <div class="card-title">Documentos</div>
+                        </div>
+                        <div class="card-content">
+                            <div style="font-size: 2rem; font-weight: 700; color: #10b981;" id="totalDocuments">0</div>
+                            <p>Políticas e documentos cadastrados</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon warning">🤖</div>
+                            <div class="card-title">Agente IA</div>
+                        </div>
+                        <div class="card-content">
+                            <div style="font-size: 2rem; font-weight: 700; color: #f59e0b;">Ativo</div>
+                            <p>WhatsApp integrado e funcionando</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>📊 Resumo da Empresa</h3>
+                    <p>Bem-vindo ao Policy Agent! Aqui você pode gerenciar colaboradores, documentos e acompanhar o desempenho do agente de IA.</p>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="users-section" class="hidden">
+                <div class="form-section">
+                    <h3>👤 Adicionar Novo Colaborador</h3>
+                    <p style="color: #6b7280; margin-bottom: 1.5rem;">Ao criar, um webhook será enviado automaticamente para o n8n</p>
+                    
+                    <form id="userForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="userName">Nome Completo <span class="required">*</span></label>
+                                <input type="text" id="userName" name="name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="userEmail">Email <span class="required">*</span></label>
+                                <input type="email" id="userEmail" name="email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="userPhone">Telefone/WhatsApp <span class="required">*</span></label>
+                                <input type="text" id="userPhone" name="phone" placeholder="+55 11 98765-4321" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="userPosition">Cargo <span class="required">*</span></label>
+                                <input type="text" id="userPosition" name="position" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="userDepartment">Departamento</label>
+                                <select id="userDepartment" name="department">
+                                    <option value="">Selecione</option>
+                                    <option value="TI">TI</option>
+                                    <option value="RH">RH</option>
+                                    <option value="Financeiro">Financeiro</option>
+                                    <option value="Comercial">Comercial</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Operações">Operações</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="userStartDate">Data de Início</label>
+                                <input type="date" id="userStartDate" name="start_date">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <span>👤</span> Cadastrar Colaborador
+                        </button>
+                    </form>
+                    
+                    <div id="userAlert" class="alert hidden"></div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>👥 Colaboradores Existentes</h3>
+                    <div class="list" id="usersList">
+                        <div class="list-item">
+                            <div class="list-item-info">
+                                <h4>Carregando...</h4>
+                                <p>Aguarde enquanto carregamos os dados</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Section -->
+            <div id="documents-section" class="hidden">
+                <div class="form-section">
+                    <h3>📄 Upload de Documento</h3>
+                    
+                    <form id="uploadForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="docTitle">Título do Documento <span class="required">*</span></label>
+                                <input type="text" id="docTitle" name="title" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="docCategory">Categoria</label>
+                                <select id="docCategory" name="category">
+                                    <option value="Beneficios">Benefícios</option>
+                                    <option value="CODEC">Código de Conduta</option>
+                                    <option value="Ferias">Férias</option>
+                                    <option value="Politicas">Políticas Gerais</option>
+                                    <option value="Outros">Outros</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="docVersion">Versão</label>
+                                <input type="text" id="docVersion" name="version" value="v1">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="docContent">Conteúdo do Documento <span class="required">*</span></label>
+                            <textarea id="docContent" name="content" placeholder="Cole aqui o texto do documento..." required></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <span>📄</span> Upload Documento
+                        </button>
+                    </form>
+                    
+                    <div id="uploadAlert" class="alert hidden"></div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="hidden">
+                <div class="form-section">
+                    <h3>⚙️ Configurações da Empresa</h3>
+                    <p>Gerencie as configurações da sua empresa e integração com WhatsApp.</p>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome da Empresa</label>
+                            <input type="text" id="settingsCompanyName" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Subdomain</label>
+                            <input type="text" id="settingsSubdomain" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Webhook n8n</label>
+                            <input type="text" value="https://hndll.app.n8n.cloud/webhook/onboarding" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentTenant = null;
+        let currentUser = null;
+        
+        // Get tenant from URL
+        function getTenantFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('tenant') || 'demo';
+        }
+        
+        // Load tenant info
+        async function loadTenantInfo() {
+            const subdomain = getTenantFromUrl();
+            
+            try {
+                const response = await fetch(`${API_BASE}/tenants`);
+                const tenants = await response.json();
+                currentTenant = tenants.find(t => t.subdomain === subdomain);
+                
+                if (currentTenant) {
+                    document.getElementById('tenantName').textContent = currentTenant.name;
+                    document.getElementById('tenantSubdomain').textContent = `Subdomain: ${currentTenant.subdomain}`;
+                    document.getElementById('settingsCompanyName').value = currentTenant.name;
+                    document.getElementById('settingsSubdomain').value = currentTenant.subdomain;
+                } else {
+                    alert('Tenant não encontrado');
+                    window.location.href = '/landing.html';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar tenant:', error);
+                alert('Erro ao conectar com o servidor');
+            }
+        }
+        
+        // Load users
+        async function loadUsers() {
+            if (!currentTenant) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/users?tenant=${currentTenant.subdomain}`);
+                const users = await response.json();
+                
+                document.getElementById('totalUsers').textContent = users.length;
+                
+                const usersList = document.getElementById('usersList');
+                usersList.innerHTML = '';
+                
+                if (users.length === 0) {
+                    usersList.innerHTML = '<div class="list-item"><div class="list-item-info"><h4>Nenhum colaborador cadastrado</h4><p>Adicione o primeiro colaborador usando o formulário acima</p></div></div>';
+                    return;
+                }
+                
+                users.forEach(user => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <div class="list-item-info">
+                            <h4>${user.name}</h4>
+                            <p>${user.email} • ${user.position}${user.department ? ` • ${user.department}` : ''}</p>
+                        </div>
+                        <div class="status-badge ${user.status === 'active' ? 'status-active' : 'status-inactive'}">
+                            ${user.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </div>
+                    `;
+                    usersList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+            }
+        }
+        
+        // Load documents count
+        async function loadDocumentsCount() {
+            if (!currentTenant) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/documents?tenantId=${currentTenant.id}`);
+                const documents = await response.json();
+                document.getElementById('totalDocuments').textContent = documents.length;
+            } catch (error) {
+                console.error('Erro ao carregar documentos:', error);
+            }
+        }
+        
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('[id$="-section"]').forEach(el => el.classList.add('hidden'));
+            
+            // Show selected section
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            
+            // Update active nav
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                dashboard: 'Dashboard',
+                users: 'Colaboradores',
+                documents: 'Documentos',
+                settings: 'Configurações'
+            };
+            document.getElementById('pageTitle').textContent = titles[section];
+            
+            // Load data for section
+            if (section === 'users') {
+                loadUsers();
+            } else if (section === 'documents') {
+                loadDocumentsCount();
+            }
+        }
+        
+        // Create user
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentTenant) {
+                showAlert('userAlert', 'error', 'Nenhum tenant detectado');
+                return;
+            }
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_BASE}/users?tenant=${currentTenant.subdomain}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('userAlert', 'success', `Colaborador "${result.name}" criado com sucesso! Webhook enviado para n8n.`);
+                    e.target.reset();
+                    loadUsers();
+                } else {
+                    showAlert('userAlert', 'error', `Erro: ${result.error?.formErrors?.[0] || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                showAlert('userAlert', 'error', `Erro de conexão: ${error.message}`);
+            }
+        });
+        
+        // Upload document
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!currentTenant) {
+                showAlert('uploadAlert', 'error', 'Nenhum tenant detectado');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('tenantId', currentTenant.id);
+            formData.append('title', document.getElementById('docTitle').value);
+            formData.append('category', document.getElementById('docCategory').value);
+            formData.append('version', document.getElementById('docVersion').value);
+            
+            const content = document.getElementById('docContent').value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            formData.append('file', blob, 'documento.txt');
+            
+            try {
+                const response = await fetch(`${API_BASE}/documents/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('uploadAlert', 'success', `Documento "${result.title}" enviado com sucesso! ${result.chunks} chunks criados.`);
+                    e.target.reset();
+                    loadDocumentsCount();
+                } else {
+                    showAlert('uploadAlert', 'error', `Erro: ${result.error?.formErrors?.[0] || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                showAlert('uploadAlert', 'error', `Erro de conexão: ${error.message}`);
+            }
+        });
+        
+        function showAlert(elementId, type, message) {
+            const alert = document.getElementById(elementId);
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.classList.remove('hidden');
+            
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadTenantInfo();
+            await loadUsers();
+            await loadDocumentsCount();
+        });
+    </script>
+</body>
+</html>
