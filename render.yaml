@@ -3,8 +3,8 @@ services:
     name: policy-agent-poc
     env: node
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install
+    startCommand: npx ts-node src/server.ts
     autoDeploy: true
     envVars:
       - key: NODE_ENV
@@ -12,6 +12,6 @@ services:
       - key: PORT
         value: 10000
       - key: OPENAI_API_KEY
-        sync: false
+        value: changeme
 
 
