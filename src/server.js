@@ -201,6 +201,26 @@ function normalizePhone(phone) {
   return cleanPhone;
 }
 
+// Função para normalizar telefone para WhatsApp (sem +)
+function normalizePhoneForWhatsApp(phone) {
+  if (!phone) return phone;
+  
+  // Remove espaços, parênteses e hífens
+  let cleanPhone = phone.replace(/[\s\(\)\-]/g, '');
+  
+  // Remove o + se existir
+  if (cleanPhone.startsWith('+')) {
+    cleanPhone = cleanPhone.substring(1);
+  }
+  
+  // Se não começar com 55, adiciona 55
+  if (!cleanPhone.startsWith('55')) {
+    cleanPhone = '55' + cleanPhone;
+  }
+  
+  return cleanPhone;
+}
+
 // Endpoint para criar usuários (colaboradores)
 app.post('/users', async (req, res) => {
   const schema = z.object({
@@ -215,8 +235,11 @@ app.post('/users', async (req, res) => {
   const parse = schema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
 
-  // Normalizar telefone
+  // Normalizar telefone para banco (com +)
   const normalizedPhone = normalizePhone(parse.data.phone);
+  
+  // Normalizar telefone para WhatsApp (sem +)
+  const whatsappPhone = normalizePhoneForWhatsApp(parse.data.phone);
 
   // Buscar tenant pelo subdomain
   const tenant = await getTenantBySubdomain(req.tenantSubdomain);
@@ -246,7 +269,7 @@ app.post('/users', async (req, res) => {
         userId: userId,
         name: parse.data.name,
         email: parse.data.email,
-        phone: normalizedPhone,
+        phone: whatsappPhone, // Telefone sem + para WhatsApp
         position: parse.data.position,
         department: parse.data.department,
         start_date: parse.data.start_date,
