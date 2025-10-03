@@ -3,6 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const mammoth = require('mammoth');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
 const { z } = require('zod');
@@ -488,16 +489,28 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
       text = req.file.buffer.toString('utf8');
     } else if (req.file.mimetype === 'application/pdf') {
       // Para PDF, por enquanto vamos retornar erro - precisa de biblioteca específica
-      return res.status(400).json({ error: 'PDF ainda não suportado. Use arquivos TXT por enquanto.' });
-    } else if (req.file.mimetype.includes('word') || req.file.mimetype.includes('document')) {
-      // Para DOC/DOCX, por enquanto vamos retornar erro - precisa de biblioteca específica
-      return res.status(400).json({ error: 'Documentos Word ainda não suportados. Use arquivos TXT por enquanto.' });
+      return res.status(400).json({ error: 'PDF ainda não suportado. Use arquivos TXT ou Word por enquanto.' });
+    } else if (req.file.mimetype.includes('word') || req.file.mimetype.includes('document') || 
+               req.file.originalname.endsWith('.docx') || req.file.originalname.endsWith('.doc')) {
+      // Para DOC/DOCX usando mammoth
+      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      text = result.value;
+      
+      // Log de avisos se houver
+      if (result.messages && result.messages.length > 0) {
+        console.log('Avisos ao processar Word:', result.messages);
+      }
     } else {
-      return res.status(400).json({ error: 'Tipo de arquivo não suportado' });
+      return res.status(400).json({ error: 'Tipo de arquivo não suportado. Use TXT ou Word (DOC/DOCX).' });
     }
   } catch (error) {
     console.error('Erro ao processar arquivo:', error);
-    return res.status(400).json({ error: 'Erro ao processar arquivo' });
+    return res.status(400).json({ error: 'Erro ao processar arquivo: ' + error.message });
+  }
+
+  // Verificar se o texto não está vazio
+  if (!text || text.trim().length === 0) {
+    return res.status(400).json({ error: 'O arquivo parece estar vazio ou não contém texto válido.' });
   }
 
   const chunks = simpleChunk(text);
