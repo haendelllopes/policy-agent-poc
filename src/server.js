@@ -7,6 +7,7 @@ const { z } = require('zod');
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
+app.use(express.static('public'));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
@@ -57,6 +58,16 @@ function cosine(a, b) {
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
+});
+
+app.get('/tenants', async (_req, res) => {
+  const { db } = await openDatabase();
+  try {
+    const tenants = runQuery(db, 'SELECT id, name FROM tenants ORDER BY name');
+    res.json(tenants);
+  } finally {
+    db.close();
+  }
 });
 
 app.post('/tenants', async (req, res) => {

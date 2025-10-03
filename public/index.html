@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Agent - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            margin-bottom: 20px;
+            color: #374151;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .tenant-list {
+            margin-top: 20px;
+        }
+        
+        .tenant-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .tenant-item h3 {
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        
+        .tenant-item p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .file-input {
+            border: 2px dashed #d1d5db;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        
+        .file-input:hover {
+            border-color: #2563eb;
+        }
+        
+        .file-input.dragover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Policy Agent - Admin</h1>
+            <p>Gerencie usuários e documentos para o agente de IA</p>
+        </div>
+        
+        <div class="grid">
+            <!-- Criar Usuário -->
+            <div class="card">
+                <h2>👤 Criar Novo Usuário</h2>
+                <form id="userForm">
+                    <div class="form-group">
+                        <label for="userName">Nome da Empresa:</label>
+                        <input type="text" id="userName" name="name" required>
+                    </div>
+                    <button type="submit" class="btn">Criar Usuário</button>
+                </form>
+                
+                <div id="userAlert" class="alert hidden"></div>
+                
+                <div class="tenant-list">
+                    <h3>Usuários Existentes:</h3>
+                    <div id="tenantList"></div>
+                </div>
+            </div>
+            
+            <!-- Upload Documento -->
+            <div class="card">
+                <h2>📄 Upload de Documento</h2>
+                <form id="uploadForm">
+                    <div class="form-group">
+                        <label for="tenantSelect">Selecionar Usuário:</label>
+                        <select id="tenantSelect" name="tenantId" required>
+                            <option value="">Selecione um usuário...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="docTitle">Título do Documento:</label>
+                        <input type="text" id="docTitle" name="title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="docCategory">Categoria:</label>
+                        <select id="docCategory" name="category">
+                            <option value="Beneficios">Benefícios</option>
+                            <option value="CODEC">Código de Conduta</option>
+                            <option value="Ferias">Férias</option>
+                            <option value="Politicas">Políticas Gerais</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="docVersion">Versão:</label>
+                        <input type="text" id="docVersion" name="version" value="v1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="docContent">Conteúdo do Documento:</label>
+                        <textarea id="docContent" name="content" rows="8" placeholder="Cole aqui o texto do documento..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn">Upload Documento</button>
+                </form>
+                
+                <div id="uploadAlert" class="alert hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        // Carregar usuários existentes
+        async function loadTenants() {
+            try {
+                const response = await fetch(`${API_BASE}/tenants`);
+                const tenants = await response.json();
+                
+                const select = document.getElementById('tenantSelect');
+                const list = document.getElementById('tenantList');
+                
+                select.innerHTML = '<option value="">Selecione um usuário...</option>';
+                list.innerHTML = '';
+                
+                tenants.forEach(tenant => {
+                    const option = document.createElement('option');
+                    option.value = tenant.id;
+                    option.textContent = tenant.name;
+                    select.appendChild(option);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'tenant-item';
+                    item.innerHTML = `
+                        <h3>${tenant.name}</h3>
+                        <p>ID: ${tenant.id}</p>
+                    `;
+                    list.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+            }
+        }
+        
+        // Criar usuário
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch(`${API_BASE}/tenants`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('userAlert', 'success', `Usuário "${result.name}" criado com sucesso! ID: ${result.id}`);
+                    e.target.reset();
+                    loadTenants();
+                } else {
+                    showAlert('userAlert', 'error', `Erro: ${result.error?.formErrors?.[0] || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                showAlert('userAlert', 'error', `Erro de conexão: ${error.message}`);
+            }
+        });
+        
+        // Upload documento
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('tenantId', document.getElementById('tenantSelect').value);
+            formData.append('title', document.getElementById('docTitle').value);
+            formData.append('category', document.getElementById('docCategory').value);
+            formData.append('version', document.getElementById('docVersion').value);
+            
+            // Criar arquivo de texto
+            const content = document.getElementById('docContent').value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            formData.append('file', blob, 'documento.txt');
+            
+            try {
+                const response = await fetch(`${API_BASE}/documents/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showAlert('uploadAlert', 'success', `Documento "${result.title}" enviado com sucesso! ${result.chunks} chunks criados.`);
+                    e.target.reset();
+                } else {
+                    showAlert('uploadAlert', 'error', `Erro: ${result.error?.formErrors?.[0] || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                showAlert('uploadAlert', 'error', `Erro de conexão: ${error.message}`);
+            }
+        });
+        
+        function showAlert(elementId, type, message) {
+            const alert = document.getElementById(elementId);
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.classList.remove('hidden');
+            
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Carregar dados iniciais
+        loadTenants();
+    </script>
+</body>
+</html>
