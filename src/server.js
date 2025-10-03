@@ -162,6 +162,27 @@ app.post('/tenants', async (req, res) => {
   }
 });
 
+// Função para normalizar telefone brasileiro
+function normalizePhone(phone) {
+  if (!phone) return phone;
+  
+  // Remove espaços, parênteses e hífens
+  let cleanPhone = phone.replace(/[\s\(\)\-]/g, '');
+  
+  // Se não começar com +, adiciona +55
+  if (!cleanPhone.startsWith('+')) {
+    // Se começar com 55, adiciona +
+    if (cleanPhone.startsWith('55')) {
+      cleanPhone = '+' + cleanPhone;
+    } else {
+      // Se não começar com 55, adiciona +55
+      cleanPhone = '+55' + cleanPhone;
+    }
+  }
+  
+  return cleanPhone;
+}
+
 // Endpoint para criar usuários (colaboradores)
 app.post('/users', async (req, res) => {
   const schema = z.object({
@@ -175,6 +196,9 @@ app.post('/users', async (req, res) => {
   
   const parse = schema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+
+  // Normalizar telefone
+  const normalizedPhone = normalizePhone(parse.data.phone);
 
   // Buscar tenant pelo subdomain
   const tenant = await getTenantBySubdomain(req.tenantSubdomain);
@@ -192,7 +216,7 @@ app.post('/users', async (req, res) => {
 
     const userId = uuidv4();
     runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-      [userId, tenant.id, parse.data.name, parse.data.email, parse.data.phone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
+      [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
     
     persistDatabase(SQL, db);
     
@@ -204,7 +228,7 @@ app.post('/users', async (req, res) => {
         userId: userId,
         name: parse.data.name,
         email: parse.data.email,
-        phone: parse.data.phone,
+        phone: normalizedPhone,
         position: parse.data.position,
         department: parse.data.department,
         start_date: parse.data.start_date,
@@ -225,7 +249,7 @@ app.post('/users', async (req, res) => {
       id: userId, 
       name: parse.data.name, 
       email: parse.data.email,
-      phone: parse.data.phone,
+      phone: normalizedPhone,
       position: parse.data.position,
       department: parse.data.department,
       start_date: parse.data.start_date,
