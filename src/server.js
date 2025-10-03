@@ -318,35 +318,50 @@ app.delete('/users/:id', async (req, res) => {
 
     // Use PostgreSQL if available, otherwise SQLite
     if (process.env.DATABASE_URL) {
-      // PostgreSQL
-      console.log('DELETE /users - Using PostgreSQL');
-      console.log('DELETE /users - Query: DELETE FROM users WHERE id = $1 AND tenant_id = $2');
-      console.log('DELETE /users - Params:', [userId, tenant.id]);
+      // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
+      console.log('DELETE /users - Using PostgreSQL with single connection');
       
-      // Primeiro, vamos verificar se o usuário existe
-      const checkUser = await query('SELECT id, name, tenant_id FROM users WHERE id = $1', [userId]);
-      console.log('DELETE /users - Check user exists:', checkUser.rows);
-      
-      const checkTenant = await query('SELECT id, name FROM users WHERE tenant_id = $1', [tenant.id]);
-      console.log('DELETE /users - Users in tenant:', checkTenant.rows);
-      
-      // Se o usuário não existe, retornar erro específico
-      if (checkUser.rows.length === 0) {
-        console.log('DELETE /users - User not found in database');
-        return res.status(404).json({ error: { formErrors: ['Usuário não encontrado no banco de dados'] } });
-      }
-      
-      // Verificar se o usuário pertence ao tenant correto
-      if (checkUser.rows[0].tenant_id !== tenant.id) {
-        console.log('DELETE /users - User belongs to different tenant');
-        return res.status(403).json({ error: { formErrors: ['Usuário não pertence a este tenant'] } });
-      }
-      
-      const result = await query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
-      console.log('DELETE /users - Result rowCount:', result.rowCount);
-      
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
+      const client = await pool.connect();
+      try {
+        // Usar transação para garantir consistência
+        await client.query('BEGIN');
+        
+        // Verificar se o usuário existe
+        const checkUser = await client.query('SELECT id, name, tenant_id FROM users WHERE id = $1', [userId]);
+        console.log('DELETE /users - Check user exists:', checkUser.rows);
+        
+        if (checkUser.rows.length === 0) {
+          console.log('DELETE /users - User not found in database');
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: { formErrors: ['Usuário não encontrado no banco de dados'] } });
+        }
+        
+        // Verificar se o usuário pertence ao tenant correto
+        if (checkUser.rows[0].tenant_id !== tenant.id) {
+          console.log('DELETE /users - User belongs to different tenant');
+          await client.query('ROLLBACK');
+          return res.status(403).json({ error: { formErrors: ['Usuário não pertence a este tenant'] } });
+        }
+        
+        // Deletar o usuário
+        const result = await client.query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
+        console.log('DELETE /users - Result rowCount:', result.rowCount);
+        
+        if (result.rowCount === 0) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
+        }
+        
+        // Confirmar transação
+        await client.query('COMMIT');
+        console.log('DELETE /users - Transaction committed successfully');
+        
+      } catch (error) {
+        console.error('DELETE /users - Error in transaction:', error);
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
       }
     } else {
       // SQLite fallback
