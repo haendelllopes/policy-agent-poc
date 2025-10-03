@@ -282,9 +282,13 @@ app.post('/users', async (req, res) => {
 app.delete('/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
+    console.log('DELETE /users - userId:', userId);
+    console.log('DELETE /users - tenantSubdomain:', req.tenantSubdomain);
     
     // Buscar tenant pelo subdomain
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    console.log('DELETE /users - tenant:', tenant);
+    
     if (!tenant) {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
@@ -292,7 +296,13 @@ app.delete('/users/:id', async (req, res) => {
     // Use PostgreSQL if available, otherwise SQLite
     if (process.env.DATABASE_URL) {
       // PostgreSQL
+      console.log('DELETE /users - Using PostgreSQL');
+      console.log('DELETE /users - Query: DELETE FROM users WHERE id = $1 AND tenant_id = $2');
+      console.log('DELETE /users - Params:', [userId, tenant.id]);
+      
       const result = await query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
+      console.log('DELETE /users - Result rowCount:', result.rowCount);
+      
       if (result.rowCount === 0) {
         return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
       }
