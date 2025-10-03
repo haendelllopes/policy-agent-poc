@@ -323,6 +323,13 @@ app.delete('/users/:id', async (req, res) => {
       console.log('DELETE /users - Query: DELETE FROM users WHERE id = $1 AND tenant_id = $2');
       console.log('DELETE /users - Params:', [userId, tenant.id]);
       
+      // Primeiro, vamos verificar se o usuário existe
+      const checkUser = await query('SELECT id, name, tenant_id FROM users WHERE id = $1', [userId]);
+      console.log('DELETE /users - Check user exists:', checkUser.rows);
+      
+      const checkTenant = await query('SELECT id, name FROM users WHERE tenant_id = $1', [tenant.id]);
+      console.log('DELETE /users - Users in tenant:', checkTenant.rows);
+      
       const result = await query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
       console.log('DELETE /users - Result rowCount:', result.rowCount);
       
