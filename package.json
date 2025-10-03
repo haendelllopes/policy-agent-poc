@@ -12,10 +12,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/pg": "^8.15.5",
     "axios": "^1.12.2",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "multer": "^2.0.2",
+    "pg": "^8.16.3",
     "sql.js": "^1.13.0",
     "uuid": "^13.0.0",
     "zod": "^4.1.11"

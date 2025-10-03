@@ -3,6 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
+const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool } = require('./db-pg');
 const { z } = require('zod');
 
 const app = express();
@@ -88,6 +89,17 @@ app.get('/dashboard', (_req, res) => {
 
 // Função auxiliar para buscar tenant por subdomain
 async function getTenantBySubdomain(subdomain) {
+  // Tentar PostgreSQL primeiro
+  if (process.env.DATABASE_URL) {
+    try {
+      return await getTenantBySubdomainPG(subdomain);
+    } catch (error) {
+      console.error('Erro ao buscar tenant no PostgreSQL:', error);
+      // Fallback para SQLite
+    }
+  }
+  
+  // Fallback para SQLite
   const { db } = await openDatabase();
   try {
     const tenants = runQuery(db, 'SELECT * FROM tenants WHERE subdomain = ?', [subdomain]);
@@ -99,6 +111,18 @@ async function getTenantBySubdomain(subdomain) {
 
 app.get('/tenants', async (_req, res) => {
   try {
+    // Tentar PostgreSQL primeiro
+    if (process.env.DATABASE_URL) {
+      try {
+        const result = await query('SELECT id, name, subdomain FROM tenants ORDER BY name');
+        return res.json(result.rows);
+      } catch (error) {
+        console.error('Erro ao buscar tenants no PostgreSQL:', error);
+        // Fallback para SQLite
+      }
+    }
+    
+    // Fallback para SQLite
     const { db } = await openDatabase();
     try {
       const tenants = runQuery(db, 'SELECT id, name, subdomain FROM tenants ORDER BY name');
@@ -308,17 +332,34 @@ app.post('/search/policy', async (req, res) => {
 
 async function bootstrap() {
   try {
-    console.log('Inicializando banco de dados...');
+    console.log('Inicializando servidor...');
+    
+    // Tentar inicializar PostgreSQL primeiro
+    if (process.env.DATABASE_URL) {
+      try {
+        console.log('Inicializando PostgreSQL...');
+        initializePool();
+        await migratePG();
+        console.log('PostgreSQL inicializado com sucesso!');
+      } catch (error) {
+        console.error('Erro ao inicializar PostgreSQL:', error);
+        console.log('Usando SQLite como fallback...');
+      }
+    }
+    
+    // Sempre inicializar SQLite como fallback
+    console.log('Inicializando SQLite...');
     const { db, SQL } = await openDatabase();
     migrate(db);
     persistDatabase(SQL, db);
     db.close();
-    console.log('Banco de dados inicializado com sucesso!');
+    console.log('SQLite inicializado com sucesso!');
     
     const port = Number(process.env.PORT || 3000);
     app.listen(port, () => {
-      console.log(`API up on http://localhost:${port}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🚀 Flowly API rodando em http://localhost:${port}`);
+      console.log(`📊 Database: ${process.env.DATABASE_URL ? 'PostgreSQL (Supabase)' : 'SQLite (Local)'}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (error) {
     console.error('Erro ao inicializar servidor:', error);
