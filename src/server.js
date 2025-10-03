@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool } = require('./db-pg');
