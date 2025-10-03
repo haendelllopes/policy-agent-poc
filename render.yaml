@@ -3,8 +3,8 @@ services:
     name: policy-agent-poc
     env: node
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: node dist/server.js
+    buildCommand: npm install
+    startCommand: node src/server.js
     autoDeploy: true
     envVars:
       - key: NODE_ENV
