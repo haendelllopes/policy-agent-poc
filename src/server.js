@@ -481,7 +481,25 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
   if (!body.success) return res.status(400).json({ error: body.error.flatten() });
   if (!req.file) return res.status(400).json({ error: 'Arquivo ausente' });
 
-  const text = req.file.buffer.toString('utf8');
+  // Extrair texto do arquivo
+  let text;
+  try {
+    if (req.file.mimetype === 'text/plain') {
+      text = req.file.buffer.toString('utf8');
+    } else if (req.file.mimetype === 'application/pdf') {
+      // Para PDF, por enquanto vamos retornar erro - precisa de biblioteca específica
+      return res.status(400).json({ error: 'PDF ainda não suportado. Use arquivos TXT por enquanto.' });
+    } else if (req.file.mimetype.includes('word') || req.file.mimetype.includes('document')) {
+      // Para DOC/DOCX, por enquanto vamos retornar erro - precisa de biblioteca específica
+      return res.status(400).json({ error: 'Documentos Word ainda não suportados. Use arquivos TXT por enquanto.' });
+    } else {
+      return res.status(400).json({ error: 'Tipo de arquivo não suportado' });
+    }
+  } catch (error) {
+    console.error('Erro ao processar arquivo:', error);
+    return res.status(400).json({ error: 'Erro ao processar arquivo' });
+  }
+
   const chunks = simpleChunk(text);
   const embeddings = await Promise.all(chunks.map(embed));
 
