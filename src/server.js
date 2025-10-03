@@ -247,34 +247,51 @@ app.post('/users', async (req, res) => {
     return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
   }
 
-  const { db, SQL } = await openDatabase();
-  try {
-    // Verificar se email já existe no tenant
-    const existing = runQuery(db, 'SELECT id FROM users WHERE tenant_id = ? AND email = ?', [tenant.id, parse.data.email]);
-    if (existing.length > 0) {
+  // Use PostgreSQL if available, otherwise SQLite
+  if (process.env.DATABASE_URL) {
+    // PostgreSQL
+    const existing = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2', [tenant.id, parse.data.email]);
+    if (existing.rows.length > 0) {
       return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
     }
 
     const userId = uuidv4();
-    runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+    await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', 
       [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
-    
-    persistDatabase(SQL, db);
-    
-    // Disparar webhook para n8n
+  } else {
+    // SQLite fallback
+    const { db, SQL } = await openDatabase();
     try {
-      const webhookData = {
-        tenantId: tenant.id,
-        tenantName: tenant.name,
-        userId: userId,
-        name: parse.data.name,
-        email: parse.data.email,
-        phone: whatsappPhone, // Telefone sem + para WhatsApp
-        position: parse.data.position,
-        department: parse.data.department,
-        start_date: parse.data.start_date,
-        created_at: new Date().toISOString()
-      };
+      // Verificar se email já existe no tenant
+      const existing = runQuery(db, 'SELECT id FROM users WHERE tenant_id = ? AND email = ?', [tenant.id, parse.data.email]);
+      if (existing.length > 0) {
+        return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
+      }
+
+      const userId = uuidv4();
+      runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+        [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
+      
+      persistDatabase(SQL, db);
+    } finally {
+      db.close();
+    }
+  }
+
+  // Disparar webhook para n8n
+  try {
+    const webhookData = {
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      userId: userId,
+      name: parse.data.name,
+      email: parse.data.email,
+      phone: whatsappPhone, // Telefone sem + para WhatsApp
+      position: parse.data.position,
+      department: parse.data.department,
+      start_date: parse.data.start_date,
+      created_at: new Date().toISOString()
+    };
       
       await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
         method: 'POST',
@@ -296,8 +313,9 @@ app.post('/users', async (req, res) => {
       start_date: parse.data.start_date,
       tenant: tenant.name
     });
-  } finally {
-    db.close();
+  } catch (error) {
+    console.error('Erro ao criar usuário:', error);
+    res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
   }
 });
 
