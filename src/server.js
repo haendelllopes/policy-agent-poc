@@ -223,76 +223,78 @@ function normalizePhoneForWhatsApp(phone) {
 
 // Endpoint para criar usuários (colaboradores)
 app.post('/users', async (req, res) => {
-  const schema = z.object({
-    name: z.string().min(1),
-    email: z.string().email(),
-    phone: z.string().min(1),
-    position: z.string().min(1),
-    department: z.string().optional(),
-    start_date: z.string().optional()
-  });
-  
-  const parse = schema.safeParse(req.body);
-  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  try {
+    const schema = z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      phone: z.string().min(1),
+      position: z.string().min(1),
+      department: z.string().optional(),
+      start_date: z.string().optional()
+    });
+    
+    const parse = schema.safeParse(req.body);
+    if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
 
-  // Normalizar telefone para banco (com +)
-  const normalizedPhone = normalizePhone(parse.data.phone);
-  
-  // Normalizar telefone para WhatsApp (sem +)
-  const whatsappPhone = normalizePhoneForWhatsApp(parse.data.phone);
+    // Normalizar telefone para banco (com +)
+    const normalizedPhone = normalizePhone(parse.data.phone);
+    
+    // Normalizar telefone para WhatsApp (sem +)
+    const whatsappPhone = normalizePhoneForWhatsApp(parse.data.phone);
 
-  // Buscar tenant pelo subdomain
-  const tenant = await getTenantBySubdomain(req.tenantSubdomain);
-  if (!tenant) {
-    return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
-  }
-
-  // Use PostgreSQL if available, otherwise SQLite
-  if (process.env.DATABASE_URL) {
-    // PostgreSQL
-    const existing = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2', [tenant.id, parse.data.email]);
-    if (existing.rows.length > 0) {
-      return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
+    // Buscar tenant pelo subdomain
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
-    const userId = uuidv4();
-    await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', 
-      [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
-  } else {
-    // SQLite fallback
-    const { db, SQL } = await openDatabase();
-    try {
-      // Verificar se email já existe no tenant
-      const existing = runQuery(db, 'SELECT id FROM users WHERE tenant_id = ? AND email = ?', [tenant.id, parse.data.email]);
-      if (existing.length > 0) {
+    // Use PostgreSQL if available, otherwise SQLite
+    let userId;
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL
+      const existing = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2', [tenant.id, parse.data.email]);
+      if (existing.rows.length > 0) {
         return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
       }
 
-      const userId = uuidv4();
-      runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+      userId = uuidv4();
+      await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', 
         [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
-      
-      persistDatabase(SQL, db);
-    } finally {
-      db.close();
-    }
-  }
+    } else {
+      // SQLite fallback
+      const { db, SQL } = await openDatabase();
+      try {
+        // Verificar se email já existe no tenant
+        const existing = runQuery(db, 'SELECT id FROM users WHERE tenant_id = ? AND email = ?', [tenant.id, parse.data.email]);
+        if (existing.length > 0) {
+          return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
+        }
 
-  // Disparar webhook para n8n
-  try {
-    const webhookData = {
-      tenantId: tenant.id,
-      tenantName: tenant.name,
-      userId: userId,
-      name: parse.data.name,
-      email: parse.data.email,
-      phone: whatsappPhone, // Telefone sem + para WhatsApp
-      position: parse.data.position,
-      department: parse.data.department,
-      start_date: parse.data.start_date,
-      created_at: new Date().toISOString()
-    };
-      
+        userId = uuidv4();
+        runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+          [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
+        
+        persistDatabase(SQL, db);
+      } finally {
+        db.close();
+      }
+    }
+
+    // Disparar webhook para n8n
+    try {
+      const webhookData = {
+        tenantId: tenant.id,
+        tenantName: tenant.name,
+        userId: userId,
+        name: parse.data.name,
+        email: parse.data.email,
+        phone: whatsappPhone, // Telefone sem + para WhatsApp
+        position: parse.data.position,
+        department: parse.data.department,
+        start_date: parse.data.start_date,
+        created_at: new Date().toISOString()
+      };
+        
       await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
