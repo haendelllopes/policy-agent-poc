@@ -387,6 +387,45 @@ app.delete('/users/:id', async (req, res) => {
   }
 });
 
+// Endpoint de teste para verificar consistência
+app.get('/test-consistency/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    if (process.env.DATABASE_URL) {
+      const pool = getPool();
+      const client = await pool.connect();
+      
+      try {
+        // Testar com conexão única
+        const result1 = await client.query('SELECT id, name, tenant_id FROM users WHERE id = $1', [userId]);
+        const result2 = await client.query('SELECT id, name FROM users WHERE tenant_id = $1', [tenant.id]);
+        
+        res.json({
+          userId: userId,
+          tenantId: tenant.id,
+          userExists: result1.rows.length > 0,
+          userData: result1.rows[0] || null,
+          usersInTenant: result2.rows.length,
+          allUsers: result2.rows
+        });
+      } finally {
+        client.release();
+      }
+    } else {
+      res.json({ error: 'Apenas PostgreSQL suportado para teste' });
+    }
+  } catch (error) {
+    console.error('Erro no teste de consistência:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Endpoint para listar usuários do tenant atual
 app.get('/users', async (req, res) => {
   try {
