@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
-const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool } = require('./db-pg');
+const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
 const { z } = require('zod');
 
 const app = express();
@@ -321,6 +321,7 @@ app.delete('/users/:id', async (req, res) => {
       // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
       console.log('DELETE /users - Using PostgreSQL with single connection');
       
+      const pool = getPool();
       const client = await pool.connect();
       try {
         // Usar transação para garantir consistência

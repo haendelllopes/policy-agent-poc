@@ -194,5 +194,6 @@ module.exports = {
   getUsersByTenant,
   getDocumentsByTenant,
   getChunksByDocument,
-  closePool
+  closePool,
+  getPool: () => pool
 };
