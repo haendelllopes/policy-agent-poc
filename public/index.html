@@ -121,11 +121,11 @@
             border: 1px solid #fca5a5;
         }
         
-        .tenant-list {
+        .user-list {
             margin-top: 20px;
         }
         
-        .tenant-item {
+        .user-item {
             background: #f9fafb;
             padding: 15px;
             border-radius: 6px;
@@ -133,36 +133,41 @@
             border: 1px solid #e5e7eb;
         }
         
-        .tenant-item h3 {
+        .user-item h3 {
             color: #374151;
             margin-bottom: 5px;
         }
         
-        .tenant-item p {
+        .user-item p {
             color: #6b7280;
             font-size: 14px;
-        }
-        
-        .file-input {
-            border: 2px dashed #d1d5db;
-            border-radius: 6px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        
-        .file-input:hover {
-            border-color: #2563eb;
-        }
-        
-        .file-input.dragover {
-            border-color: #2563eb;
-            background: #eff6ff;
+            margin-bottom: 3px;
         }
         
         .hidden {
             display: none;
+        }
+        
+        .required {
+            color: #dc2626;
+        }
+        
+        .tenant-info {
+            background: #eff6ff;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .tenant-info h3 {
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+        
+        .tenant-info p {
+            color: #1e40af;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -170,26 +175,71 @@
     <div class="container">
         <div class="header">
             <h1>🤖 Policy Agent - Admin</h1>
-            <p>Gerencie usuários e documentos para o agente de IA</p>
+            <p>Gerencie colaboradores e documentos para o agente de IA</p>
+        </div>
+        
+        <div id="tenantInfo" class="tenant-info hidden">
+            <h3>🏢 Tenant Atual</h3>
+            <p id="tenantDetails"></p>
         </div>
         
         <div class="grid">
-            <!-- Criar Usuário -->
+            <!-- Criar Colaborador -->
             <div class="card">
-                <h2>👤 Criar Novo Usuário</h2>
+                <h2>👤 Adicionar Colaborador</h2>
+                <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">
+                    Ao criar, um webhook será enviado automaticamente para o n8n
+                </p>
+                
                 <form id="userForm">
                     <div class="form-group">
-                        <label for="userName">Nome da Empresa:</label>
+                        <label for="userName">Nome Completo <span class="required">*</span>:</label>
                         <input type="text" id="userName" name="name" required>
                     </div>
-                    <button type="submit" class="btn">Criar Usuário</button>
+                    
+                    <div class="form-group">
+                        <label for="userEmail">Email <span class="required">*</span>:</label>
+                        <input type="email" id="userEmail" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userPhone">Telefone/WhatsApp <span class="required">*</span>:</label>
+                        <input type="text" id="userPhone" name="phone" placeholder="+55 11 98765-4321" required>
+                        <small style="color: #6b7280; font-size: 12px;">Será usado para iniciar conversa no WhatsApp</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userPosition">Cargo <span class="required">*</span>:</label>
+                        <input type="text" id="userPosition" name="position" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userDepartment">Departamento:</label>
+                        <select id="userDepartment" name="department">
+                            <option value="">Selecione</option>
+                            <option value="TI">TI</option>
+                            <option value="RH">RH</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Comercial">Comercial</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Operações">Operações</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userStartDate">Data de Início:</label>
+                        <input type="date" id="userStartDate" name="start_date">
+                    </div>
+                    
+                    <button type="submit" class="btn">Cadastrar Colaborador</button>
                 </form>
                 
                 <div id="userAlert" class="alert hidden"></div>
                 
-                <div class="tenant-list">
-                    <h3>Usuários Existentes:</h3>
-                    <div id="tenantList"></div>
+                <div class="user-list">
+                    <h3>Colaboradores Existentes:</h3>
+                    <div id="userList"></div>
                 </div>
             </div>
             
@@ -197,13 +247,6 @@
             <div class="card">
                 <h2>📄 Upload de Documento</h2>
                 <form id="uploadForm">
-                    <div class="form-group">
-                        <label for="tenantSelect">Selecionar Usuário:</label>
-                        <select id="tenantSelect" name="tenantId" required>
-                            <option value="">Selecione um usuário...</option>
-                        </select>
-                    </div>
-                    
                     <div class="form-group">
                         <label for="docTitle">Título do Documento:</label>
                         <input type="text" id="docTitle" name="title" required>
@@ -240,30 +283,60 @@
 
     <script>
         const API_BASE = window.location.origin;
+        let currentTenant = null;
         
-        // Carregar usuários existentes
-        async function loadTenants() {
+        // Detectar tenant atual
+        async function detectTenant() {
+            const host = window.location.hostname;
+            let subdomain = 'demo'; // padrão para desenvolvimento
+            
+            if (!host.includes('localhost') && !host.includes('onrender.com')) {
+                subdomain = host.split('.')[0];
+            } else {
+                // Para desenvolvimento, usar query param
+                const urlParams = new URLSearchParams(window.location.search);
+                subdomain = urlParams.get('tenant') || 'demo';
+            }
+            
             try {
                 const response = await fetch(`${API_BASE}/tenants`);
                 const tenants = await response.json();
+                currentTenant = tenants.find(t => t.subdomain === subdomain);
                 
-                const select = document.getElementById('tenantSelect');
-                const list = document.getElementById('tenantList');
+                if (currentTenant) {
+                    document.getElementById('tenantDetails').textContent = 
+                        `${currentTenant.name} (${currentTenant.subdomain})`;
+                    document.getElementById('tenantInfo').classList.remove('hidden');
+                } else {
+                    showAlert('userAlert', 'error', `Tenant "${subdomain}" não encontrado. Crie um tenant primeiro.`);
+                }
+            } catch (error) {
+                console.error('Erro ao detectar tenant:', error);
+                showAlert('userAlert', 'error', 'Erro ao conectar com o servidor');
+            }
+        }
+        
+        // Carregar usuários existentes
+        async function loadUsers() {
+            if (!currentTenant) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                const users = await response.json();
                 
-                select.innerHTML = '<option value="">Selecione um usuário...</option>';
+                const list = document.getElementById('userList');
                 list.innerHTML = '';
                 
-                tenants.forEach(tenant => {
-                    const option = document.createElement('option');
-                    option.value = tenant.id;
-                    option.textContent = tenant.name;
-                    select.appendChild(option);
-                    
+                users.forEach(user => {
                     const item = document.createElement('div');
-                    item.className = 'tenant-item';
+                    item.className = 'user-item';
                     item.innerHTML = `
-                        <h3>${tenant.name}</h3>
-                        <p>ID: ${tenant.id}</p>
+                        <h3>${user.name}</h3>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>Telefone:</strong> ${user.phone}</p>
+                        <p><strong>Cargo:</strong> ${user.position}</p>
+                        ${user.department ? `<p><strong>Departamento:</strong> ${user.department}</p>` : ''}
+                        <p><strong>Status:</strong> ${user.status}</p>
                     `;
                     list.appendChild(item);
                 });
@@ -276,11 +349,16 @@
         document.getElementById('userForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (!currentTenant) {
+                showAlert('userAlert', 'error', 'Nenhum tenant detectado');
+                return;
+            }
+            
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
             
             try {
-                const response = await fetch(`${API_BASE}/tenants`, {
+                const response = await fetch(`${API_BASE}/users`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -291,9 +369,9 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showAlert('userAlert', 'success', `Usuário "${result.name}" criado com sucesso! ID: ${result.id}`);
+                    showAlert('userAlert', 'success', `Colaborador "${result.name}" criado com sucesso! Webhook enviado para n8n.`);
                     e.target.reset();
-                    loadTenants();
+                    loadUsers();
                 } else {
                     showAlert('userAlert', 'error', `Erro: ${result.error?.formErrors?.[0] || 'Erro desconhecido'}`);
                 }
@@ -306,8 +384,13 @@
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            if (!currentTenant) {
+                showAlert('uploadAlert', 'error', 'Nenhum tenant detectado');
+                return;
+            }
+            
             const formData = new FormData();
-            formData.append('tenantId', document.getElementById('tenantSelect').value);
+            formData.append('tenantId', currentTenant.id);
             formData.append('title', document.getElementById('docTitle').value);
             formData.append('category', document.getElementById('docCategory').value);
             formData.append('version', document.getElementById('docVersion').value);
@@ -348,7 +431,9 @@
         }
         
         // Carregar dados iniciais
-        loadTenants();
+        detectTenant().then(() => {
+            loadUsers();
+        });
     </script>
 </body>
 </html>

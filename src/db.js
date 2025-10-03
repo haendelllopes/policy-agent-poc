@@ -32,7 +32,22 @@ function migrate(db) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS tenants (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL
+      name TEXT NOT NULL,
+      subdomain TEXT UNIQUE NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      position TEXT NOT NULL,
+      department TEXT,
+      start_date DATE,
+      status TEXT DEFAULT 'active',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id)
     );
     CREATE TABLE IF NOT EXISTS documents (
       id TEXT PRIMARY KEY,
@@ -54,6 +69,7 @@ function migrate(db) {
     );
     CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id);
     CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id);
   `);
 }
 
