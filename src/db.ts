@@ -6,17 +6,17 @@ const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_PATH = path.join(DATA_DIR, 'db.sqlite');
 
 export type DatabaseHandles = {
-  SQL: awaitedReturn<typeof initSqlJs>;
+  SQL: Awaited<ReturnType<typeof initSqlJs>>;
   db: any;
 };
-
-type awaitedReturn<T> = T extends (...args: any[]) => Promise<infer R> ? R : never;
 
 export async function openDatabase(): Promise<DatabaseHandles> {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  const SQL = await initSqlJs({ locateFile: (f) => require.resolve('sql.js/dist/sql-wasm.wasm') });
+  const SQL = await initSqlJs({ 
+    locateFile: (f: string) => require.resolve('sql.js/dist/sql-wasm.wasm') 
+  });
   let db;
   if (fs.existsSync(DB_PATH)) {
     const filebuffer = fs.readFileSync(DB_PATH);
