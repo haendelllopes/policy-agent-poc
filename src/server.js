@@ -330,6 +330,18 @@ app.delete('/users/:id', async (req, res) => {
       const checkTenant = await query('SELECT id, name FROM users WHERE tenant_id = $1', [tenant.id]);
       console.log('DELETE /users - Users in tenant:', checkTenant.rows);
       
+      // Se o usuário não existe, retornar erro específico
+      if (checkUser.rows.length === 0) {
+        console.log('DELETE /users - User not found in database');
+        return res.status(404).json({ error: { formErrors: ['Usuário não encontrado no banco de dados'] } });
+      }
+      
+      // Verificar se o usuário pertence ao tenant correto
+      if (checkUser.rows[0].tenant_id !== tenant.id) {
+        console.log('DELETE /users - User belongs to different tenant');
+        return res.status(403).json({ error: { formErrors: ['Usuário não pertence a este tenant'] } });
+      }
+      
       const result = await query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
       console.log('DELETE /users - Result rowCount:', result.rowCount);
       
