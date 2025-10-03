@@ -743,7 +743,14 @@
             if (!currentTenant) return;
             
             try {
-                const response = await fetch(`${API_BASE}/users?tenant=${currentTenant.subdomain}`);
+                // Adicionar timestamp para evitar cache
+                const timestamp = new Date().getTime();
+                const response = await fetch(`${API_BASE}/users?tenant=${currentTenant.subdomain}&_t=${timestamp}`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 const users = await response.json();
                 
                 document.getElementById('totalUsers').textContent = users.length;
