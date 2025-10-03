@@ -551,16 +551,18 @@ app.post('/search/policy', async (req, res) => {
   const { tenantId, query, top_k } = parse.data;
 
   const qEmbed = await embed(query);
-  const { db } = await openDatabase();
-  try {
-    const rows = runQuery(
-      db,
+  
+  // Use PostgreSQL if available, otherwise SQLite
+  if (process.env.DATABASE_URL) {
+    // PostgreSQL
+    const result = await query(
       `SELECT c.id, c.content, c.embedding, c.section, d.title, d.version
        FROM chunks c JOIN documents d ON d.id = c.document_id
-       WHERE d.tenant_id = ? AND d.status = 'published'`,
+       WHERE d.tenant_id = $1 AND d.status = 'published'`,
       [tenantId]
     );
-    const ranked = rows
+    
+    const ranked = result.rows
       .map((r) => ({
         id: r.id,
         content: r.content,
@@ -573,8 +575,34 @@ app.post('/search/policy', async (req, res) => {
       .slice(0, top_k);
 
     res.json({ query, results: ranked });
-  } finally {
-    db.close();
+  } else {
+    // SQLite fallback
+    const { db } = await openDatabase();
+    try {
+      const rows = runQuery(
+        db,
+        `SELECT c.id, c.content, c.embedding, c.section, d.title, d.version
+         FROM chunks c JOIN documents d ON d.id = c.document_id
+         WHERE d.tenant_id = ? AND d.status = 'published'`,
+        [tenantId]
+      );
+      
+      const ranked = rows
+        .map((r) => ({
+          id: r.id,
+          content: r.content,
+          section: r.section,
+          title: r.title,
+          version: r.version,
+          score: cosine(qEmbed, JSON.parse(r.embedding)),
+        }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, top_k);
+
+      res.json({ query, results: ranked });
+    } finally {
+      db.close();
+    }
   }
 });
 
