@@ -1,0 +1,126 @@
+{
+  "name": "Policy Onboarding + Search (template)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook_Onboarding",
+      "name": "Webhook Onboarding",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 200]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "tenantId", "value": "={{$json.tenantId}}" },
+            { "name": "name", "value": "={{$json.name}}" },
+            { "name": "phone", "value": "={{$json.phone}}" },
+            { "name": "welcome", "value": "Olá {{$json.name}}! Sou o assistente de onboarding. Posso te ajudar com políticas como CODEC e Benefícios. Pergunte, por exemplo: 'Como funciona o plano de saúde?'" }
+          ]
+        },
+        "options": { "keepOnlySet": true }
+      },
+      "id": "Set_Welcome",
+      "name": "Set Welcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [470, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{ json: { ok: true, message: $json.welcome, phone: $json.phone } }];"
+      },
+      "id": "Function_WelcomePayload",
+      "name": "Function WelcomePayload",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [730, 200]
+    },
+    {
+      "parameters": {
+        "statusCode": 200,
+        "responseBody": "={{$json}}"
+      },
+      "id": "Respond_Onboarding",
+      "name": "Respond Onboarding (plug WhatsApp send)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [980, 200]
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{$json.messageText || $json.text || ''}}", "operation": "isEmpty" }
+          ]
+        }
+      },
+      "id": "If_Discard_NoText",
+      "name": "If Discard NoText",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [470, 520]
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "http://localhost:3000/search/policy",
+        "options": {},
+        "jsonParameters": true,
+        "optionsRequest": {},
+        "sendHeaders": true,
+        "headerParametersJson": "{\n  \"Content-Type\": \"application/json\"\n}",
+        "queryParametersJson": "{}",
+        "bodyParametersJson": "{\n  \"tenantId\": \"={{$json.tenantId || 'f37a823e-c4af-4b1b-9e88-1d5ec65326ad'}}\",\n  \"query\": \"={{$json.messageText || $json.text || $json.body}}\",\n  \"top_k\": 3\n}"
+      },
+      "id": "HTTP_policy_search",
+      "name": "HTTP policy_search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [740, 640]
+    },
+    {
+      "parameters": {
+        "functionCode": "const r = $json.results?.[0];\nreturn [{ json: { message: r ? `Encontrei em ${r.title} (${r.version}):\\n${r.content}` : 'Não encontrei nada relacionado. Pode reformular a pergunta?' } }];"
+      },
+      "id": "Function_FormatReply",
+      "name": "Function FormatReply",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 2,
+      "position": [980, 640]
+    },
+    {
+      "parameters": {
+        "responseBody": "={{$json}}",
+        "statusCode": 200
+      },
+      "id": "Respond_Chat",
+      "name": "Respond Chat (plug WhatsApp send)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1240, 640]
+    }
+  ],
+  "connections": {
+    "Webhook Onboarding": { "main": [[{ "node": "Set Welcome", "type": "main", "index": 0 }]] },
+    "Set Welcome": { "main": [[{ "node": "Function WelcomePayload", "type": "main", "index": 0 }]] },
+    "Function WelcomePayload": { "main": [[{ "node": "Respond Onboarding (plug WhatsApp send)", "type": "main", "index": 0 }]] },
+
+    "If Discard NoText": { "main": [
+      [ { "node": "Respond Chat (plug WhatsApp send)", "type": "main", "index": 0 } ],
+      [ { "node": "HTTP policy_search", "type": "main", "index": 0 } ]
+    ] },
+    "HTTP policy_search": { "main": [[{ "node": "Function FormatReply", "type": "main", "index": 0 }]] },
+    "Function FormatReply": { "main": [[{ "node": "Respond Chat (plug WhatsApp send)", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}
+}
+
+
+
