@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: policy-agent-poc
+    name: flowly
     env: node
     plan: free
     buildCommand: npm install

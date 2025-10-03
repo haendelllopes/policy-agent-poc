@@ -1,7 +1,7 @@
 {
-  "name": "policy-agent-poc",
+  "name": "flowly",
   "version": "1.0.0",
-  "description": "",
+  "description": "Flowly - AI-powered employee onboarding via WhatsApp",
   "main": "src/server.js",
   "scripts": {
     "dev": "node src/server.js",
