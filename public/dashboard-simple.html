@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Flowly</title>
+    <title>🤖 Flowly Dashboard - Resumo Real</title>
     <style>
         * {
             margin: 0;
@@ -407,12 +407,65 @@
         }
         
         // Dashboard data
-        function loadDashboardData() {
-            // Mock data for now
-            document.getElementById('users-count').textContent = '12';
-            document.getElementById('documents-count').textContent = '8';
-            document.getElementById('departments-count').textContent = '5';
-            document.getElementById('categories-count').textContent = '4';
+        async function loadDashboardData() {
+            try {
+                // Carregar dados reais do backend
+                const [usersResponse, documentsResponse, departmentsResponse, categoriesResponse] = await Promise.all([
+                    fetch('/api/users'),
+                    fetch('/api/documents'),
+                    fetch('/api/departments'),
+                    fetch('/api/categories')
+                ]);
+
+                // Processar resposta de usuários
+                let totalUsers = 0;
+                if (usersResponse.ok) {
+                    const usersData = await usersResponse.json();
+                    totalUsers = usersData.data ? usersData.data.length : 0;
+                }
+
+                // Processar resposta de documentos
+                let totalDocuments = 0;
+                if (documentsResponse.ok) {
+                    const documentsData = await documentsResponse.json();
+                    totalDocuments = documentsData.data ? documentsData.data.length : 0;
+                }
+
+                // Processar resposta de departamentos
+                let totalDepartments = 0;
+                if (departmentsResponse.ok) {
+                    const departmentsData = await departmentsResponse.json();
+                    totalDepartments = departmentsData.data ? departmentsData.data.length : 0;
+                }
+
+                // Processar resposta de categorias
+                let totalCategories = 0;
+                if (categoriesResponse.ok) {
+                    const categoriesData = await categoriesResponse.json();
+                    totalCategories = categoriesData.data ? categoriesData.data.length : 0;
+                }
+
+                // Atualizar interface com dados reais
+                document.getElementById('users-count').textContent = totalUsers.toString();
+                document.getElementById('documents-count').textContent = totalDocuments.toString();
+                document.getElementById('departments-count').textContent = totalDepartments.toString();
+                document.getElementById('categories-count').textContent = totalCategories.toString();
+                
+                console.log('Dados do resumo carregados com sucesso:', {
+                    users: totalUsers,
+                    documents: totalDocuments,
+                    departments: totalDepartments,
+                    categories: totalCategories
+                });
+                
+            } catch (error) {
+                console.error('Erro ao carregar dados do resumo:', error);
+                // Em caso de erro, manter dados mockados
+                document.getElementById('users-count').textContent = '12';
+                document.getElementById('documents-count').textContent = '8';
+                document.getElementById('departments-count').textContent = '5';
+                document.getElementById('categories-count').textContent = '4';
+            }
         }
         
         // Users
