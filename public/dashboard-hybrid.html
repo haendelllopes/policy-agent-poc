@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OnboardFlow - Dashboard</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8fafc;color:#1e293b}
+        .container{display:flex;min-height:100vh}
+        .sidebar{width:280px;background:white;border-right:1px solid #e2e8f0;padding:2rem 0;position:fixed;height:100vh;overflow-y:auto}
+        .logo{display:flex;align-items:center;gap:0.75rem;padding:0 2rem;margin-bottom:2rem}
+        .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.3rem;font-weight:bold}
+        .logo-text{font-size:1.5rem;font-weight:700;color:#2563eb}
+        .menu-section{padding:0 2rem;margin-bottom:2rem}
+        .menu-title{font-size:0.8rem;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1rem}
+        .nav-menu{list-style:none}
+        .nav-item{margin-bottom:0.5rem}
+        .nav-link{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;color:#64748b;text-decoration:none;border-radius:8px;transition:all 0.2s;font-weight:500}
+        .nav-link:hover{background:#f1f5f9;color:#2563eb}
+        .nav-link.active{background:#eff6ff;color:#2563eb;border-right:3px solid #2563eb}
+        .nav-icon{font-size:1.2rem;width:20px;text-align:center}
+        .logout{position:absolute;bottom:2rem;left:2rem;right:2rem}
+        .logout-link{display:flex;align-items:center;gap:0.5rem;color:#ef4444;text-decoration:none;font-weight:500;padding:0.5rem;border-radius:6px;transition:background 0.2s}
+        .logout-link:hover{background:#fef2f2}
+        .main-content{flex:1;margin-left:280px;display:flex;flex-direction:column}
+        .header{background:white;border-bottom:1px solid #e2e8f0;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50}
+        .search-bar{display:flex;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 1rem;width:400px}
+        .search-icon{color:#64748b;margin-right:0.5rem}
+        .search-input{border:none;background:transparent;outline:none;flex:1;font-size:0.9rem;color:#1e293b}
+        .search-input::placeholder{color:#94a3b8}
+        .header-actions{display:flex;align-items:center;gap:1rem}
+        .header-icon{width:40px;height:40px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s;position:relative}
+        .header-icon:hover{background:#e2e8f0}
+        .notification-badge{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#ef4444;border-radius:50%}
+        .avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.9rem;cursor:pointer}
+        .content{flex:1;padding:2rem}
+        .page-header{margin-bottom:2rem}
+        .page-title{font-size:2rem;font-weight:700;color:#1e293b;margin-bottom:0.5rem}
+        .page-subtitle{color:#64748b;font-size:1rem}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem;margin-bottom:2rem}
+        .stat-card{background:white;border-radius:12px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #f1f5f9}
+        .stat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+        .stat-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+        .stat-icon.blue{background:#dbeafe;color:#2563eb}
+        .stat-icon.orange{background:#fed7aa;color:#ea580c}
+        .stat-icon.green{background:#dcfce7;color:#16a34a}
+        .stat-icon.purple{background:#e9d5ff;color:#7c3aed}
+        .stat-value{font-size:2rem;font-weight:700;color:#1e293b;margin-bottom:0.25rem}
+        .stat-label{color:#64748b;font-size:0.9rem;margin-bottom:0.5rem}
+        .stat-subtitle{color:#16a34a;font-size:0.8rem;font-weight:500}
+        .charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem;margin-bottom:2rem}
+        .chart-card{background:white;border-radius:12px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #f1f5f9}
+        .chart-header{margin-bottom:1.5rem}
+        .chart-title{font-size:1.1rem;font-weight:600;color:#1e293b;margin-bottom:0.25rem}
+        .chart-subtitle{color:#64748b;font-size:0.9rem}
+        .chart-placeholder{height:200px;background:#f8fafc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.9rem;border:2px dashed #e2e8f0}
+        .employee-list{margin-top:1rem}
+        .employee-item{display:flex;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid #f1f5f9}
+        .employee-item:last-child{border-bottom:none}
+        .employee-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.8rem}
+        .employee-info{flex:1}
+        .employee-name{font-weight:600;color:#1e293b;margin-bottom:0.25rem}
+        .employee-role{color:#64748b;font-size:0.9rem}
+        .employee-status{padding:0.25rem 0.75rem;border-radius:20px;font-size:0.8rem;font-weight:500;white-space:nowrap}
+        .status-progress{background:#fef3c7;color:#92400e}
+        .status-complete{background:#dbeafe;color:#1e40af}
+        .hidden{display:none}
+        @media (max-width:1024px){.charts-grid{grid-template-columns:1fr}.search-bar{width:300px}}
+        @media (max-width:768px){.sidebar{transform:translateX(-100%);transition:transform 0.3s ease}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0}.search-bar{width:200px}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">O</div>
+                <div class="logo-text">OnboardFlow</div>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Menu Principal</div>
+                <ul class="nav-menu">
+                    <li class="nav-item"><a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')"><div class="nav-icon">📊</div><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a href="#employees" class="nav-link" onclick="showSection('employees')"><div class="nav-icon">👥</div><span>Funcionários</span></a></li>
+                    <li class="nav-item"><a href="#documents" class="nav-link" onclick="showSection('documents')"><div class="nav-icon">📄</div><span>Documentos</span></a></li>
+                    <li class="nav-item"><a href="#tasks" class="nav-link" onclick="showSection('tasks')"><div class="nav-icon">✅</div><span>Tarefas</span></a></li>
+                    <li class="nav-item"><a href="#settings" class="nav-link" onclick="showSection('settings')"><div class="nav-icon">⚙️</div><span>Configurações</span></a></li>
+                </ul>
+            </div>
+            <div class="logout">
+                <a href="#" class="logout-link"><span>→</span><span>Sair</span></a>
+            </div>
+        </nav>
+        <main class="main-content">
+            <header class="header">
+                <div class="search-bar">
+                    <div class="search-icon">🔍</div>
+                    <input type="text" class="search-input" placeholder="Buscar colaboradores, documentos...">
+                </div>
+                <div class="header-actions">
+                    <div class="header-icon"><span>⊞</span></div>
+                    <div class="header-icon"><span>🔔</span><div class="notification-badge"></div></div>
+                    <div class="avatar">AD</div>
+                </div>
+            </header>
+            <div class="content">
+                <div id="dashboard-section" class="section active">
+                    <div class="page-header">
+                        <h1 class="page-title">Dashboard</h1>
+                        <p class="page-subtitle">Visão geral do processo de onboarding</p>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header"><div class="stat-icon blue">👥</div></div>
+                            <div class="stat-value">24</div>
+                            <div class="stat-label">Total de Funcionários</div>
+                            <div class="stat-subtitle">+3 este mês</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><div class="stat-icon orange">📈</div></div>
+                            <div class="stat-value">8</div>
+                            <div class="stat-label">Em Progresso</div>
+                            <div class="stat-subtitle">33% do total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><div class="stat-icon green">✅</div></div>
+                            <div class="stat-value">14</div>
+                            <div class="stat-label">Completados</div>
+                            <div class="stat-subtitle">58% do total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-header"><div class="stat-icon purple">📄</div></div>
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">Documentos</div>
+                            <div class="stat-subtitle">Todos atualizados</div>
+                        </div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Progresso de Onboarding</h3>
+                                <p class="chart-subtitle">Acompanhamento mensal dos status de integração</p>
+                            </div>
+                            <div class="chart-placeholder">📊 Gráfico de Barras - Progresso Mensal</div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 class="chart-title">Funcionários Recentes</h3>
+                                <p class="chart-subtitle">Últimas integrações cadastradas no sistema</p>
+                            </div>
+                            <div class="employee-list">
+                                <div class="employee-item">
+                                    <div class="employee-avatar">AS</div>
+                                    <div class="employee-info">
+                                        <div class="employee-name">Ana Silva</div>
+                                        <div class="employee-role">Designer UX</div>
+                                    </div>
+                                    <div class="employee-status status-progress">Em Progresso 75%</div>
+                                </div>
+                                <div class="employee-item">
+                                    <div class="employee-avatar">CS</div>
+                                    <div class="employee-info">
+                                        <div class="employee-name">Carlos Santos</div>
+                                        <div class="employee-role">Desenvolvedor Frontend</div>
+                                    </div>
+                                    <div class="employee-status status-complete">Completo 100%</div>
+                                </div>
+                                <div class="employee-item">
+                                    <div class="employee-avatar">MO</div>
+                                    <div class="employee-info">
+                                        <div class="employee-name">Maria Oliveira</div>
+                                        <div class="employee-role">Analista de Dados</div>
+                                    </div>
+                                    <div class="employee-status status-progress">Em Progresso 50%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="employees-section" class="section hidden">
+                    <div class="page-header">
+                        <h1 class="page-title">Funcionários</h1>
+                        <p class="page-subtitle">Gestão de colaboradores e onboarding</p>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Lista de Funcionários</h3>
+                        <p style="color:#64748b;margin-top:0.5rem">Funcionalidade em desenvolvimento...</p>
+                    </div>
+                </div>
+                <div id="documents-section" class="section hidden">
+                    <div class="page-header">
+                        <h1 class="page-title">Documentos</h1>
+                        <p class="page-subtitle">Gestão de documentos e contratos</p>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Biblioteca de Documentos</h3>
+                        <p style="color:#64748b;margin-top:0.5rem">Funcionalidade em desenvolvimento...</p>
+                    </div>
+                </div>
+                <div id="tasks-section" class="section hidden">
+                    <div class="page-header">
+                        <h1 class="page-title">Tarefas</h1>
+                        <p class="page-subtitle">Acompanhamento de tarefas de onboarding</p>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Lista de Tarefas</h3>
+                        <p style="color:#64748b;margin-top:0.5rem">Funcionalidade em desenvolvimento...</p>
+                    </div>
+                </div>
+                <div id="settings-section" class="section hidden">
+                    <div class="page-header">
+                        <h1 class="page-title">Configurações</h1>
+                        <p class="page-subtitle">Configurações do sistema e perfil</p>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Configurações do Sistema</h3>
+                        <p style="color:#64748b;margin-top:0.5rem">Funcionalidade em desenvolvimento...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        function showSection(section){
+            document.querySelectorAll('.section').forEach(el=>{el.classList.add('hidden');el.classList.remove('active')});
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            document.getElementById(`${section}-section`).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(link=>{link.classList.remove('active')});
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+        }
+        document.addEventListener('DOMContentLoaded',function(){
+            console.log('OnboardFlow Dashboard carregado!');
+        });
+    </script>
+</body>
+</html>
