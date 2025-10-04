@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Flowly Minimal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #007bff;
+            color: white;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Flowly Dashboard - Versão Minimal</h1>
+            <p>Teste de funcionalidade básica</p>
+        </div>
+        
+        <div class="status success">
+            <strong>✅ Dashboard Carregado com Sucesso!</strong><br>
+            Se você está vendo esta página, o servidor está funcionando corretamente.
+        </div>
+        
+        <div class="status info">
+            <strong>📊 Status do Sistema:</strong><br>
+            • Servidor: Funcionando<br>
+            • HTML: Carregando<br>
+            • CSS: Aplicado<br>
+            • JavaScript: Básico funcionando
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>👥 Colaboradores</h3>
+                <p>Gerenciar colaboradores da empresa</p>
+                <button class="btn" onclick="alert('Funcionalidade em desenvolvimento')">Ver Colaboradores</button>
+            </div>
+            
+            <div class="card">
+                <h3>📄 Documentos</h3>
+                <p>Gerenciar documentos e políticas</p>
+                <button class="btn" onclick="alert('Funcionalidade em desenvolvimento')">Ver Documentos</button>
+            </div>
+            
+            <div class="card">
+                <h3>⚙️ Configurações</h3>
+                <p>Configurar sistema e cadastros</p>
+                <button class="btn" onclick="alert('Funcionalidade em desenvolvimento')">Ver Configurações</button>
+            </div>
+            
+            <div class="card">
+                <h3>🏢 Cadastros</h3>
+                <p>Departamentos, Cargos, Categorias, Tags</p>
+                <button class="btn" onclick="alert('Funcionalidade em desenvolvimento')">Ver Cadastros</button>
+            </div>
+        </div>
+        
+        <div class="status info">
+            <strong>🔧 Próximos Passos:</strong><br>
+            1. Se esta página funciona, o problema é no dashboard complexo<br>
+            2. Vamos implementar funcionalidades gradualmente<br>
+            3. Dashboard completo será reconstruído
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <button class="btn" onclick="testAPI()">Testar API</button>
+            <button class="btn" onclick="window.location.href='dashboard-standalone.html'">Dashboard Standalone</button>
+            <button class="btn" onclick="window.location.href='dashboard.html'">Dashboard Original</button>
+        </div>
+        
+        <div id="api-result" style="margin-top: 20px;"></div>
+    </div>
+    
+    <script>
+        console.log('Dashboard minimal carregado com sucesso!');
+        
+        function testAPI() {
+            const result = document.getElementById('api-result');
+            result.innerHTML = '<div class="status info">Testando API...</div>';
+            
+            fetch('/api/tenants')
+                .then(response => {
+                    if (response.ok) {
+                        result.innerHTML = '<div class="status success">✅ API funcionando!</div>';
+                    } else {
+                        result.innerHTML = '<div class="status" style="background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">❌ API retornou erro: ' + response.status + '</div>';
+                    }
+                })
+                .catch(error => {
+                    result.innerHTML = '<div class="status" style="background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">❌ Erro na API: ' + error.message + '</div>';
+                });
+        }
+        
+        // Mostrar timestamp
+        document.addEventListener('DOMContentLoaded', () => {
+            const timestamp = new Date().toLocaleString('pt-BR');
+            document.title = `Dashboard Minimal - ${timestamp}`;
+        });
+    </script>
+</body>
+</html>
