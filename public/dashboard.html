@@ -716,13 +716,18 @@
         async function loadTenantInfo() {
             try {
                 const tenantSubdomain = getTenantFromUrl();
+                console.log('🔍 Buscando tenant:', tenantSubdomain);
+                
                 const response = await fetch(`${API_BASE}/api/tenants/${tenantSubdomain}`);
+                console.log('📡 Resposta da API:', response.status, response.statusText);
                 
                 if (response.ok) {
                     currentTenant = await response.json();
+                    console.log('✅ Tenant carregado:', currentTenant);
                     document.getElementById('tenantName').textContent = currentTenant.name;
                     document.getElementById('tenantSubdomain').textContent = `${currentTenant.subdomain}.flowly.com`;
                 } else {
+                    console.warn('⚠️ Tenant não encontrado, usando fallback');
                     // Fallback para demo
                     currentTenant = {
                         id: 'demo-id',
@@ -733,7 +738,7 @@
                     document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
                 }
             } catch (error) {
-                console.error('Erro ao carregar tenant:', error);
+                console.error('❌ Erro ao carregar tenant:', error);
                 // Fallback para demo
                 currentTenant = {
                     id: 'demo-id',
@@ -781,12 +786,23 @@
         
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            loadSidebarState();
-            await loadTenantInfo();
-            updateTime();
-            setInterval(updateTime, 1000);
-            
-            console.log('Dashboard carregado com sucesso!');
+            try {
+                console.log('🚀 Iniciando carregamento do dashboard...');
+                
+                console.log('📱 Carregando estado da sidebar...');
+                loadSidebarState();
+                
+                console.log('🏢 Carregando informações do tenant...');
+                await loadTenantInfo();
+                
+                console.log('⏰ Atualizando relógio...');
+                updateTime();
+                setInterval(updateTime, 1000);
+                
+                console.log('✅ Dashboard carregado com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao carregar dashboard:', error);
+            }
         });
         
         // Registration Routine Functions
