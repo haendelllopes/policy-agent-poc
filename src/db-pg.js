@@ -171,16 +171,106 @@ async function migrate() {
       )
     `);
     
+    // Criar tabela document_tags
+    await query(`
+      CREATE TABLE IF NOT EXISTS document_tags (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+        tag_name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(document_id, tag_name)
+      )
+    `);
+    
     // Criar índices
     await query(`CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id)`);
+    
+    // Popular dados iniciais para todos os tenants existentes
+    await seedInitialData();
     await query(`CREATE INDEX IF NOT EXISTS idx_tenants_subdomain ON tenants(subdomain)`);
     
     console.log('Migrações executadas com sucesso!');
   } catch (error) {
     console.error('Erro nas migrações:', error);
     throw error;
+  }
+}
+
+// Função para popular dados iniciais
+async function seedInitialData() {
+  try {
+    console.log('Populando dados iniciais...');
+    
+    // Obter todos os tenants existentes
+    const tenantsResult = await query('SELECT id FROM tenants');
+    const tenants = tenantsResult.rows;
+    
+    if (tenants.length === 0) {
+      console.log('Nenhum tenant encontrado para popular dados iniciais');
+      return;
+    }
+    
+    // Dados iniciais
+    const departments = [
+      'Desenvolvimento', 'Recursos Humanos (RH)', 'Financeiro', 'Comercial', 
+      'Marketing', 'Operações', 'Suporte Técnico', 'Qualidade', 'Jurídico', 'Administrativo'
+    ];
+    
+    const positions = [
+      'Desenvolvedor', 'Analista', 'Gerente', 'Coordenador', 'Supervisor',
+      'Assistente', 'Diretor', 'Consultor', 'Especialista', 'Trainee'
+    ];
+    
+    const categories = [
+      'Políticas Internas', 'Manuais de Procedimentos', 'Benefícios e Remuneração',
+      'Código de Conduta', 'Segurança e Saúde', 'Treinamentos', 'Contratos',
+      'Relatórios', 'Formulários', 'Comunicados'
+    ];
+    
+    const tags = ['Urgente', 'Confidencial', 'Obrigatório'];
+    
+    // Popular dados para cada tenant
+    for (const tenant of tenants) {
+      console.log(`Populando dados para tenant ${tenant.id}...`);
+      
+      // Inserir departamentos
+      for (const dept of departments) {
+        await query(
+          'INSERT INTO departments (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (tenant_id, name) DO NOTHING',
+          [require('uuid').v4(), tenant.id, dept, new Date().toISOString()]
+        );
+      }
+      
+      // Inserir cargos
+      for (const pos of positions) {
+        await query(
+          'INSERT INTO positions (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (tenant_id, name) DO NOTHING',
+          [require('uuid').v4(), tenant.id, pos, new Date().toISOString()]
+        );
+      }
+      
+      // Inserir categorias
+      for (const cat of categories) {
+        await query(
+          'INSERT INTO categories (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (tenant_id, name) DO NOTHING',
+          [require('uuid').v4(), tenant.id, cat, new Date().toISOString()]
+        );
+      }
+      
+      // Inserir tags
+      for (const tag of tags) {
+        await query(
+          'INSERT INTO tags (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (tenant_id, name) DO NOTHING',
+          [require('uuid').v4(), tenant.id, tag, new Date().toISOString()]
+        );
+      }
+    }
+    
+    console.log('Dados iniciais populados com sucesso!');
+  } catch (error) {
+    console.error('Erro ao popular dados iniciais:', error);
   }
 }
 

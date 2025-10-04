@@ -479,7 +479,12 @@ app.get('/users', async (req, res) => {
 });
 
 app.post('/documents/upload', upload.single('file'), async (req, res) => {
-  const schema = z.object({ tenantId: z.string().uuid(), title: z.string().min(1), category: z.string().optional() });
+  const schema = z.object({ 
+    tenantId: z.string().uuid(), 
+    title: z.string().min(1), 
+    category: z.string().optional(),
+    tags: z.string().optional()
+  });
   const body = schema.safeParse(req.body);
   if (!body.success) return res.status(400).json({ error: body.error.flatten() });
   if (!req.file) return res.status(400).json({ error: 'Arquivo ausente' });
@@ -531,6 +536,9 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
   
   // Use PostgreSQL if available, otherwise SQLite
   if (process.env.DATABASE_URL) {
+    // Parse tags
+    const tags = body.data.tags ? JSON.parse(body.data.tags) : [];
+    
     // PostgreSQL
     await query('INSERT INTO documents (id, tenant_id, title, category, status, created_at) VALUES ($1, $2, $3, $4, $5, $6)', [
       documentId,
@@ -540,6 +548,18 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
       'published',
       createdAt,
     ]);
+    
+    // Insert document tags
+    for (const tagName of tags) {
+      if (tagName && tagName.trim()) {
+        await query('INSERT INTO document_tags (id, document_id, tag_name, created_at) VALUES ($1, $2, $3, $4)', [
+          uuidv4(),
+          documentId,
+          tagName.trim(),
+          createdAt
+        ]);
+      }
+    }
     
     for (let i = 0; i < chunks.length; i++) {
       const chunkId = uuidv4();
