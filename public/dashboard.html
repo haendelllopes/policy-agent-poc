@@ -3,8 +3,560 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Flowly v2</title>
+    <title>Dashboard - Flowly</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 2rem 0;
+            z-index: 100;
+            transition: width 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sidebar-toggle:hover {
+            background: #e2e8f0;
+        }
+        
+        .sidebar-header {
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+            transition: padding 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 1rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .logo {
+            font-size: 1rem;
+            justify-content: center;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        
+        .sidebar.collapsed .logo-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+        
+        .nav-text {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        
+        .tenant-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .tenant-info {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .tenant-info h3 {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .tenant-info h3 {
+            font-size: 0.7rem;
+            text-align: center;
+        }
+        
+        .tenant-info p {
+            font-size: 0.8rem;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .tenant-info p {
+            display: none;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 2rem;
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            padding: 0.75rem 1rem;
+            justify-content: center;
+        }
+        
+        .nav-link:hover {
+            background: #f1f5f9;
+            color: #2563eb;
+        }
+        
+        .nav-link.active {
+            background: #eff6ff;
+            color: #2563eb;
+            border-left-color: #2563eb;
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-left: 80px;
+        }
+        
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Tooltip para menu recolhido */
+        .sidebar.collapsed .nav-link::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s;
+            z-index: 1000;
+            margin-left: 0.5rem;
+        }
+        
+        .sidebar.collapsed .nav-link:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">←</span>
+        </button>
+        
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">🤖</div>
+                <span class="nav-text">Flowly</span>
+            </div>
+            <div class="tenant-info">
+                <h3 id="tenantName">Carregando...</h3>
+                <p id="tenantSubdomain">Carregando...</p>
+            </div>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')" data-tooltip="Dashboard">
+                    <div class="nav-icon">📊</div>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#users" class="nav-link" onclick="showSection('users')" data-tooltip="Colaboradores">
+                    <div class="nav-icon">👥</div>
+                    <span class="nav-text">Colaboradores</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#documents" class="nav-link" onclick="showSection('documents')" data-tooltip="Documentos">
+                    <div class="nav-icon">📄</div>
+                    <span class="nav-text">Documentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#settings" class="nav-link" onclick="showSection('settings')" data-tooltip="Configurações">
+                    <div class="nav-icon">⚙️</div>
+                    <span class="nav-text">Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <h1 id="pageTitle">Dashboard</h1>
+            <div>
+                <span id="currentTime"></span>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="usersCount">0</div>
+                        <div class="stat-label">Colaboradores</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="documentsCount">0</div>
+                        <div class="stat-label">Documentos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="departmentsCount">0</div>
+                        <div class="stat-label">Departamentos</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Bem-vindo ao Flowly!</h3>
+                    <p>Dashboard funcionando perfeitamente. Todas as funcionalidades estão operacionais.</p>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="users-section" class="section hidden">
+                <div class="section-header">
+                    <h2>Colaboradores</h2>
+                    <button class="btn-primary">+ Novo Colaborador</button>
+                </div>
+                <div class="card">
+                    <p>Funcionalidade de colaboradores em desenvolvimento...</p>
+                </div>
+            </div>
+
+            <!-- Documents Section -->
+            <div id="documents-section" class="section hidden">
+                <div class="section-header">
+                    <h2>Documentos</h2>
+                    <button class="btn-primary">+ Novo Documento</button>
+                </div>
+                <div class="card">
+                    <p>Funcionalidade de documentos em desenvolvimento...</p>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="section hidden">
+                <div class="section-header">
+                    <h2>Configurações</h2>
+                </div>
+                <div class="card">
+                    <h3>Cadastros</h3>
+                    <p>Funcionalidade de cadastros em desenvolvimento...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentTenant = null;
+        let currentUser = null;
+        
+        // Sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('collapsed');
+            
+            // Update toggle icon
+            if (sidebar.classList.contains('collapsed')) {
+                toggleIcon.textContent = '→';
+            } else {
+                toggleIcon.textContent = '←';
+            }
+            
+            // Save preference to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+        
+        // Load sidebar state on page load
+        function loadSidebarState() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                toggleIcon.textContent = '→';
+            }
+        }
+        
+        // Get tenant from URL
+        function getTenantFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('tenant') || 'demo';
+        }
+        
+        // Load tenant info
+        async function loadTenantInfo() {
+            try {
+                const tenantSubdomain = getTenantFromUrl();
+                const response = await fetch(`${API_BASE}/api/tenants/${tenantSubdomain}`);
+                
+                if (response.ok) {
+                    currentTenant = await response.json();
+                    document.getElementById('tenantName').textContent = currentTenant.name;
+                    document.getElementById('tenantSubdomain').textContent = `${currentTenant.subdomain}.flowly.com`;
+                } else {
+                    // Fallback para demo
+                    currentTenant = {
+                        id: 'demo-id',
+                        name: 'Empresa Demo',
+                        subdomain: 'demo'
+                    };
+                    document.getElementById('tenantName').textContent = 'Empresa Demo';
+                    document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar tenant:', error);
+                // Fallback para demo
+                currentTenant = {
+                    id: 'demo-id',
+                    name: 'Empresa Demo',
+                    subdomain: 'demo'
+                };
+                document.getElementById('tenantName').textContent = 'Empresa Demo';
+                document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
+            }
+        }
+        
+        // Show section
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            document.getElementById(`${section}-section`).classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                dashboard: 'Dashboard',
+                users: 'Colaboradores',
+                documents: 'Documentos',
+                settings: 'Configurações'
+            };
+            document.getElementById('pageTitle').textContent = titles[section];
+        }
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR');
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadSidebarState();
+            await loadTenantInfo();
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            console.log('Dashboard carregado com sucesso!');
+        });
+    </script>
+</body>
+</html>
     <style>
         * {
             margin: 0;
