@@ -1047,6 +1047,37 @@ app.post('/departments', async (req, res) => {
   }
 });
 
+app.put('/departments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome do departamento é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'UPDATE departments SET name = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+      [name.trim(), new Date().toISOString(), id, tenant.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Departamento não encontrado' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 app.delete('/departments/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1104,6 +1135,37 @@ app.post('/categories', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Erro ao criar categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.put('/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome da categoria é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'UPDATE categories SET name = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+      [name.trim(), new Date().toISOString(), id, tenant.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Categoria não encontrada' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar categoria:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -1169,6 +1231,37 @@ app.post('/positions', async (req, res) => {
   }
 });
 
+app.put('/positions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome do cargo é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'UPDATE positions SET name = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+      [name.trim(), new Date().toISOString(), id, tenant.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cargo não encontrado' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar cargo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 app.delete('/positions/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -1226,6 +1319,37 @@ app.post('/tags', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Erro ao criar tag:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.put('/tags/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome da tag é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'UPDATE tags SET name = $1, updated_at = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+      [name.trim(), new Date().toISOString(), id, tenant.id]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Tag não encontrada' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar tag:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
