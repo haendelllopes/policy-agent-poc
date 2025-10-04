@@ -409,19 +409,35 @@
         // Dashboard data
         async function loadDashboardData() {
             try {
+                // Extrair tenant da URL atual
+                const urlParams = new URLSearchParams(window.location.search);
+                const tenant = urlParams.get('tenant') || 'demo';
+                
+                console.log('🔍 Carregando dados para tenant:', tenant);
+                
                 // Carregar dados reais do backend
                 const [usersResponse, documentsResponse, departmentsResponse, categoriesResponse] = await Promise.all([
-                    fetch('/api/users'),
-                    fetch('/api/documents'),
-                    fetch('/api/departments'),
-                    fetch('/api/categories')
+                    fetch(`/api/users?tenant=${tenant}`),
+                    fetch(`/api/documents?tenant=${tenant}`),
+                    fetch(`/api/departments?tenant=${tenant}`),
+                    fetch(`/api/categories?tenant=${tenant}`)
                 ]);
+                
+                console.log('📊 Respostas das APIs:', {
+                    users: usersResponse.status,
+                    documents: documentsResponse.status,
+                    departments: departmentsResponse.status,
+                    categories: categoriesResponse.status
+                });
 
                 // Processar resposta de usuários
                 let totalUsers = 0;
                 if (usersResponse.ok) {
                     const usersData = await usersResponse.json();
                     totalUsers = usersData.data ? usersData.data.length : 0;
+                    console.log('👥 Usuários carregados:', totalUsers, usersData);
+                } else {
+                    console.error('❌ Erro ao carregar usuários:', usersResponse.status, usersResponse.statusText);
                 }
 
                 // Processar resposta de documentos
@@ -429,6 +445,9 @@
                 if (documentsResponse.ok) {
                     const documentsData = await documentsResponse.json();
                     totalDocuments = documentsData.data ? documentsData.data.length : 0;
+                    console.log('📄 Documentos carregados:', totalDocuments, documentsData);
+                } else {
+                    console.error('❌ Erro ao carregar documentos:', documentsResponse.status, documentsResponse.statusText);
                 }
 
                 // Processar resposta de departamentos
@@ -436,6 +455,9 @@
                 if (departmentsResponse.ok) {
                     const departmentsData = await departmentsResponse.json();
                     totalDepartments = departmentsData.data ? departmentsData.data.length : 0;
+                    console.log('🏢 Departamentos carregados:', totalDepartments, departmentsData);
+                } else {
+                    console.error('❌ Erro ao carregar departamentos:', departmentsResponse.status, departmentsResponse.statusText);
                 }
 
                 // Processar resposta de categorias
@@ -443,6 +465,9 @@
                 if (categoriesResponse.ok) {
                     const categoriesData = await categoriesResponse.json();
                     totalCategories = categoriesData.data ? categoriesData.data.length : 0;
+                    console.log('📂 Categorias carregadas:', totalCategories, categoriesData);
+                } else {
+                    console.error('❌ Erro ao carregar categorias:', categoriesResponse.status, categoriesResponse.statusText);
                 }
 
                 // Atualizar interface com dados reais
