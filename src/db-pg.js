@@ -109,7 +109,9 @@ async function migrate() {
         category VARCHAR(100),
         version VARCHAR(50),
         status VARCHAR(50) DEFAULT 'published',
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        metadata JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `);
     

@@ -551,6 +551,32 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
       ]);
     }
     
+    // Enviar documento para n8n para categorização
+    try {
+      const webhookData = {
+        type: 'document_upload',
+        documentId: documentId,
+        tenantId: body.data.tenantId,
+        title: body.data.title,
+        content: text,
+        category: body.data.category,
+        created_at: createdAt
+      };
+      
+      console.log('Enviando documento para n8n para categorização:', webhookData);
+      
+      await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(webhookData)
+      });
+      
+      console.log('Documento enviado para n8n com sucesso');
+    } catch (webhookError) {
+      console.error('Erro ao enviar documento para n8n:', webhookError);
+      // Não falhar o upload por causa do webhook
+    }
+
     res.status(201).json({ documentId, chunks: chunks.length });
   } else {
     // SQLite fallback
@@ -577,6 +603,33 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
       }
       
       persistDatabase(SQL, db);
+      
+      // Enviar documento para n8n para categorização
+      try {
+        const webhookData = {
+          type: 'document_upload',
+          documentId: documentId,
+          tenantId: body.data.tenantId,
+          title: body.data.title,
+          content: text,
+          category: body.data.category,
+          created_at: createdAt
+        };
+        
+        console.log('Enviando documento para n8n para categorização:', webhookData);
+        
+        await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookData)
+        });
+        
+        console.log('Documento enviado para n8n com sucesso');
+      } catch (webhookError) {
+        console.error('Erro ao enviar documento para n8n:', webhookError);
+        // Não falhar o upload por causa do webhook
+      }
+
       res.status(201).json({ documentId, chunks: chunks.length });
     } finally {
       db.close();
@@ -771,6 +824,108 @@ app.get('/documents/:id/download', async (req, res) => {
   } catch (error) {
     console.error('Erro ao baixar documento:', error);
     res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
+  }
+});
+
+// Endpoint para receber resultado da categorização do n8n
+app.post('/documents/categorization-result', async (req, res) => {
+  try {
+    console.log('Recebido resultado de categorização do n8n:', req.body);
+    
+    const {
+      documentId,
+      tenantId,
+      suggestedCategory,
+      subcategories = [],
+      tags = [],
+      summary = '',
+      confidence = 0,
+      processedAt
+    } = req.body;
+
+    // Validar dados obrigatórios
+    if (!documentId || !tenantId) {
+      return res.status(400).json({ error: 'documentId e tenantId são obrigatórios' });
+    }
+
+    // Use PostgreSQL if available, otherwise SQLite
+    if (process.env.DATABASE_URL) {
+      // PostgreSQL - Atualizar documento com categorização
+      const result = await query(
+        'UPDATE documents SET category = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3',
+        [suggestedCategory, documentId, tenantId]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Documento não encontrado' });
+      }
+
+      // Inserir tags e subcategorias (vamos criar uma tabela para isso)
+      // Por enquanto, vamos salvar como JSON em um campo adicional
+      await query(
+        'UPDATE documents SET metadata = $1 WHERE id = $2',
+        [JSON.stringify({
+          subcategories,
+          tags,
+          summary,
+          confidence,
+          processedAt,
+          aiProcessed: true
+        }), documentId]
+      );
+
+    } else {
+      // SQLite fallback
+      const { db, SQL } = await openDatabase();
+      try {
+        // Verificar se documento existe
+        const existing = runQuery(db, 'SELECT id FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenantId]);
+        if (existing.length === 0) {
+          return res.status(404).json({ error: 'Documento não encontrado' });
+        }
+
+        // Atualizar documento
+        runExec(db, 'UPDATE documents SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?', 
+          [suggestedCategory, documentId, tenantId]);
+
+        // Salvar metadados (precisamos adicionar coluna metadata na migração)
+        runExec(db, 'UPDATE documents SET metadata = ? WHERE id = ?', 
+          [JSON.stringify({
+            subcategories,
+            tags,
+            summary,
+            confidence,
+            processedAt,
+            aiProcessed: true
+          }), documentId]);
+
+        persistDatabase(SQL, db);
+      } finally {
+        db.close();
+      }
+    }
+
+    console.log('Categorização salva com sucesso:', {
+      documentId,
+      suggestedCategory,
+      subcategories,
+      tags,
+      confidence
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Categorização salva com sucesso',
+      documentId,
+      suggestedCategory,
+      subcategories,
+      tags,
+      confidence
+    });
+
+  } catch (error) {
+    console.error('Erro ao processar categorização:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 

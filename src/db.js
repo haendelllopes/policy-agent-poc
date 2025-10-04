@@ -56,7 +56,9 @@ function migrate(db) {
       category TEXT,
       version TEXT,
       status TEXT NOT NULL DEFAULT 'published',
+      metadata TEXT,
       created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
       FOREIGN KEY (tenant_id) REFERENCES tenants(id)
     );
     CREATE TABLE IF NOT EXISTS chunks (
