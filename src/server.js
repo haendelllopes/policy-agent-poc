@@ -285,6 +285,7 @@ app.post('/users', async (req, res) => {
     // Disparar webhook para n8n
     try {
       const webhookData = {
+        type: 'user_created',
         tenantId: tenant.id,
         tenantName: tenant.name,
         userId: userId,
