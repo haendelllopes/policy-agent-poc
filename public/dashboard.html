@@ -512,6 +512,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="#registrations" class="nav-link" onclick="showSection('registrations')">
+                    <div class="nav-icon">📋</div>
+                    Cadastros
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="#settings" class="nav-link" onclick="showSection('settings')">
                     <div class="nav-icon">⚙️</div>
                     Configurações
@@ -702,6 +708,80 @@
                     
                     <div id="documentsList">
                         <p class="text-muted">Carregando documentos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registrations Section -->
+            <div id="registrations-section" class="hidden">
+                <div class="form-section">
+                    <h3>📋 Cadastros da Empresa</h3>
+                    <p>Gerencie os cadastros básicos da sua empresa para personalizar o sistema.</p>
+                    
+                    <!-- Departamentos -->
+                    <div class="form-grid" style="margin-bottom: 2rem;">
+                        <div class="form-group">
+                            <label>🏢 Departamentos</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="newDepartment" placeholder="Ex: Desenvolvimento, RH, Financeiro">
+                                <button type="button" class="btn btn-primary" onclick="addDepartment()">Adicionar</button>
+                            </div>
+                            <div id="departmentsList" style="margin-top: 1rem;">
+                                <div class="list-item">
+                                    <div class="list-item-info">
+                                        <h4>Carregando departamentos...</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>📂 Categorias de Documentos</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="newCategory" placeholder="Ex: Políticas Internas, Manuais">
+                                <button type="button" class="btn btn-primary" onclick="addCategory()">Adicionar</button>
+                            </div>
+                            <div id="categoriesList" style="margin-top: 1rem;">
+                                <div class="list-item">
+                                    <div class="list-item-info">
+                                        <h4>Carregando categorias...</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cargos -->
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>👔 Cargos</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="newPosition" placeholder="Ex: Desenvolvedor, Analista, Gerente">
+                                <button type="button" class="btn btn-primary" onclick="addPosition()">Adicionar</button>
+                            </div>
+                            <div id="positionsList" style="margin-top: 1rem;">
+                                <div class="list-item">
+                                    <div class="list-item-info">
+                                        <h4>Carregando cargos...</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>🏷️ Tags Personalizadas</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="newTag" placeholder="Ex: Urgente, Confidencial, Atualizado">
+                                <button type="button" class="btn btn-primary" onclick="addTag()">Adicionar</button>
+                            </div>
+                            <div id="tagsList" style="margin-top: 1rem;">
+                                <div class="list-item">
+                                    <div class="list-item-info">
+                                        <h4>Carregando tags...</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -949,6 +1029,7 @@
                 dashboard: 'Dashboard',
                 users: 'Colaboradores',
                 documents: 'Documentos',
+                registrations: 'Cadastros',
                 settings: 'Configurações'
             };
             document.getElementById('pageTitle').textContent = titles[section];
@@ -959,6 +1040,354 @@
             } else if (section === 'documents') {
                 loadDocumentsCount();
                 loadDocuments();
+            } else if (section === 'registrations') {
+                loadRegistrations();
+            }
+        }
+        
+        // Load registrations data
+        async function loadRegistrations() {
+            if (!currentTenant) return;
+            
+            // Load departments
+            loadDepartments();
+            // Load categories
+            loadCategories();
+            // Load positions
+            loadPositions();
+            // Load tags
+            loadTags();
+        }
+        
+        // Departments management
+        async function loadDepartments() {
+            try {
+                const response = await fetch(`${API_BASE}/departments?tenant=${currentTenant.subdomain}`);
+                const departments = await response.json();
+                
+                const departmentsList = document.getElementById('departmentsList');
+                departmentsList.innerHTML = '';
+                
+                if (departments.length === 0) {
+                    departmentsList.innerHTML = '<p style="color: #6b7280; font-style: italic;">Nenhum departamento cadastrado</p>';
+                    return;
+                }
+                
+                departments.forEach(dept => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <div class="list-item-info">
+                            <h4>${dept.name}</h4>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-delete" onclick="deleteDepartment('${dept.id}', '${dept.name}')" title="Excluir departamento">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    departmentsList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar departamentos:', error);
+            }
+        }
+        
+        async function addDepartment() {
+            const input = document.getElementById('newDepartment');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('Por favor, digite o nome do departamento');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/departments?tenant=${currentTenant.subdomain}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadDepartments();
+                } else {
+                    alert('Erro ao adicionar departamento');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar departamento:', error);
+                alert('Erro ao adicionar departamento');
+            }
+        }
+        
+        async function deleteDepartment(id, name) {
+            if (!confirm(`Tem certeza que deseja excluir o departamento "${name}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/departments/${id}?tenant=${currentTenant.subdomain}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadDepartments();
+                } else {
+                    alert('Erro ao excluir departamento');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir departamento:', error);
+                alert('Erro ao excluir departamento');
+            }
+        }
+        
+        // Categories management
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categories?tenant=${currentTenant.subdomain}`);
+                const categories = await response.json();
+                
+                const categoriesList = document.getElementById('categoriesList');
+                categoriesList.innerHTML = '';
+                
+                if (categories.length === 0) {
+                    categoriesList.innerHTML = '<p style="color: #6b7280; font-style: italic;">Nenhuma categoria cadastrada</p>';
+                    return;
+                }
+                
+                categories.forEach(cat => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <div class="list-item-info">
+                            <h4>${cat.name}</h4>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-delete" onclick="deleteCategory('${cat.id}', '${cat.name}')" title="Excluir categoria">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    categoriesList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+            }
+        }
+        
+        async function addCategory() {
+            const input = document.getElementById('newCategory');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('Por favor, digite o nome da categoria');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/categories?tenant=${currentTenant.subdomain}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadCategories();
+                } else {
+                    alert('Erro ao adicionar categoria');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar categoria:', error);
+                alert('Erro ao adicionar categoria');
+            }
+        }
+        
+        async function deleteCategory(id, name) {
+            if (!confirm(`Tem certeza que deseja excluir a categoria "${name}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/categories/${id}?tenant=${currentTenant.subdomain}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadCategories();
+                } else {
+                    alert('Erro ao excluir categoria');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir categoria:', error);
+                alert('Erro ao excluir categoria');
+            }
+        }
+        
+        // Positions management
+        async function loadPositions() {
+            try {
+                const response = await fetch(`${API_BASE}/positions?tenant=${currentTenant.subdomain}`);
+                const positions = await response.json();
+                
+                const positionsList = document.getElementById('positionsList');
+                positionsList.innerHTML = '';
+                
+                if (positions.length === 0) {
+                    positionsList.innerHTML = '<p style="color: #6b7280; font-style: italic;">Nenhum cargo cadastrado</p>';
+                    return;
+                }
+                
+                positions.forEach(pos => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <div class="list-item-info">
+                            <h4>${pos.name}</h4>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-delete" onclick="deletePosition('${pos.id}', '${pos.name}')" title="Excluir cargo">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    positionsList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar cargos:', error);
+            }
+        }
+        
+        async function addPosition() {
+            const input = document.getElementById('newPosition');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('Por favor, digite o nome do cargo');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/positions?tenant=${currentTenant.subdomain}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadPositions();
+                } else {
+                    alert('Erro ao adicionar cargo');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar cargo:', error);
+                alert('Erro ao adicionar cargo');
+            }
+        }
+        
+        async function deletePosition(id, name) {
+            if (!confirm(`Tem certeza que deseja excluir o cargo "${name}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/positions/${id}?tenant=${currentTenant.subdomain}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadPositions();
+                } else {
+                    alert('Erro ao excluir cargo');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir cargo:', error);
+                alert('Erro ao excluir cargo');
+            }
+        }
+        
+        // Tags management
+        async function loadTags() {
+            try {
+                const response = await fetch(`${API_BASE}/tags?tenant=${currentTenant.subdomain}`);
+                const tags = await response.json();
+                
+                const tagsList = document.getElementById('tagsList');
+                tagsList.innerHTML = '';
+                
+                if (tags.length === 0) {
+                    tagsList.innerHTML = '<p style="color: #6b7280; font-style: italic;">Nenhuma tag cadastrada</p>';
+                    return;
+                }
+                
+                tags.forEach(tag => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <div class="list-item-info">
+                            <h4>${tag.name}</h4>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-delete" onclick="deleteTag('${tag.id}', '${tag.name}')" title="Excluir tag">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    tagsList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar tags:', error);
+            }
+        }
+        
+        async function addTag() {
+            const input = document.getElementById('newTag');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('Por favor, digite o nome da tag');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/tags?tenant=${currentTenant.subdomain}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadTags();
+                } else {
+                    alert('Erro ao adicionar tag');
+                }
+            } catch (error) {
+                console.error('Erro ao adicionar tag:', error);
+                alert('Erro ao adicionar tag');
+            }
+        }
+        
+        async function deleteTag(id, name) {
+            if (!confirm(`Tem certeza que deseja excluir a tag "${name}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/tags/${id}?tenant=${currentTenant.subdomain}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadTags();
+                } else {
+                    alert('Erro ao excluir tag');
+                }
+            } catch (error) {
+                console.error('Erro ao excluir tag:', error);
+                alert('Erro ao excluir tag');
             }
         }
         

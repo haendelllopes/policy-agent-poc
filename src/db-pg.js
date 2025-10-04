@@ -127,6 +127,50 @@ async function migrate() {
       )
     `);
     
+    // Criar tabela departments
+    await query(`
+      CREATE TABLE IF NOT EXISTS departments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(tenant_id, name)
+      )
+    `);
+    
+    // Criar tabela categories
+    await query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(tenant_id, name)
+      )
+    `);
+    
+    // Criar tabela positions
+    await query(`
+      CREATE TABLE IF NOT EXISTS positions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(tenant_id, name)
+      )
+    `);
+    
+    // Criar tabela tags
+    await query(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(tenant_id, name)
+      )
+    `);
+    
     // Criar índices
     await query(`CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id)`);

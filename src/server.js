@@ -1002,6 +1002,252 @@ app.post('/search/policy', async (req, res) => {
   }
 });
 
+// ===== ENDPOINTS DE CADASTROS =====
+
+// Departamentos
+app.get('/departments', async (req, res) => {
+  try {
+    const tenantSubdomain = req.tenantSubdomain;
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query('SELECT * FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao obter departamentos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.post('/departments', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome do departamento é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'INSERT INTO departments (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) RETURNING *',
+      [uuidv4(), tenant.id, name.trim(), new Date().toISOString()]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.delete('/departments/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    await query('DELETE FROM departments WHERE id = $1 AND tenant_id = $2', [id, tenant.id]);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Erro ao excluir departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Categorias
+app.get('/categories', async (req, res) => {
+  try {
+    const tenantSubdomain = req.tenantSubdomain;
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query('SELECT * FROM categories WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao obter categorias:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.post('/categories', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome da categoria é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'INSERT INTO categories (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) RETURNING *',
+      [uuidv4(), tenant.id, name.trim(), new Date().toISOString()]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.delete('/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    await query('DELETE FROM categories WHERE id = $1 AND tenant_id = $2', [id, tenant.id]);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Erro ao excluir categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Cargos
+app.get('/positions', async (req, res) => {
+  try {
+    const tenantSubdomain = req.tenantSubdomain;
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query('SELECT * FROM positions WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao obter cargos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.post('/positions', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome do cargo é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'INSERT INTO positions (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) RETURNING *',
+      [uuidv4(), tenant.id, name.trim(), new Date().toISOString()]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar cargo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.delete('/positions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    await query('DELETE FROM positions WHERE id = $1 AND tenant_id = $2', [id, tenant.id]);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Erro ao excluir cargo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Tags
+app.get('/tags', async (req, res) => {
+  try {
+    const tenantSubdomain = req.tenantSubdomain;
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query('SELECT * FROM tags WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao obter tags:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.post('/tags', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'Nome da tag é obrigatório' });
+    }
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    const result = await query(
+      'INSERT INTO tags (id, tenant_id, name, created_at) VALUES ($1, $2, $3, $4) RETURNING *',
+      [uuidv4(), tenant.id, name.trim(), new Date().toISOString()]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao criar tag:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+app.delete('/tags/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenantSubdomain = req.tenantSubdomain;
+    
+    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    
+    await query('DELETE FROM tags WHERE id = $1 AND tenant_id = $2', [id, tenant.id]);
+    res.status(204).send();
+  } catch (error) {
+    console.error('Erro ao excluir tag:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 async function bootstrap() {
   try {
     console.log('Inicializando servidor...');
