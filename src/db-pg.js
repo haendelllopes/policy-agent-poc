@@ -13,16 +13,28 @@ function initializePool() {
     return null;
   }
   
-  pool = new Pool({
-    connectionString,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-  });
-  
-  console.log('Pool PostgreSQL inicializado');
-  return pool;
+  try {
+    // Validar se a URL é válida
+    if (!connectionString.includes('postgres://') && !connectionString.includes('postgresql://')) {
+      console.warn('DATABASE_URL inválida, usando SQLite local');
+      return null;
+    }
+    
+    pool = new Pool({
+      connectionString,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 2000,
+    });
+    
+    console.log('Pool PostgreSQL inicializado');
+    return pool;
+  } catch (error) {
+    console.error('Erro ao criar pool PostgreSQL:', error.message);
+    console.warn('Usando SQLite como fallback');
+    return null;
+  }
 }
 
 // Função para executar queries
