@@ -319,7 +319,138 @@
             opacity: 1;
             visibility: visible;
         }
-    </style>
+        
+        /* Registration Routine Styles */
+        .routine-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .routine-item:hover {
+            border-color: #2563eb;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+        }
+        
+        .routine-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        
+        .routine-text h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .routine-text p {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        /* Inline editing styles */
+        .inline-row {
+            background: #f8fafc !important;
+            border: 2px solid #e2e8f0 !important;
+        }
+        
+        .inline-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .btn-inline-save {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .btn-inline-cancel {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .btn-inline-save:hover {
+            background: #059669;
+        }
+        
+        .btn-inline-cancel:hover {
+            background: #dc2626;
+        }
+        
+        .btn-edit {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+        
+        .btn-edit:hover {
+            background: #2563eb;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
 </head>
 <body>
     <!-- Sidebar -->
@@ -429,9 +560,112 @@
                 <div class="section-header">
                     <h2>Configurações</h2>
                 </div>
-                <div class="card">
-                    <h3>Cadastros</h3>
-                    <p>Funcionalidade de cadastros em desenvolvimento...</p>
+                
+                <!-- Main Settings View -->
+                <div id="settings-main">
+                    <div class="card">
+                        <h3>Informações da Empresa</h3>
+                        <div style="margin-bottom: 1rem;">
+                            <label><strong>Nome da Empresa:</strong></label>
+                            <p id="companyName">Empresa Demo</p>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <label><strong>Subdomínio:</strong></label>
+                            <p id="companySubdomain">demo.flowly.com</p>
+                        </div>
+                        <div style="background: #dcfce7; padding: 1rem; border-radius: 6px; border-left: 4px solid #16a34a;">
+                            <strong>✅ Integração WhatsApp Ativa</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>Cadastros (4)</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                            <div class="routine-item" onclick="showRegistrationRoutine('departments')">
+                                <div class="routine-icon">🏢</div>
+                                <div class="routine-text">
+                                    <h4>Departamentos</h4>
+                                    <p>Gerencie os departamentos da empresa</p>
+                                </div>
+                            </div>
+                            
+                            <div class="routine-item" onclick="showRegistrationRoutine('categories')">
+                                <div class="routine-icon">📂</div>
+                                <div class="routine-text">
+                                    <h4>Categorias de Documentos</h4>
+                                    <p>Organize os tipos de documentos</p>
+                                </div>
+                            </div>
+                            
+                            <div class="routine-item" onclick="showRegistrationRoutine('positions')">
+                                <div class="routine-icon">👔</div>
+                                <div class="routine-text">
+                                    <h4>Cargos</h4>
+                                    <p>Defina os cargos da empresa</p>
+                                </div>
+                            </div>
+                            
+                            <div class="routine-item" onclick="showRegistrationRoutine('tags')">
+                                <div class="routine-icon">🏷️</div>
+                                <div class="routine-text">
+                                    <h4>Tags Personalizadas</h4>
+                                    <p>Crie tags para classificação</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Registration Routine View -->
+                <div id="settings-registration" class="hidden">
+                    <div class="section-header">
+                        <button class="btn-secondary" onclick="backToSettings()">← Voltar</button>
+                        <h2 id="routine-title">Cadastro</h2>
+                    </div>
+                    
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <button class="btn-primary" onclick="addNewItemInline()">
+                                + Novo <span id="new-item-text">Item</span>
+                            </button>
+                            <input type="text" id="routineSearch" placeholder="Pesquisar por nome..." onkeyup="searchRoutineItems()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; width: 250px;">
+                        </div>
+                        
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                                        <th style="padding: 1rem; text-align: left; font-weight: 600;">Nome</th>
+                                        <th style="padding: 1rem; text-align: left; font-weight: 600;">Data Criação</th>
+                                        <th style="padding: 1rem; text-align: center; font-weight: 600;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="routine-grid-body">
+                                    <tr>
+                                        <td colspan="3" style="padding: 2rem; text-align: center; color: #6b7280; font-style: italic;">
+                                            Carregando dados...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                            <div id="grid-info" style="color: #6b7280; font-size: 0.9rem;">0 resultados</div>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <button class="btn-secondary" onclick="loadMoreItems()">Carregar mais 10 resultados</button>
+                                <div style="display: flex; gap: 0.5rem; align-items: center; color: #6b7280; font-size: 0.9rem;">
+                                    EXIBIR
+                                    <select id="itemsPerPage" onchange="changeItemsPerPage()" style="padding: 0.25rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                    RESULTADOS POR VEZ
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -554,6 +788,288 @@
             
             console.log('Dashboard carregado com sucesso!');
         });
+        
+        // Registration Routine Functions
+        let currentRoutine = null;
+        let editingItemId = null;
+        
+        function showRegistrationRoutine(routine) {
+            currentRoutine = routine;
+            
+            // Hide main settings, show registration view
+            document.getElementById('settings-main').classList.add('hidden');
+            document.getElementById('settings-registration').classList.remove('hidden');
+            
+            // Update title and button text
+            const titles = {
+                departments: 'Departamentos',
+                categories: 'Categorias de Documentos',
+                positions: 'Cargos',
+                tags: 'Tags Personalizadas'
+            };
+            
+            const buttonTexts = {
+                departments: 'Departamento',
+                categories: 'Categoria',
+                positions: 'Cargo',
+                tags: 'Tag'
+            };
+            
+            document.getElementById('routine-title').textContent = titles[routine];
+            document.getElementById('new-item-text').textContent = buttonTexts[routine];
+            
+            // Load routine data
+            loadRoutineData();
+        }
+        
+        function backToSettings() {
+            document.getElementById('settings-main').classList.remove('hidden');
+            document.getElementById('settings-registration').classList.add('hidden');
+            currentRoutine = null;
+            editingItemId = null;
+        }
+        
+        async function loadRoutineData() {
+            if (!currentRoutine) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/${currentRoutine}?tenant=${getTenantFromUrl()}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayRoutineData(data);
+                } else {
+                    console.error('Erro ao carregar dados:', response.statusText);
+                    displayRoutineData([]);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                displayRoutineData([]);
+            }
+        }
+        
+        function displayRoutineData(items) {
+            const tbody = document.getElementById('routine-grid-body');
+            
+            if (items.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="padding: 2rem; text-align: center; color: #6b7280; font-style: italic;">
+                            Nenhum ${getRoutineName()} encontrado
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('grid-info').textContent = '0 resultados';
+                return;
+            }
+            
+            tbody.innerHTML = items.map(item => `
+                <tr>
+                    <td style="padding: 1rem; font-weight: 500;">${item.name}</td>
+                    <td style="padding: 1rem; color: #6b7280;">${new Date(item.created_at).toLocaleDateString('pt-BR')}</td>
+                    <td style="padding: 1rem; text-align: center;">
+                        <button class="btn-edit" onclick="editItemInline('${item.id}', '${item.name.replace(/'/g, "\\'")}')">✏️ Editar</button>
+                        <button class="btn-delete" onclick="deleteItem('${item.id}', '${item.name.replace(/'/g, "\\'")}')">🗑️ Excluir</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('grid-info').textContent = `${items.length} resultado(s)`;
+        }
+        
+        function getRoutineName() {
+            const names = {
+                departments: 'departamento',
+                categories: 'categoria',
+                positions: 'cargo',
+                tags: 'tag'
+            };
+            return names[currentRoutine] || 'item';
+        }
+        
+        function addNewItemInline() {
+            if (editingItemId) {
+                cancelInlineEdit();
+            }
+            
+            const tbody = document.getElementById('routine-grid-body');
+            const newRow = document.createElement('tr');
+            newRow.className = 'inline-row';
+            newRow.innerHTML = `
+                <td style="padding: 1rem;">
+                    <input type="text" id="inlineName" placeholder="Nome do ${getRoutineName()}" style="width: 100%;">
+                </td>
+                <td style="padding: 1rem; color: #6b7280;">-</td>
+                <td style="padding: 1rem; text-align: center;">
+                    <div class="inline-actions">
+                        <button class="btn-inline-save" onclick="saveInlineItem()">✅ Salvar</button>
+                        <button class="btn-inline-cancel" onclick="cancelInlineEdit()">❌ Cancelar</button>
+                    </div>
+                </td>
+            `;
+            
+            tbody.insertBefore(newRow, tbody.firstChild);
+            
+            // Focus on input and add keyboard listeners
+            const input = document.getElementById('inlineName');
+            input.focus();
+            
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveInlineItem();
+                } else if (e.key === 'Escape') {
+                    cancelInlineEdit();
+                }
+            });
+        }
+        
+        function editItemInline(id, currentName) {
+            if (editingItemId) {
+                cancelInlineEdit();
+            }
+            
+            editingItemId = id;
+            
+            // Find the row with this ID
+            const rows = document.querySelectorAll('#routine-grid-body tr');
+            let targetRow = null;
+            
+            for (let row of rows) {
+                const editButton = row.querySelector('.btn-edit');
+                if (editButton && editButton.onclick.toString().includes(id)) {
+                    targetRow = row;
+                    break;
+                }
+            }
+            
+            if (!targetRow) return;
+            
+            targetRow.className = 'inline-row';
+            targetRow.innerHTML = `
+                <td style="padding: 1rem;">
+                    <input type="text" id="inlineName" value="${currentName.replace(/"/g, '&quot;')}" style="width: 100%;">
+                </td>
+                <td style="padding: 1rem; color: #6b7280;">-</td>
+                <td style="padding: 1rem; text-align: center;">
+                    <div class="inline-actions">
+                        <button class="btn-inline-save" onclick="saveInlineItem()">✅ Salvar</button>
+                        <button class="btn-inline-cancel" onclick="cancelInlineEdit()">❌ Cancelar</button>
+                    </div>
+                </td>
+            `;
+            
+            // Focus on input and select all text
+            const input = document.getElementById('inlineName');
+            input.focus();
+            input.select();
+            
+            // Add keyboard listeners
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveInlineItem();
+                } else if (e.key === 'Escape') {
+                    cancelInlineEdit();
+                }
+            });
+        }
+        
+        async function saveInlineItem() {
+            const nameInput = document.getElementById('inlineName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Por favor, informe o nome.');
+                return;
+            }
+            
+            try {
+                let response;
+                
+                if (editingItemId) {
+                    // Update existing item
+                    response = await fetch(`${API_BASE}/api/${currentRoutine}/${editingItemId}?tenant=${getTenantFromUrl()}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name }),
+                    });
+                } else {
+                    // Create new item
+                    response = await fetch(`${API_BASE}/api/${currentRoutine}?tenant=${getTenantFromUrl()}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name }),
+                    });
+                }
+                
+                if (response.ok) {
+                    editingItemId = null;
+                    loadRoutineData(); // Reload data
+                } else {
+                    const error = await response.json();
+                    alert(`Erro: ${error.message || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                console.error('Erro ao salvar:', error);
+                alert('Erro ao salvar. Tente novamente.');
+            }
+        }
+        
+        function cancelInlineEdit() {
+            editingItemId = null;
+            loadRoutineData(); // Reload to restore original state
+        }
+        
+        async function deleteItem(id, name) {
+            if (!confirm(`Tem certeza que deseja excluir "${name}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/${currentRoutine}/${id}?tenant=${getTenantFromUrl()}`, {
+                    method: 'DELETE',
+                });
+                
+                if (response.ok) {
+                    loadRoutineData(); // Reload data
+                } else {
+                    const error = await response.json();
+                    alert(`Erro: ${error.message || 'Erro desconhecido'}`);
+                }
+            } catch (error) {
+                console.error('Erro ao excluir:', error);
+                alert('Erro ao excluir. Tente novamente.');
+            }
+        }
+        
+        function searchRoutineItems() {
+            const searchTerm = document.getElementById('routineSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#routine-grid-body tr');
+            
+            rows.forEach(row => {
+                const nameCell = row.querySelector('td:first-child');
+                if (nameCell) {
+                    const name = nameCell.textContent.toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+        
+        function loadMoreItems() {
+            // Placeholder for pagination
+            console.log('Carregar mais itens...');
+        }
+        
+        function changeItemsPerPage() {
+            // Placeholder for items per page
+            console.log('Alterar itens por página...');
+        }
     </script>
 </body>
 </html>
