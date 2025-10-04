@@ -1465,4 +1465,10 @@ async function bootstrap() {
   }
 }
 
-bootstrap();
+// Para Vercel, exportar o app
+module.exports = app;
+
+// Para desenvolvimento local, inicializar o servidor
+if (require.main === module) {
+  bootstrap();
+}
