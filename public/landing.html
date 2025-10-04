@@ -557,7 +557,7 @@
             
             try {
                 // Criar tenant
-                const tenantResponse = await fetch(`${API_BASE}/tenants`, {
+                const tenantResponse = await fetch(`${API_BASE}/api/tenants`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -611,7 +611,7 @@
             
             try {
                 // Verificar se tenant existe
-                const response = await fetch(`${API_BASE}/tenants`);
+                const response = await fetch(`${API_BASE}/api/tenants`);
                 const tenants = await response.json();
                 const tenant = tenants.find(t => t.subdomain === data.subdomain);
                 
