@@ -758,8 +758,64 @@
                 border-right: none;
                 border-bottom: 1px solid #e2e8f0;
             }
+        .inline-row {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
         }
-    </style>
+        
+        .inline-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .btn-inline-save {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .btn-inline-cancel {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .btn-inline-save:hover {
+            background: #059669;
+        }
+        
+        .btn-inline-cancel:hover {
+            background: #dc2626;
+        }
+        
+        .grid-row-cell input[type="text"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .grid-row-cell input[type="text"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
 </head>
 <body>
     <!-- Sidebar -->
@@ -1056,14 +1112,13 @@
                         <div class="routine-grid-container">
                             <div class="routine-grid-header">
                                 <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <button class="btn btn-primary" onclick="addNewItem()">
+                                    <button class="btn btn-primary" onclick="addNewItemInline()">
                                         <span>+</span> Novo <span id="new-item-text">Item</span>
                                     </button>
                                     <span style="color: #6b7280; font-size: 0.9rem;">Arraste a coluna até aqui para agrupar</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <input type="text" id="routine-search" placeholder="Pesquisar" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-                                    <span style="color: #2563eb; cursor: pointer;">Pesquisa Avançada</span>
+                                    <input type="text" id="routineSearch" placeholder="Pesquisar por nome..." onkeyup="searchRoutineItems()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; width: 250px;">
                                 </div>
                             </div>
                             
@@ -1422,6 +1477,7 @@
                 items.forEach(item => {
                     const row = document.createElement('div');
                     row.className = 'grid-row';
+                    row.dataset.itemId = item.id;
                     row.innerHTML = `
                         <div class="grid-row-cell">
                             <span>${item.name}</span>
@@ -1431,10 +1487,10 @@
                         </div>
                         <div class="grid-row-cell">
                             <div class="grid-row-actions">
-                                <button class="btn-grid-action btn-edit" onclick="editItem('${item.id}', '${item.name}')">
+                                <button class="btn-grid-action btn-edit" onclick="editItemInline('${item.id}', '${item.name.replace(/'/g, "\\'")}')">
                                     Editar
                                 </button>
-                                <button class="btn-grid-action btn-delete-grid" onclick="deleteItem('${item.id}', '${item.name}')">
+                                <button class="btn-grid-action btn-delete-grid" onclick="deleteItem('${item.id}', '${item.name.replace(/'/g, "\\'")}')">
                                     Excluir
                                 </button>
                             </div>
@@ -1450,16 +1506,182 @@
             }
         }
         
-        function addNewItem() {
-            const itemName = prompt(`Digite o nome do novo ${currentRoutine === 'departments' ? 'departamento' : 
-                                                              currentRoutine === 'categories' ? 'categoria' :
-                                                              currentRoutine === 'positions' ? 'cargo' : 'tag'}:`);
-            
-            if (!itemName || itemName.trim() === '') {
+        // Inline editing functionality
+        let isEditingInline = false;
+        let editingItemId = null;
+        
+        function addNewItemInline() {
+            if (isEditingInline) {
+                alert('Finalize a edição atual antes de criar um novo item');
                 return;
             }
             
-            createNewItem(itemName.trim());
+            const gridBody = document.getElementById('routine-grid-body');
+            const newRow = document.createElement('div');
+            newRow.className = 'grid-row inline-row';
+            newRow.innerHTML = `
+                <div class="grid-row-cell">
+                    <input type="text" id="inlineName" placeholder="Digite o nome..." maxlength="255">
+                </div>
+                <div class="grid-row-cell">
+                    <span style="color: #6b7280; font-style: italic;">Novo</span>
+                </div>
+                <div class="grid-row-cell">
+                    <div class="inline-actions">
+                        <button class="btn-inline-save" onclick="saveInlineItem()" title="Salvar">
+                            ✓
+                        </button>
+                        <button class="btn-inline-cancel" onclick="cancelInlineEdit()" title="Cancelar">
+                            ✗
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Insert at the beginning
+            gridBody.insertBefore(newRow, gridBody.firstChild);
+            
+            // Focus on input
+            const input = document.getElementById('inlineName');
+            input.focus();
+            
+            // Add keyboard event listeners
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    saveInlineItem();
+                } else if (e.key === 'Escape') {
+                    cancelInlineEdit();
+                }
+            });
+            
+            isEditingInline = true;
+            editingItemId = null;
+        }
+        
+        function editItemInline(id, currentName) {
+            if (isEditingInline) {
+                alert('Finalize a edição atual antes de editar outro item');
+                return;
+            }
+            
+            // Find the row with this ID and replace it with inline editing
+            const rows = document.querySelectorAll('.grid-row');
+            for (let row of rows) {
+                if (row.dataset.itemId === id) {
+                    row.className = 'grid-row inline-row';
+                    row.innerHTML = `
+                        <div class="grid-row-cell">
+                            <input type="text" id="inlineName" value="${currentName}" maxlength="255">
+                        </div>
+                        <div class="grid-row-cell">
+                            <span style="color: #6b7280; font-style: italic;">Editando</span>
+                        </div>
+                        <div class="grid-row-cell">
+                            <div class="inline-actions">
+                                <button class="btn-inline-save" onclick="saveInlineItem()" title="Salvar">
+                                    ✓
+                                </button>
+                                <button class="btn-inline-cancel" onclick="cancelInlineEdit()" title="Cancelar">
+                                    ✗
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Focus and select text
+                    const input = document.getElementById('inlineName');
+                    input.focus();
+                    input.select();
+                    
+                    // Add keyboard event listeners
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            saveInlineItem();
+                        } else if (e.key === 'Escape') {
+                            cancelInlineEdit();
+                        }
+                    });
+                    
+                    isEditingInline = true;
+                    editingItemId = id;
+                    break;
+                }
+            }
+        }
+        
+        async function saveInlineItem() {
+            const nameInput = document.getElementById('inlineName');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Por favor, digite um nome válido');
+                nameInput.focus();
+                return;
+            }
+            
+            try {
+                if (editingItemId) {
+                    // Update existing item
+                    const response = await fetch(`${API_BASE}/${currentRoutine}/${editingItemId}?tenant=${currentTenant.subdomain}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
+                    });
+                    
+                    if (response.ok) {
+                        loadRoutineData(currentRoutine);
+                    } else {
+                        alert('Erro ao atualizar item');
+                    }
+                } else {
+                    // Create new item
+                    const response = await fetch(`${API_BASE}/${currentRoutine}?tenant=${currentTenant.subdomain}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
+                    });
+                    
+                    if (response.ok) {
+                        loadRoutineData(currentRoutine);
+                    } else {
+                        alert('Erro ao criar item');
+                    }
+                }
+                
+                isEditingInline = false;
+                editingItemId = null;
+            } catch (error) {
+                console.error('Erro ao salvar item:', error);
+                alert('Erro ao salvar item');
+            }
+        }
+        
+        function cancelInlineEdit() {
+            // Remove the inline editing row
+            const inlineRow = document.querySelector('.inline-row');
+            if (inlineRow) {
+                inlineRow.remove();
+            }
+            
+            isEditingInline = false;
+            editingItemId = null;
+        }
+        
+        function searchRoutineItems() {
+            const searchTerm = document.getElementById('routineSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('.grid-row:not(.inline-row)');
+            
+            rows.forEach(row => {
+                const nameCell = row.querySelector('.grid-row-cell:first-child span');
+                if (nameCell) {
+                    const itemName = nameCell.textContent.toLowerCase();
+                    if (itemName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
         }
         
         async function createNewItem(name) {
