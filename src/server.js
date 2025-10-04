@@ -13,8 +13,8 @@ const app = express();
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static('public'));
 
-// Middleware para extrair tenant do subdomínio
-app.use((req, res, next) => {
+// Middleware para extrair tenant do subdomínio (apenas para rotas da API)
+app.use('/api', (req, res, next) => {
   const host = req.get('host') || '';
   const subdomain = host.split('.')[0];
   
