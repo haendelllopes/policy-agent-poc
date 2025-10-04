@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test - Flowly</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .test-section {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0.5rem;
+        }
+        .btn:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Flowly Dashboard Test</h1>
+            <p>Versão de teste para verificar servidor</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>✅ Teste de Carregamento</h3>
+            <p>Se você está vendo esta página, o servidor está funcionando.</p>
+            <p><strong>Tamanho do arquivo:</strong> ~2KB</p>
+            <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔧 Teste de JavaScript</h3>
+            <button class="btn" onclick="testJS()">Testar JavaScript</button>
+            <div id="js-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Teste de API</h3>
+            <button class="btn" onclick="testAPI()">Testar API</button>
+            <div id="api-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 Próximos Passos</h3>
+            <p>Se este teste funcionar, o problema é específico do arquivo dashboard.html original.</p>
+            <a href="dashboard.html" class="btn">Tentar Dashboard Original</a>
+        </div>
+    </div>
+    
+    <script>
+        // Update timestamp
+        document.getElementById('timestamp').textContent = new Date().toISOString();
+        
+        function testJS() {
+            document.getElementById('js-result').innerHTML = '<p style="color: green;">✅ JavaScript funcionando!</p>';
+        }
+        
+        async function testAPI() {
+            const result = document.getElementById('api-result');
+            try {
+                const response = await fetch('/api/tenants');
+                if (response.ok) {
+                    result.innerHTML = '<p style="color: green;">✅ API funcionando!</p>';
+                } else {
+                    result.innerHTML = '<p style="color: orange;">⚠️ API respondeu com erro: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                result.innerHTML = '<p style="color: red;">❌ Erro na API: ' + error.message + '</p>';
+            }
+        }
+        
+        console.log('Dashboard test carregado com sucesso!');
+    </script>
+</body>
+</html>
