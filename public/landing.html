@@ -573,7 +573,7 @@
                 }
                 
                 // Criar admin user
-                const userResponse = await fetch(`${API_BASE}/users?tenant=${data.subdomain}`, {
+                const userResponse = await fetch(`${API_BASE}/api/users?tenant=${data.subdomain}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -620,7 +620,7 @@
                 }
                 
                 // Verificar se usuário existe
-                const userResponse = await fetch(`${API_BASE}/users?tenant=${data.subdomain}`);
+                const userResponse = await fetch(`${API_BASE}/api/users?tenant=${data.subdomain}`);
                 const users = await userResponse.json();
                 const user = users.find(u => u.email === data.email);
                 
