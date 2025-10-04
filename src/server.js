@@ -112,7 +112,7 @@ async function getTenantBySubdomain(subdomain) {
   }
 }
 
-app.get('/tenants', async (_req, res) => {
+app.get('/api/tenants', async (_req, res) => {
   try {
     // Tentar PostgreSQL primeiro
     if (process.env.DATABASE_URL) {
@@ -139,7 +139,7 @@ app.get('/tenants', async (_req, res) => {
   }
 });
 
-app.post('/tenants', async (req, res) => {
+app.post('/api/tenants', async (req, res) => {
   const schema = z.object({ 
     name: z.string().min(1),
     subdomain: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Subdomain deve conter apenas letras minúsculas, números e hífens')
@@ -224,7 +224,7 @@ function normalizePhoneForWhatsApp(phone) {
 }
 
 // Endpoint para criar usuários (colaboradores)
-app.post('/users', async (req, res) => {
+app.post('/api/users', async (req, res) => {
   try {
     const schema = z.object({
       name: z.string().min(1),
@@ -325,7 +325,7 @@ app.post('/users', async (req, res) => {
 });
 
 // Endpoint para excluir usuário
-app.delete('/users/:id', async (req, res) => {
+app.delete('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
     console.log('DELETE /users - userId:', userId);
@@ -450,7 +450,7 @@ app.get('/test-consistency/:userId', async (req, res) => {
 });
 
 // Endpoint para listar usuários do tenant atual
-app.get('/users', async (req, res) => {
+app.get('/api/users', async (req, res) => {
   try {
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
@@ -478,7 +478,7 @@ app.get('/users', async (req, res) => {
   }
 });
 
-app.post('/documents/upload', upload.single('file'), async (req, res) => {
+app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   const schema = z.object({ 
     tenantId: z.string().uuid(), 
     title: z.string().min(1), 
@@ -669,7 +669,7 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
 });
 
 // Endpoint para listar documentos do tenant
-app.get('/documents', async (req, res) => {
+app.get('/api/documents', async (req, res) => {
   try {
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
@@ -701,7 +701,7 @@ app.get('/documents', async (req, res) => {
 });
 
 // Endpoint para excluir documento
-app.delete('/documents/:id', async (req, res) => {
+app.delete('/api/documents/:id', async (req, res) => {
   try {
     const documentId = req.params.id;
     console.log('DELETE /documents - documentId:', documentId);
@@ -1025,7 +1025,7 @@ app.post('/search/policy', async (req, res) => {
 // ===== ENDPOINTS DE CADASTROS =====
 
 // Departamentos
-app.get('/departments', async (req, res) => {
+app.get('/api/departments', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
     const tenant = await getTenantBySubdomainPG(tenantSubdomain);
@@ -1041,7 +1041,7 @@ app.get('/departments', async (req, res) => {
   }
 });
 
-app.post('/departments', async (req, res) => {
+app.post('/api/departments', async (req, res) => {
   try {
     const { name } = req.body;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1067,7 +1067,7 @@ app.post('/departments', async (req, res) => {
   }
 });
 
-app.put('/departments/:id', async (req, res) => {
+app.put('/api/departments/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -1098,7 +1098,7 @@ app.put('/departments/:id', async (req, res) => {
   }
 });
 
-app.delete('/departments/:id', async (req, res) => {
+app.delete('/api/departments/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1117,7 +1117,7 @@ app.delete('/departments/:id', async (req, res) => {
 });
 
 // Categorias
-app.get('/categories', async (req, res) => {
+app.get('/api/categories', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
     const tenant = await getTenantBySubdomainPG(tenantSubdomain);
@@ -1133,7 +1133,7 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-app.post('/categories', async (req, res) => {
+app.post('/api/categories', async (req, res) => {
   try {
     const { name } = req.body;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1159,7 +1159,7 @@ app.post('/categories', async (req, res) => {
   }
 });
 
-app.put('/categories/:id', async (req, res) => {
+app.put('/api/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -1190,7 +1190,7 @@ app.put('/categories/:id', async (req, res) => {
   }
 });
 
-app.delete('/categories/:id', async (req, res) => {
+app.delete('/api/categories/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1209,7 +1209,7 @@ app.delete('/categories/:id', async (req, res) => {
 });
 
 // Cargos
-app.get('/positions', async (req, res) => {
+app.get('/api/positions', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
     const tenant = await getTenantBySubdomainPG(tenantSubdomain);
@@ -1225,7 +1225,7 @@ app.get('/positions', async (req, res) => {
   }
 });
 
-app.post('/positions', async (req, res) => {
+app.post('/api/positions', async (req, res) => {
   try {
     const { name } = req.body;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1251,7 +1251,7 @@ app.post('/positions', async (req, res) => {
   }
 });
 
-app.put('/positions/:id', async (req, res) => {
+app.put('/api/positions/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -1282,7 +1282,7 @@ app.put('/positions/:id', async (req, res) => {
   }
 });
 
-app.delete('/positions/:id', async (req, res) => {
+app.delete('/api/positions/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1301,7 +1301,7 @@ app.delete('/positions/:id', async (req, res) => {
 });
 
 // Tags
-app.get('/tags', async (req, res) => {
+app.get('/api/tags', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
     const tenant = await getTenantBySubdomainPG(tenantSubdomain);
@@ -1317,7 +1317,7 @@ app.get('/tags', async (req, res) => {
   }
 });
 
-app.post('/tags', async (req, res) => {
+app.post('/api/tags', async (req, res) => {
   try {
     const { name } = req.body;
     const tenantSubdomain = req.tenantSubdomain;
@@ -1343,7 +1343,7 @@ app.post('/tags', async (req, res) => {
   }
 });
 
-app.put('/tags/:id', async (req, res) => {
+app.put('/api/tags/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -1374,7 +1374,7 @@ app.put('/tags/:id', async (req, res) => {
   }
 });
 
-app.delete('/tags/:id', async (req, res) => {
+app.delete('/api/tags/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
