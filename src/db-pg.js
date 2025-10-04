@@ -199,6 +199,9 @@ async function migrate() {
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id)`);
     
+    // Criar tenant demo se não existir
+    await createDemoTenant();
+    
     // Popular dados iniciais para todos os tenants existentes
     await seedInitialData();
     await query(`CREATE INDEX IF NOT EXISTS idx_tenants_subdomain ON tenants(subdomain)`);
@@ -207,6 +210,30 @@ async function migrate() {
   } catch (error) {
     console.error('Erro nas migrações:', error);
     throw error;
+  }
+}
+
+// Função para criar tenant demo se não existir
+async function createDemoTenant() {
+  try {
+    console.log('Verificando se tenant demo existe...');
+    
+    // Verificar se tenant demo já existe
+    const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', ['demo']);
+    
+    if (existing.rows.length === 0) {
+      console.log('Criando tenant demo...');
+      const demoId = require('uuid').v4();
+      await query(
+        'INSERT INTO tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, $4)',
+        [demoId, 'Empresa Demo', 'demo', new Date().toISOString()]
+      );
+      console.log('Tenant demo criado com sucesso!');
+    } else {
+      console.log('Tenant demo já existe');
+    }
+  } catch (error) {
+    console.error('Erro ao criar tenant demo:', error);
   }
 }
 
@@ -278,11 +305,92 @@ async function seedInitialData() {
           [require('uuid').v4(), tenant.id, tag, new Date().toISOString()]
         );
       }
+      
+      // Para o tenant demo, adicionar alguns dados de exemplo
+      if (tenant.id === (await query('SELECT id FROM tenants WHERE subdomain = $1', ['demo'])).rows[0]?.id) {
+        await seedDemoData(tenant.id);
+      }
     }
     
     console.log('Dados iniciais populados com sucesso!');
   } catch (error) {
     console.error('Erro ao popular dados iniciais:', error);
+  }
+}
+
+// Função para popular dados de exemplo do tenant demo
+async function seedDemoData(tenantId) {
+  try {
+    console.log('Populando dados de exemplo para tenant demo...');
+    
+    // Verificar se já existem dados para o tenant demo
+    const existingUsers = await query('SELECT COUNT(*) FROM users WHERE tenant_id = $1', [tenantId]);
+    const existingDocs = await query('SELECT COUNT(*) FROM documents WHERE tenant_id = $1', [tenantId]);
+    
+    if (existingUsers.rows[0].count > 0 || existingDocs.rows[0].count > 0) {
+      console.log('Dados de exemplo já existem para tenant demo');
+      return;
+    }
+    
+    // Dados de exemplo para usuários
+    const demoUsers = [
+      { name: 'João Silva', email: 'joao@demo.com', phone: '11999999999', position: 'Desenvolvedor', department: 'Desenvolvimento' },
+      { name: 'Maria Santos', email: 'maria@demo.com', phone: '11999999998', position: 'Analista', department: 'Recursos Humanos (RH)' },
+      { name: 'Pedro Costa', email: 'pedro@demo.com', phone: '11999999997', position: 'Gerente', department: 'Financeiro' },
+      { name: 'Ana Oliveira', email: 'ana@demo.com', phone: '11999999996', position: 'Coordenador', department: 'Comercial' },
+      { name: 'Carlos Lima', email: 'carlos@demo.com', phone: '11999999995', position: 'Supervisor', department: 'Marketing' }
+    ];
+    
+    // Dados de exemplo para documentos
+    const demoDocuments = [
+      { title: 'Manual do Colaborador', category: 'Políticas Internas' },
+      { title: 'Política de Segurança', category: 'Políticas Internas' },
+      { title: 'Código de Conduta', category: 'Código de Conduta' },
+      { title: 'Manual de Procedimentos', category: 'Manuais de Procedimentos' },
+      { title: 'Benefícios e Remuneração', category: 'Benefícios e Remuneração' },
+      { title: 'Treinamento de Segurança', category: 'Treinamentos' },
+      { title: 'Relatório Mensal', category: 'Relatórios' },
+      { title: 'Formulário de Solicitação', category: 'Formulários' }
+    ];
+    
+    // Inserir usuários de exemplo
+    for (const user of demoUsers) {
+      await query(
+        'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+        [
+          require('uuid').v4(),
+          tenantId,
+          user.name,
+          user.email,
+          user.phone,
+          user.position,
+          user.department,
+          new Date().toISOString().split('T')[0],
+          'active',
+          new Date().toISOString()
+        ]
+      );
+    }
+    
+    // Inserir documentos de exemplo
+    for (const doc of demoDocuments) {
+      await query(
+        'INSERT INTO documents (id, tenant_id, title, category, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        [
+          require('uuid').v4(),
+          tenantId,
+          doc.title,
+          doc.category,
+          'published',
+          new Date().toISOString(),
+          new Date().toISOString()
+        ]
+      );
+    }
+    
+    console.log('Dados de exemplo criados para tenant demo!');
+  } catch (error) {
+    console.error('Erro ao popular dados de exemplo:', error);
   }
 }
 
