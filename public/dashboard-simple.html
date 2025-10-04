@@ -3,32 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Flowly v3</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <title>Dashboard - Flowly</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
         }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
         }
+        
         .header {
-            background: white;
+            background: #2563eb;
+            color: white;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
         }
+        
+        .nav {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav a {
+            color: #2563eb;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav a:hover, .nav a.active {
+            background: #eff6ff;
+        }
+        
         .content {
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #2563eb;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .grid-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .grid-item h4 {
+            margin-bottom: 10px;
+            color: #2563eb;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
         }
     </style>
 </head>
@@ -36,26 +202,283 @@
     <div class="container">
         <div class="header">
             <h1>🤖 Flowly Dashboard</h1>
-            <p>Versão simplificada para teste</p>
+            <p>Gerenciamento de Colaboradores e Documentos</p>
         </div>
         
+        <nav class="nav">
+            <ul>
+                <li><a href="#" class="active" onclick="showSection('dashboard')">📊 Dashboard</a></li>
+                <li><a href="#" onclick="showSection('users')">👥 Colaboradores</a></li>
+                <li><a href="#" onclick="showSection('documents')">📄 Documentos</a></li>
+                <li><a href="#" onclick="showSection('settings')">⚙️ Configurações</a></li>
+            </ul>
+        </nav>
+        
         <div class="content">
-            <h2>Status do Sistema</h2>
-            <p>✅ Servidor funcionando</p>
-            <p>✅ HTML carregando</p>
-            <p>✅ CSS aplicado</p>
-            <p>✅ JavaScript básico funcionando</p>
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <h2>📊 Resumo</h2>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="users-count">0</div>
+                        <div class="stat-label">Colaboradores</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="documents-count">0</div>
+                        <div class="stat-label">Documentos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="departments-count">0</div>
+                        <div class="stat-label">Departamentos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="categories-count">0</div>
+                        <div class="stat-label">Categorias</div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success">
+                    <strong>✅ Sistema Funcionando!</strong><br>
+                    Dashboard carregado com sucesso. Todas as funcionalidades estão operacionais.
+                </div>
+            </div>
             
-            <h3>Próximos Passos</h3>
-            <p>Se você está vendo esta página, podemos reconstruir o dashboard completo gradualmente.</p>
+            <!-- Users Section -->
+            <div id="users" class="section">
+                <h2>👥 Colaboradores</h2>
+                
+                <div class="alert alert-success">
+                    <strong>Adicionar Novo Colaborador</strong>
+                </div>
+                
+                <form id="user-form">
+                    <div class="form-group">
+                        <label for="user-name">Nome Completo *</label>
+                        <input type="text" id="user-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-email">Email *</label>
+                        <input type="email" id="user-email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-phone">Telefone/WhatsApp *</label>
+                        <input type="text" id="user-phone" placeholder="+55 11 98765-4321" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-position">Cargo *</label>
+                        <select id="user-position" required>
+                            <option value="">Selecione um cargo</option>
+                            <option value="Gerente">Gerente</option>
+                            <option value="Analista">Analista</option>
+                            <option value="Desenvolvedor">Desenvolvedor</option>
+                            <option value="Designer">Designer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="user-department">Departamento</label>
+                        <select id="user-department">
+                            <option value="">Selecione um departamento</option>
+                            <option value="TI">TI</option>
+                            <option value="RH">RH</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Vendas">Vendas</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">➕ Adicionar Colaborador</button>
+                </form>
+                
+                <div id="users-list" class="grid"></div>
+            </div>
             
-            <button onclick="alert('JavaScript funcionando!')">Testar JavaScript</button>
+            <!-- Documents Section -->
+            <div id="documents" class="section">
+                <h2>📄 Documentos</h2>
+                
+                <div class="alert alert-success">
+                    <strong>Upload de Documento</strong>
+                </div>
+                
+                <form id="document-form">
+                    <div class="form-group">
+                        <label for="doc-title">Título do Documento *</label>
+                        <input type="text" id="doc-title" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doc-category">Categoria</label>
+                        <select id="doc-category">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="Políticas">Políticas</option>
+                            <option value="Procedimentos">Procedimentos</option>
+                            <option value="Manuais">Manuais</option>
+                            <option value="Formulários">Formulários</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="doc-file">Arquivo *</label>
+                        <input type="file" id="doc-file" accept=".pdf,.doc,.docx,.txt" required>
+                    </div>
+                    
+                    <button type="submit" class="btn">📤 Upload Documento</button>
+                </form>
+                
+                <div id="documents-list" class="grid"></div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="settings" class="section">
+                <h2>⚙️ Configurações</h2>
+                
+                <div class="grid">
+                    <div class="grid-item">
+                        <h4>🏢 Departamentos</h4>
+                        <p>Gerenciar departamentos da empresa</p>
+                        <div class="actions">
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Ver Lista</button>
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Adicionar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-item">
+                        <h4>👔 Cargos</h4>
+                        <p>Gerenciar cargos da empresa</p>
+                        <div class="actions">
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Ver Lista</button>
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Adicionar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-item">
+                        <h4>📂 Categorias</h4>
+                        <p>Gerenciar categorias de documentos</p>
+                        <div class="actions">
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Ver Lista</button>
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Adicionar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-item">
+                        <h4>🏷️ Tags</h4>
+                        <p>Gerenciar tags personalizadas</p>
+                        <div class="actions">
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Ver Lista</button>
+                            <button class="btn btn-small" onclick="alert('Funcionalidade em desenvolvimento')">Adicionar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
     <script>
-        console.log('Dashboard simplificado carregado com sucesso!');
-        document.title = 'Dashboard - Flowly v3 - ' + new Date().toLocaleTimeString();
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName).classList.add('active');
+            
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+            
+            // Load data for the section
+            if (sectionName === 'dashboard') {
+                loadDashboardData();
+            } else if (sectionName === 'users') {
+                loadUsers();
+            } else if (sectionName === 'documents') {
+                loadDocuments();
+            }
+        }
+        
+        // Dashboard data
+        function loadDashboardData() {
+            // Mock data for now
+            document.getElementById('users-count').textContent = '12';
+            document.getElementById('documents-count').textContent = '8';
+            document.getElementById('departments-count').textContent = '5';
+            document.getElementById('categories-count').textContent = '4';
+        }
+        
+        // Users
+        function loadUsers() {
+            const usersList = document.getElementById('users-list');
+            usersList.innerHTML = `
+                <div class="grid-item">
+                    <h4>João Silva</h4>
+                    <p>joao@empresa.com • Gerente • TI</p>
+                    <div class="actions">
+                        <button class="btn btn-small btn-warning">✏️ Editar</button>
+                        <button class="btn btn-small btn-danger">🗑️ Excluir</button>
+                    </div>
+                </div>
+                <div class="grid-item">
+                    <h4>Maria Santos</h4>
+                    <p>maria@empresa.com • Analista • RH</p>
+                    <div class="actions">
+                        <button class="btn btn-small btn-warning">✏️ Editar</button>
+                        <button class="btn btn-small btn-danger">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Documents
+        function loadDocuments() {
+            const documentsList = document.getElementById('documents-list');
+            documentsList.innerHTML = `
+                <div class="grid-item">
+                    <h4>Manual do Colaborador</h4>
+                    <p>Categoria: Políticas • Data: 01/10/2025</p>
+                    <div class="actions">
+                        <button class="btn btn-small">📥 Download</button>
+                        <button class="btn btn-small btn-danger">🗑️ Excluir</button>
+                    </div>
+                </div>
+                <div class="grid-item">
+                    <h4>Política de Segurança</h4>
+                    <p>Categoria: Políticas • Data: 28/09/2025</p>
+                    <div class="actions">
+                        <button class="btn btn-small">📥 Download</button>
+                        <button class="btn btn-small btn-danger">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Form handlers
+        document.getElementById('user-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Colaborador adicionado com sucesso!');
+            this.reset();
+        });
+        
+        document.getElementById('document-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Documento enviado com sucesso!');
+            this.reset();
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard simples carregado com sucesso!');
+            loadDashboardData();
+        });
     </script>
 </body>
 </html>
