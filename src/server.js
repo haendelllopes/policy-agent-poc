@@ -577,7 +577,12 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
       // Não falhar o upload por causa do webhook
     }
 
-    res.status(201).json({ documentId, chunks: chunks.length });
+    res.status(201).json({ 
+      documentId, 
+      title: body.data.title,
+      category: body.data.category,
+      chunks: chunks.length 
+    });
   } else {
     // SQLite fallback
     const { db, SQL } = await openDatabase();
@@ -630,7 +635,12 @@ app.post('/documents/upload', upload.single('file'), async (req, res) => {
         // Não falhar o upload por causa do webhook
       }
 
-      res.status(201).json({ documentId, chunks: chunks.length });
+      res.status(201).json({ 
+        documentId, 
+        title: body.data.title,
+        category: body.data.category,
+        chunks: chunks.length 
+      });
     } finally {
       db.close();
     }
