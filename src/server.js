@@ -182,6 +182,42 @@ app.post('/api/tenants', async (req, res) => {
   }
 });
 
+// Endpoint para buscar tenant por subdomain
+app.get('/api/tenants/:subdomain', async (req, res) => {
+  try {
+    const { subdomain } = req.params;
+    
+    // Tentar PostgreSQL primeiro
+    if (process.env.DATABASE_URL) {
+      try {
+        const result = await query('SELECT id, name, subdomain FROM tenants WHERE subdomain = $1', [subdomain]);
+        if (result.rows.length === 0) {
+          return res.status(404).json({ error: 'Tenant não encontrado' });
+        }
+        return res.json(result.rows[0]);
+      } catch (error) {
+        console.error('Erro ao buscar tenant no PostgreSQL:', error);
+        // Fallback para SQLite
+      }
+    }
+    
+    // Fallback para SQLite
+    const { db } = await openDatabase();
+    try {
+      const result = runQuery(db, 'SELECT id, name, subdomain FROM tenants WHERE subdomain = ?', [subdomain]);
+      if (result.length === 0) {
+        return res.status(404).json({ error: 'Tenant não encontrado' });
+      }
+      res.json(result[0]);
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    console.error('Erro ao buscar tenant:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Função para normalizar telefone brasileiro
 function normalizePhone(phone) {
   if (!phone) return phone;
