@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnboardFlow - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 2rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        
+        .nav-menu {
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: #64748b;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover {
+            background: #f1f5f9;
+            color: #2563eb;
+        }
+        
+        .nav-link.active {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-subtitle {
+            color: #64748b;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-subtitle {
+            color: #16a34a;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">O</div>
+                <div class="logo-text">OnboardFlow</div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="showSection('dashboard')">
+                        <span>📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('employees')">
+                        <span>👥</span>
+                        <span>Funcionários</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('documents')">
+                        <span>📄</span>
+                        <span>Documentos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="showSection('settings')">
+                        <span>⚙️</span>
+                        <span>Configurações</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-subtitle">Visão geral do processo de onboarding</p>
+            </header>
+            
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Total de Funcionários</div>
+                        <div class="stat-subtitle">+3 este mês</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Em Progresso</div>
+                        <div class="stat-subtitle">33% do total</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">14</div>
+                        <div class="stat-label">Completados</div>
+                        <div class="stat-subtitle">58% do total</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">45</div>
+                        <div class="stat-label">Documentos</div>
+                        <div class="stat-subtitle">Todos atualizados</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Other Sections -->
+            <div id="employees-section" class="section hidden">
+                <div class="stat-card">
+                    <h3>Funcionários</h3>
+                    <p>Funcionalidade em desenvolvimento...</p>
+                </div>
+            </div>
+            
+            <div id="documents-section" class="section hidden">
+                <div class="stat-card">
+                    <h3>Documentos</h3>
+                    <p>Funcionalidade em desenvolvimento...</p>
+                </div>
+            </div>
+            
+            <div id="settings-section" class="section hidden">
+                <div class="stat-card">
+                    <h3>Configurações</h3>
+                    <p>Funcionalidade em desenvolvimento...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('OnboardFlow Dashboard carregado!');
+        });
+    </script>
+</body>
+</html>
