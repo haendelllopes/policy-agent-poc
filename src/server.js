@@ -93,17 +93,23 @@ app.get('/dashboard', (_req, res) => {
 
 // Função auxiliar para buscar tenant por subdomain
 async function getTenantBySubdomain(subdomain) {
-  // Tentar PostgreSQL primeiro
-  if (process.env.DATABASE_URL) {
+  // Priorizar PostgreSQL (via pool detectado)
+  if (usePostgres()) {
     try {
       return await getTenantBySubdomainPG(subdomain);
     } catch (error) {
       console.error('Erro ao buscar tenant no PostgreSQL:', error);
-      // Fallback para SQLite
+      // Não cair automaticamente para SQLite no Vercel
+      if (process.env.VERCEL) return null;
     }
   }
   
-  // Fallback para SQLite
+  // Evitar SQLite no Vercel (filesystem imutável / schema diferente)
+  if (process.env.VERCEL) {
+    return null;
+  }
+  
+  // Fallback para SQLite apenas fora do Vercel
   const { db } = await openDatabase();
   try {
     const tenants = runQuery(db, 'SELECT * FROM tenants WHERE subdomain = ?', [subdomain]);
