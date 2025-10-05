@@ -1631,7 +1631,14 @@ app.post('/api/debug/test-connection', async (req, res) => {
       return res.status(400).json({ error: 'Variáveis PG* incompletas' });
     }
     
-    const assembledUrl = `postgresql://${encodeURIComponent(pgUser)}:${encodeURIComponent(pgPassword)}@${pgHost}:${pgPort}/${pgDatabase}`;
+    // Se for host do Supabase direto, usar session pooler (IPv4)
+    let finalHost = pgHost;
+    if (pgHost.includes('db.gxqwfltteimexngybwna.supabase.co')) {
+      finalHost = 'aws-1-sa-east-1.pooler.supabase.com';
+      console.log('Usando session pooler Supabase para IPv4:', finalHost);
+    }
+    
+    const assembledUrl = `postgresql://${encodeURIComponent(pgUser)}:${encodeURIComponent(pgPassword)}@${finalHost}:${pgPort}/${pgDatabase}`;
     
     console.log('Testando conexão direta com:', assembledUrl.substring(0, 50) + '...');
     

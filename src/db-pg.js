@@ -25,7 +25,14 @@ function initializePool() {
     });
     
     if (host && database && user && password) {
-      const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+      // Se for host do Supabase direto, usar session pooler (IPv4)
+      let finalHost = host;
+      if (host.includes('db.gxqwfltteimexngybwna.supabase.co')) {
+        finalHost = 'aws-1-sa-east-1.pooler.supabase.com';
+        console.log('Usando session pooler Supabase para IPv4:', finalHost);
+      }
+      
+      const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${finalHost}:${port}/${database}`;
       console.log('Usando variáveis PG* para montar a conexão:', assembled.substring(0, 50) + '...');
       return createPool(assembled);
     }
