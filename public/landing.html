@@ -384,7 +384,9 @@
             </div>
         </div>
         <div class="hero-image">
-            <img src="./hero-onboarding.jpg" alt="Navigator Dashboard" loading="lazy">
+            <div style="width: 100%; height: 400px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 600;">
+                🤖 Navigator Dashboard
+            </div>
         </div>
     </section>
 
@@ -539,18 +541,17 @@
             submitBtn.disabled = true;
 
             try {
-                // Gerar subdomain válido
-                let subdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                // Gerar subdomain único baseado no nome da empresa + timestamp
+                let baseSubdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
                 
                 // Se o subdomain ficar vazio, usar uma versão simplificada
-                if (!subdomain || subdomain.length === 0) {
-                    subdomain = 'empresa-' + Date.now().toString().slice(-6);
+                if (!baseSubdomain || baseSubdomain.length === 0) {
+                    baseSubdomain = 'empresa';
                 }
                 
-                // Garantir que o subdomain tenha pelo menos 1 caractere
-                if (subdomain.length === 0) {
-                    subdomain = 'empresa';
-                }
+                // Adicionar timestamp para garantir unicidade
+                const timestamp = Date.now().toString().slice(-6);
+                const subdomain = `${baseSubdomain}-${timestamp}`;
 
                 console.log('Criando tenant:', { name: companyName, subdomain });
 
@@ -573,9 +574,30 @@
                     // Redirect to dashboard
                     window.location.href = `/inicio?tenant=${subdomain}`;
                 } else if (createResponse.status === 409) {
-                    console.log('Tenant já existe, redirecionando...');
-                    // Tenant already exists, redirect anyway
-                    window.location.href = `/inicio?tenant=${subdomain}`;
+                    console.log('Tenant já existe, tentando com subdomain diferente...');
+                    // Se o tenant já existe, tentar com um subdomain ligeiramente diferente
+                    const newSubdomain = `${baseSubdomain}-${Date.now()}`;
+                    console.log('Tentando com novo subdomain:', newSubdomain);
+                    
+                    // Tentar criar novamente com subdomain diferente
+                    const retryResponse = await fetch('/api/tenants', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            name: companyName,
+                            subdomain: newSubdomain
+                        })
+                    });
+                    
+                    if (retryResponse.ok) {
+                        window.location.href = `/inicio?tenant=${newSubdomain}`;
+                    } else {
+                        // Se ainda falhar, usar o tenant demo
+                        console.log('Usando tenant demo como fallback');
+                        window.location.href = `/inicio?tenant=demo`;
+                    }
                 } else {
                     const errorData = await createResponse.json();
                     console.error('Erro da API:', errorData);
