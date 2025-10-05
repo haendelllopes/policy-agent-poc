@@ -72,14 +72,20 @@ function createPool(connStr) {
     // Configurações otimizadas para serverless (Vercel)
     max: 1, // Máximo 1 conexão por função serverless
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 10000, // Timeout mais baixo
-    connectionTimeoutMillis: 5000, // Timeout mais alto para conexão inicial
-    acquireTimeoutMillis: 10000, // Timeout para adquirir conexão
-    // Configurações de retry
-    retryDelayMs: 1000,
-    retryAttempts: 3,
+    idleTimeoutMillis: 30000, // 30 segundos (aumentado)
+    connectionTimeoutMillis: 20000, // 20 segundos para conexão inicial (aumentado)
+    acquireTimeoutMillis: 25000, // 25 segundos para adquirir conexão (aumentado)
+    // Configurações de retry melhoradas
+    retryDelayMs: 2000, // 2 segundos entre tentativas
+    retryAttempts: 5, // Mais tentativas
     // Forçar IPv4
-    family: 4
+    family: 4,
+    // Configurações adicionais para estabilidade
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 0,
+    statement_timeout: 30000, // 30 segundos para queries
+    query_timeout: 25000, // 25 segundos para queries
+    application_name: 'navigator-app'
   });
 
   // Tratamento de erros do pool
@@ -100,8 +106,8 @@ function createPool(connStr) {
   return pool;
 }
 
-// Função para executar queries com retry
-async function query(text, params = [], retries = 3) {
+// Função para executar queries com retry melhorado
+async function query(text, params = [], retries = 5) {
   const pgPool = initializePool();
   
   if (!pgPool) {
@@ -118,15 +124,26 @@ async function query(text, params = [], retries = 3) {
     } catch (error) {
       console.error(`Erro na query (tentativa ${attempt}/${retries}):`, error.message);
       
-      // Se for erro de conexão e ainda há tentativas, aguardar e tentar novamente
-      if (attempt < retries && (
+      // Verificar se é um erro recuperável
+      const isRetryableError = (
         error.message.includes('connection terminated') ||
         error.message.includes('db_termination') ||
         error.message.includes('ENOTFOUND') ||
-        error.message.includes('timeout')
-      )) {
-        console.log(`Aguardando ${attempt * 1000}ms antes da próxima tentativa...`);
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        error.message.includes('timeout') ||
+        error.message.includes('ECONNRESET') ||
+        error.message.includes('ETIMEDOUT') ||
+        error.message.includes('Connection terminated due to connection timeout')
+      );
+      
+      // Se for erro de conexão e ainda há tentativas, aguardar e tentar novamente
+      if (attempt < retries && isRetryableError) {
+        // Backoff exponencial com jitter
+        const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
+        const jitter = Math.random() * 1000;
+        const delay = baseDelay + jitter;
+        
+        console.log(`Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
       

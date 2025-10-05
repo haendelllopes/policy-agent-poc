@@ -1653,13 +1653,24 @@ app.get('/api/health', async (req, res) => {
     if (usePostgres()) {
       try {
         const start = Date.now();
-        await query('SELECT 1 as test');
+        const result = await query('SELECT 1 as test, NOW() as current_time');
         health.database.status = 'connected';
         health.database.connectionTime = Date.now() - start;
+        
+        // Informações do pool
+        const pool = getPool();
+        if (pool) {
+          health.database.poolInfo = {
+            totalCount: pool.totalCount,
+            idleCount: pool.idleCount,
+            waitingCount: pool.waitingCount
+          };
+        }
       } catch (dbError) {
         health.database.status = 'error';
         health.database.error = dbError.message;
         health.ok = false;
+        console.error('Health check database error:', dbError);
       }
     }
 
