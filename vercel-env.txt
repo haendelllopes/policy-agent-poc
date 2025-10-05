@@ -16,3 +16,4 @@ N8N_WEBHOOK_URL=https://hndll.app.n8n.cloud/webhook/onboarding
 # 5. Environment: Production (ou All)
 # 6. Save e aguarde o redeploy automático
 
+
