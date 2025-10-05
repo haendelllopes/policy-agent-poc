@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigator - Plataforma de Gestão Corporativa</title>
+    <meta name="description" content="Automatize a gestão de funcionários, documentos e processos corporativos com Navigator. Centralize informações em uma única plataforma inteligente.">
+    <meta name="author" content="Navigator">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.6; 
+            color: #1a202c; 
+            background: #ffffff; 
+        }
+
+        /* Header */
+        .header { 
+            background: white; 
+            border-bottom: 1px solid #e2e8f0; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            backdrop-filter: blur(10px); 
+        }
+
+        .nav { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 1rem 2rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+
+        .logo { 
+            font-size: 1.5rem; 
+            font-weight: 700; 
+            color: #2563eb; 
+            text-decoration: none; 
+        }
+
+        .nav-links { 
+            display: flex; 
+            gap: 2rem; 
+            list-style: none; 
+        }
+
+        .nav-links a { 
+            color: #4a5568; 
+            text-decoration: none; 
+            font-weight: 500; 
+            transition: color 0.2s; 
+        }
+
+        .nav-links a:hover { 
+            color: #2563eb; 
+        }
+
+        .cta-button { 
+            background: #2563eb; 
+            color: white; 
+            padding: 0.75rem 1.5rem; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+            border: none; 
+            cursor: pointer; 
+        }
+
+        .cta-button:hover { 
+            background: #1d4ed8; 
+            transform: translateY(-1px); 
+        }
+
+        /* Hero Section */
+        .hero { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 4rem 2rem; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 4rem; 
+            align-items: center; 
+            min-height: 80vh; 
+        }
+
+        .hero-content h1 { 
+            font-size: 3.5rem; 
+            font-weight: 800; 
+            line-height: 1.1; 
+            margin-bottom: 1.5rem; 
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            background-clip: text; 
+        }
+
+        .hero-content p { 
+            font-size: 1.25rem; 
+            color: #64748b; 
+            margin-bottom: 2rem; 
+            line-height: 1.7; 
+        }
+
+        .hero-buttons { 
+            display: flex; 
+            gap: 1rem; 
+            flex-wrap: wrap; 
+        }
+
+        .btn-primary { 
+            background: #2563eb; 
+            color: white; 
+            padding: 1rem 2rem; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            font-size: 1.1rem; 
+            transition: all 0.3s; 
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); 
+        }
+
+        .btn-primary:hover { 
+            background: #1d4ed8; 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4); 
+        }
+
+        .btn-secondary { 
+            background: white; 
+            color: #2563eb; 
+            padding: 1rem 2rem; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            font-size: 1.1rem; 
+            border: 2px solid #2563eb; 
+            transition: all 0.3s; 
+            cursor: pointer; 
+        }
+
+        .btn-secondary:hover { 
+            background: #2563eb; 
+            color: white; 
+            transform: translateY(-2px); 
+        }
+
+        .hero-image { 
+            position: relative; 
+        }
+
+        .hero-image img { 
+            width: 100%; 
+            height: auto; 
+            border-radius: 20px; 
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15); 
+            transition: transform 0.3s; 
+        }
+
+        .hero-image:hover img { 
+            transform: scale(1.02); 
+        }
+
+        /* Features Section */
+        .features { 
+            background: #f8fafc; 
+            padding: 6rem 2rem; 
+        }
+
+        .features-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+
+        .features-header { 
+            text-align: center; 
+            margin-bottom: 4rem; 
+        }
+
+        .features-header h2 { 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            margin-bottom: 1rem; 
+            color: #1a202c; 
+        }
+
+        .features-header p { 
+            font-size: 1.25rem; 
+            color: #64748b; 
+            max-width: 600px; 
+            margin: 0 auto; 
+        }
+
+        .features-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 2rem; 
+        }
+
+        .feature-card { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); 
+            transition: all 0.3s; 
+            border: 1px solid #e2e8f0; 
+        }
+
+        .feature-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); 
+        }
+
+        .feature-icon { 
+            width: 60px; 
+            height: 60px; 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8); 
+            border-radius: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 1.5rem; 
+            font-size: 1.5rem; 
+        }
+
+        .feature-card h3 { 
+            font-size: 1.5rem; 
+            font-weight: 600; 
+            margin-bottom: 1rem; 
+            color: #1a202c; 
+        }
+
+        .feature-card p { 
+            color: #64748b; 
+            line-height: 1.6; 
+        }
+
+        /* CTA Section */
+        .cta { 
+            background: white; 
+            padding: 6rem 2rem; 
+            text-align: center; 
+        }
+
+        .cta-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+
+        .cta h2 { 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            margin-bottom: 1rem; 
+            color: #1a202c; 
+        }
+
+        .cta p { 
+            font-size: 1.25rem; 
+            color: #64748b; 
+            margin-bottom: 2rem; 
+        }
+
+        /* Footer */
+        .footer { 
+            background: #1a202c; 
+            color: white; 
+            padding: 3rem 2rem 2rem; 
+        }
+
+        .footer-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 2rem; 
+        }
+
+        .footer-section h3 { 
+            font-size: 1.25rem; 
+            font-weight: 600; 
+            margin-bottom: 1rem; 
+        }
+
+        .footer-section p, 
+        .footer-section a { 
+            color: #a0aec0; 
+            text-decoration: none; 
+            line-height: 1.6; 
+        }
+
+        .footer-section a:hover { 
+            color: white; 
+        }
+
+        .footer-bottom { 
+            border-top: 1px solid #2d3748; 
+            margin-top: 2rem; 
+            padding-top: 2rem; 
+            text-align: center; 
+            color: #a0aec0; 
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) { 
+            .nav { 
+                padding: 1rem; 
+                flex-direction: column; 
+                gap: 1rem; 
+            }
+
+            .nav-links { 
+                gap: 1rem; 
+            }
+
+            .hero { 
+                grid-template-columns: 1fr; 
+                gap: 2rem; 
+                padding: 2rem 1rem; 
+                text-align: center; 
+            }
+
+            .hero-content h1 { 
+                font-size: 2.5rem; 
+            }
+
+            .hero-buttons { 
+                justify-content: center; 
+            }
+
+            .features { 
+                padding: 4rem 1rem; 
+            }
+
+            .features-header h2 { 
+                font-size: 2rem; 
+            }
+
+            .cta { 
+                padding: 4rem 1rem; 
+            }
+
+            .cta h2 { 
+                font-size: 2rem; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo"> Navigator</a>
+            <ul class="nav-links">
+                <li><a href="#features">Recursos</a></li>
+                <li><a href="#contact">Contato</a></li>
+            </ul>
+            <a href="#" class="cta-button" onclick="showLoginModal()">Entrar</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Transforme sua Gestão Corporativa</h1>
+            <p>
+                O Navigator é a plataforma completa para gerenciar funcionários, 
+                documentos e processos corporativos. Centralize informações, 
+                automatize tarefas e tome decisões baseadas em dados reais.
+            </p>
+            <div class="hero-buttons">
+                <button class="btn-primary" onclick="showLoginModal()">
+                    Começar Agora
+                </button>
+                <button class="btn-secondary" onclick="scrollToFeatures()">
+                    Ver Recursos
+                </button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <img src="./hero-onboarding.jpg" alt="Navigator Dashboard" loading="lazy">
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-container">
+            <div class="features-header">
+                <h2>Recursos Poderosos</h2>
+                <p>
+                    Tudo que você precisa para gerenciar sua empresa de forma eficiente
+                </p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Gestão de Funcionários</h3>
+                    <p>
+                        Controle completo de dados dos colaboradores, 
+                        documentos pessoais e histórico profissional em um só lugar.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Gestão de Documentos</h3>
+                    <p>
+                        Organize, armazene e gerencie todos os documentos 
+                        corporativos com segurança e facilidade.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Estrutura Organizacional</h3>
+                    <p>
+                        Visualize e gerencie departamentos, cargos e 
+                        hierarquias organizacionais de forma intuitiva.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"></div>
+                    <h3>Relatórios e Analytics</h3>
+                    <p>
+                        Acompanhe métricas importantes e tome decisões 
+                        baseadas em dados reais e atualizados.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="cta-container">
+            <h2>Pronto para Transformar sua Empresa?</h2>
+            <p>
+                Junte-se a centenas de empresas que já confiam no Navigator 
+                para gerenciar seus processos corporativos.
+            </p>
+            <div class="hero-buttons">
+                <button class="btn-primary" onclick="showLoginModal()">
+                    Começar Gratuitamente
+                </button>
+                <button class="btn-secondary" onclick="showContactModal()">
+                    Falar com Especialista
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Navigator</h3>
+                <p>
+                    A plataforma completa para gestão corporativa, 
+                    desenvolvida para simplificar e otimizar os 
+                    processos da sua empresa.
+                </p>
+            </div>
+            <div class="footer-section">
+                <h3>Produto</h3>
+                <p><a href="#features">Recursos</a></p>
+                <p><a href="#contact">Suporte</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Empresa</h3>
+                <p><a href="#contact">Sobre Nós</a></p>
+                <p><a href="#contact">Contato</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Navigator. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Login Modal -->
+    <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%;">
+            <h2 style="margin-bottom: 1rem; text-align: center;">Acessar Navigator</h2>
+            <form id="loginForm">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nome da Empresa:</label>
+                    <input type="text" id="companyName" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="Digite o nome da sua empresa" required>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">E-mail:</label>
+                    <input type="email" id="userEmail" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="seu@email.com" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-bottom: 1rem;">
+                    Entrar no Sistema
+                </button>
+                <button type="button" onclick="closeLoginModal()" style="width: 100%; background: #f1f5f9; color: #64748b; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer;">
+                    Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scrolling
+        function scrollToFeatures() {
+            document.getElementById('features').scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        // Modal functions
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        // Login form handling
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const companyName = document.getElementById('companyName').value.trim();
+            const userEmail = document.getElementById('userEmail').value.trim();
+            
+            if (!companyName || !userEmail) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Carregando...';
+            submitBtn.disabled = true;
+
+            try {
+                // Create tenant if it doesn't exist
+                const createResponse = await fetch('/api/tenants', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: companyName,
+                        subdomain: companyName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+                        email: userEmail
+                    })
+                });
+
+                if (createResponse.ok || createResponse.status === 409) {
+                    // Redirect to dashboard
+                    const subdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    window.location.href = `/inicio?tenant=${subdomain}`;
+                } else {
+                    throw new Error('Erro ao criar conta');
+                }
+            } catch (error) {
+                console.error('Erro no login:', error);
+                alert('Erro ao acessar o sistema. Tente novamente.');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLoginModal();
+            }
+        });
+
+        // Show contact modal (placeholder)
+        function showContactModal() {
+            alert('Entre em contato conosco pelo e-mail: contato@navigator.com');
+        }
+
+        console.log(' Navigator Landing Page carregada!');
+    </script>
+</body>
+</html>
