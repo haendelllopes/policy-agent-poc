@@ -16,9 +16,17 @@ function initializePool() {
     const user = process.env.PGUSER;
     const password = process.env.PGPASSWORD;
     
+    console.log('DATABASE_URL ausente. Verificando variáveis PG*:', {
+      PGHOST: host ? 'SET' : 'MISSING',
+      PGPORT: port,
+      PGDATABASE: database ? 'SET' : 'MISSING',
+      PGUSER: user ? 'SET' : 'MISSING',
+      PGPASSWORD: password ? 'SET' : 'MISSING'
+    });
+    
     if (host && database && user && password) {
       const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
-      console.warn('DATABASE_URL ausente. Usando variáveis PG* para montar a conexão.');
+      console.log('Usando variáveis PG* para montar a conexão:', assembled.substring(0, 50) + '...');
       return createPool(assembled);
     }
     
