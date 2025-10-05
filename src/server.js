@@ -206,13 +206,6 @@ function usePostgres() {
     if (!getPool()) {
       initializePool();
     }
-    
-    // Em produção (Vercel), priorizar dados demo se PostgreSQL falhar
-    if (process.env.VERCEL) {
-      console.log('Ambiente Vercel detectado - usando dados demo como fallback principal');
-      return false; // Forçar uso de dados demo em Vercel por enquanto
-    }
-    
     return Boolean(getPool());
   } catch (_e) {
     console.log('PostgreSQL não disponível, usando dados demo');
@@ -1316,7 +1309,7 @@ app.post('/api/departments', async (req, res) => {
       return res.status(400).json({ error: 'Nome do departamento é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1343,7 +1336,7 @@ app.put('/api/departments/:id', async (req, res) => {
       return res.status(400).json({ error: 'Nome do departamento é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1369,7 +1362,7 @@ app.delete('/api/departments/:id', async (req, res) => {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1386,7 +1379,7 @@ app.delete('/api/departments/:id', async (req, res) => {
 app.get('/api/categories', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1408,7 +1401,7 @@ app.post('/api/categories', async (req, res) => {
       return res.status(400).json({ error: 'Nome da categoria é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1435,7 +1428,7 @@ app.put('/api/categories/:id', async (req, res) => {
       return res.status(400).json({ error: 'Nome da categoria é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1461,7 +1454,7 @@ app.delete('/api/categories/:id', async (req, res) => {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1478,7 +1471,7 @@ app.delete('/api/categories/:id', async (req, res) => {
 app.get('/api/positions', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1500,7 +1493,7 @@ app.post('/api/positions', async (req, res) => {
       return res.status(400).json({ error: 'Nome do cargo é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1527,7 +1520,7 @@ app.put('/api/positions/:id', async (req, res) => {
       return res.status(400).json({ error: 'Nome do cargo é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1553,7 +1546,7 @@ app.delete('/api/positions/:id', async (req, res) => {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1570,7 +1563,7 @@ app.delete('/api/positions/:id', async (req, res) => {
 app.get('/api/tags', async (req, res) => {
   try {
     const tenantSubdomain = req.tenantSubdomain;
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1592,7 +1585,7 @@ app.post('/api/tags', async (req, res) => {
       return res.status(400).json({ error: 'Nome da tag é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1619,7 +1612,7 @@ app.put('/api/tags/:id', async (req, res) => {
       return res.status(400).json({ error: 'Nome da tag é obrigatório' });
     }
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1645,7 +1638,7 @@ app.delete('/api/tags/:id', async (req, res) => {
     const { id } = req.params;
     const tenantSubdomain = req.tenantSubdomain;
     
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -2184,33 +2177,57 @@ app.post('/api/debug/setup-rls', async (req, res) => {
   }
 });
 
-// Endpoint para teste simples de conectividade
-app.get('/api/debug/test-connection', async (req, res) => {
+// Endpoint para diagnóstico detalhado da conexão PostgreSQL
+app.get('/api/debug/connection-details', async (req, res) => {
   try {
-    console.log('Testando conectividade PostgreSQL...');
-    
-    if (!usePostgres()) {
-      return res.status(500).json({ 
-        error: 'PostgreSQL não configurado',
-        fallback: 'Usando dados demo'
-      });
+    const details = {
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        VERCEL: process.env.VERCEL,
+        DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT_SET',
+        PGHOST: process.env.PGHOST || 'NOT_SET',
+        PGPORT: process.env.PGPORT || 'NOT_SET',
+        PGDATABASE: process.env.PGDATABASE || 'NOT_SET',
+        PGUSER: process.env.PGUSER || 'NOT_SET',
+        PGPASSWORD: process.env.PGPASSWORD ? 'SET' : 'NOT_SET'
+      },
+      connection: {
+        poolExists: Boolean(getPool()),
+        poolConfig: getPool() ? {
+          totalCount: getPool().totalCount,
+          idleCount: getPool().idleCount,
+          waitingCount: getPool().waitingCount
+        } : null
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    // Tentar uma conexão simples
+    if (usePostgres()) {
+      try {
+        const startTime = Date.now();
+        const result = await query('SELECT 1 as test, NOW() as current_time');
+        const endTime = Date.now();
+        
+        details.connection.test = {
+          success: true,
+          duration: endTime - startTime,
+          result: result.rows[0]
+        };
+      } catch (error) {
+        details.connection.test = {
+          success: false,
+          error: error.message,
+          code: error.code
+        };
+      }
     }
 
-    // Teste simples - apenas SELECT 1
-    const result = await query('SELECT 1 as test, NOW() as current_time');
-    
-    res.json({ 
-      success: true,
-      message: 'Conexão PostgreSQL funcionando!',
-      data: result.rows[0],
-      timestamp: new Date().toISOString()
-    });
+    res.json(details);
   } catch (error) {
-    console.error('Erro no teste de conectividade:', error);
     res.status(500).json({ 
-      error: 'Falha na conexão PostgreSQL',
-      details: error.message,
-      fallback: 'Usando dados demo'
+      error: 'Erro no diagnóstico', 
+      details: error.message 
     });
   }
 });
