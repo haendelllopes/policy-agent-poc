@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test - Simple</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .header { border-bottom: 1px solid #ddd; padding-bottom: 20px; margin-bottom: 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .card { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff; }
+        .card h3 { margin: 0 0 10px 0; color: #333; }
+        .card-value { font-size: 2em; font-weight: bold; color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dashboard Test - Simple</h1>
+            <p>Teste básico do dashboard</p>
+        </div>
+        
+        <div class="cards">
+            <div class="card">
+                <h3>Total Funcionários</h3>
+                <div class="card-value" id="total-employees">-</div>
+            </div>
+            <div class="card">
+                <h3>Total Documentos</h3>
+                <div class="card-value" id="total-documents">-</div>
+            </div>
+            <div class="card">
+                <h3>Departamentos</h3>
+                <div class="card-value" id="total-departments">-</div>
+            </div>
+            <div class="card">
+                <h3>Progresso</h3>
+                <div class="card-value" id="progress">-</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Dashboard carregado!');
+        
+        async function loadData() {
+            const tenant = new URLSearchParams(location.search).get('tenant') || 'demo';
+            console.log('Tenant:', tenant);
+            
+            try {
+                const response = await fetch(/api/users?tenant=);
+                const users = await response.json();
+                document.getElementById('total-employees').textContent = users.length;
+                console.log('Usuários carregados:', users.length);
+            } catch (error) {
+                console.error('Erro ao carregar usuários:', error);
+                document.getElementById('total-employees').textContent = 'Erro';
+            }
+            
+            try {
+                const response = await fetch(/api/documents?tenant=);
+                const docs = await response.json();
+                document.getElementById('total-documents').textContent = docs.length;
+                console.log('Documentos carregados:', docs.length);
+            } catch (error) {
+                console.error('Erro ao carregar documentos:', error);
+                document.getElementById('total-documents').textContent = 'Erro';
+            }
+            
+            try {
+                const response = await fetch(/api/departments?tenant=);
+                const deps = await response.json();
+                document.getElementById('total-departments').textContent = deps.length;
+                console.log('Departamentos carregados:', deps.length);
+            } catch (error) {
+                console.error('Erro ao carregar departamentos:', error);
+                document.getElementById('total-departments').textContent = 'Erro';
+            }
+            
+            document.getElementById('progress').textContent = '75%';
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadData);
+    </script>
+</body>
+</html>
