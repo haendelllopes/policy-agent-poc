@@ -124,7 +124,7 @@ app.get('/api/tenants', async (_req, res) => {
           initializePool();
         }
         
-        const result = await query('SELECT id, name, subdomain FROM tenants ORDER BY name');
+        const result = await query('SELECT id, name, subdomain FROM public.tenants ORDER BY name');
         return res.json(result.rows);
       } catch (error) {
         console.error('Erro ao buscar tenants no PostgreSQL:', error);
@@ -1519,7 +1519,7 @@ app.get('/api/debug/tenants', async (req, res) => {
       const result = await query(`
         SELECT column_name, data_type 
         FROM information_schema.columns 
-        WHERE table_name = 'tenants' 
+        WHERE table_schema = 'public' AND table_name = 'tenants' 
         ORDER BY ordinal_position
       `);
       
@@ -1547,7 +1547,7 @@ app.post('/api/tenants/demo', async (req, res) => {
       }
       
       // Verificar se já existe
-      const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', ['demo']);
+      const existing = await query('SELECT id FROM public.tenants WHERE subdomain = $1', ['demo']);
       if (existing.rows.length > 0) {
         return res.json({ message: 'Tenant demo já existe', tenant: existing.rows[0] });
       }
@@ -1555,7 +1555,7 @@ app.post('/api/tenants/demo', async (req, res) => {
       // Criar tenant demo
       const demoId = uuidv4();
       await query(
-        'INSERT INTO tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, $4)',
+        'INSERT INTO public.tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, $4)',
         [demoId, 'Empresa Demo', 'demo', new Date().toISOString()]
       );
       
