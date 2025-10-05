@@ -18,15 +18,22 @@ app.use(express.static('public'));
 app.use('/api', (req, res, next) => {
   const host = req.get('host') || '';
   const subdomain = host.split('.')[0];
-  
-  // Se não for localhost, extrair subdomínio
-  if (!host.includes('localhost') && !host.includes('onrender.com')) {
-    req.tenantSubdomain = subdomain;
-  } else {
-    // Para desenvolvimento, usar subdomain padrão
-    req.tenantSubdomain = req.query.tenant || 'demo';
+
+  // 1) Se o tenant vier via querystring, priorizar
+  if (req.query && req.query.tenant) {
+    req.tenantSubdomain = String(req.query.tenant);
+    return next();
   }
   
+  // 2) Em ambientes locais ou hosts sem subdomínio real, usar default
+  const isLocalLike = host.includes('localhost') || host.includes('onrender.com') || host.includes('vercel.app');
+  if (isLocalLike) {
+    req.tenantSubdomain = 'demo';
+    return next();
+  }
+  
+  // 3) Caso contrário, usar subdomínio do host
+  req.tenantSubdomain = subdomain;
   next();
 });
 
