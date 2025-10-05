@@ -9,33 +9,20 @@ function initializePool() {
   const connectionString = process.env.DATABASE_URL;
   
   if (!connectionString) {
-    // Tentar montar a conexão a partir de variáveis separadas (fallback)
-    const host = process.env.PGHOST;
-    const port = process.env.PGPORT || '5432';
-    const database = process.env.PGDATABASE;
+    // Tentar montar a conexão usando Session Pooler do Supabase
     const user = process.env.PGUSER;
     const password = process.env.PGPASSWORD;
     
     console.log('DATABASE_URL ausente. Verificando variáveis PG*:', {
-      PGHOST: host ? 'SET' : 'MISSING',
-      PGPORT: port,
-      PGDATABASE: database ? 'SET' : 'MISSING',
       PGUSER: user ? 'SET' : 'MISSING',
       PGPASSWORD: password ? 'SET' : 'MISSING'
     });
     
-    if (host && database && user && password) {
-      // Se for host do Supabase direto, usar session pooler (IPv4)
-      let finalHost = host;
-      if (host.includes('supabase.co')) {
-        // Usar o pooler genérico do Supabase (mais confiável)
-        finalHost = 'aws-1-sa-east-1.pooler.supabase.com';
-        console.log('Usando session pooler Supabase para IPv4:', finalHost);
-      }
-      
-      const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${finalHost}:${port}/${database}`;
-      console.log('Usando variáveis PG* para montar a conexão:', assembled.substring(0, 50) + '...');
-      return createPool(assembled);
+    if (user && password) {
+      // Usar Session Pooler do Supabase (IPv4 compatible)
+      const sessionPoolerUrl = `postgresql://${user}:${encodeURIComponent(password)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
+      console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
+      return createPool(sessionPoolerUrl);
     }
     
     console.warn('DATABASE_URL não encontrada e variáveis PG* ausentes. Usando SQLite local');
@@ -43,21 +30,7 @@ function initializePool() {
   }
   
   try {
-    // Validar se a URL é válida
-    if (!connectionString.includes('postgres://') && !connectionString.includes('postgresql://')) {
-      console.warn('DATABASE_URL inválida. Tentando interpretar com variáveis PG*...');
-      const host = process.env.PGHOST;
-      const port = process.env.PGPORT || '5432';
-      const database = process.env.PGDATABASE;
-      const user = process.env.PGUSER;
-      const password = process.env.PGPASSWORD;
-      if (host && database && user && password) {
-        const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
-        return createPool(assembled);
-      }
-      console.warn('Sem variáveis PG*. Usando SQLite local');
-      return null;
-    }
+    console.log('Usando DATABASE_URL fornecida');
     return createPool(connectionString);
   } catch (error) {
     console.error('Erro ao criar pool PostgreSQL:', error.message);
