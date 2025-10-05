@@ -2167,3 +2167,34 @@ app.post('/api/debug/setup-rls', async (req, res) => {
   }
 });
 
+// Endpoint para teste simples de conectividade
+app.get('/api/debug/test-connection', async (req, res) => {
+  try {
+    console.log('Testando conectividade PostgreSQL...');
+    
+    if (!usePostgres()) {
+      return res.status(500).json({ 
+        error: 'PostgreSQL não configurado',
+        fallback: 'Usando dados demo'
+      });
+    }
+
+    // Teste simples - apenas SELECT 1
+    const result = await query('SELECT 1 as test, NOW() as current_time');
+    
+    res.json({ 
+      success: true,
+      message: 'Conexão PostgreSQL funcionando!',
+      data: result.rows[0],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Erro no teste de conectividade:', error);
+    res.status(500).json({ 
+      error: 'Falha na conexão PostgreSQL',
+      details: error.message,
+      fallback: 'Usando dados demo'
+    });
+  }
+});
+
