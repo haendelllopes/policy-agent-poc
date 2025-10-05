@@ -156,6 +156,255 @@
             color: #64748b; 
         }
         
+        /* Users Section Styles */
+        .users-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            gap: 24px;
+        }
+
+        .users-title h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .users-title p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .users-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary, .btn-secondary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .users-filters {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box svg {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 44px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .filter-select select {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            min-width: 160px;
+        }
+
+        .users-table-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th {
+            background: #f8fafc;
+            padding: 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .users-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        .users-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.active {
+            background: #f0fdf4;
+            color: #22c55e;
+        }
+
+        .status-badge.inactive {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn.edit {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .action-btn.edit:hover {
+            background: #dbeafe;
+        }
+
+        .action-btn.delete {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .action-btn.delete:hover {
+            background: #fee2e2;
+        }
+
+        .loading-row {
+            text-align: center;
+            padding: 48px;
+            color: #64748b;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .pagination-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: #f8fafc;
+            color: #3b82f6;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #64748b;
+            font-size: 14px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) { 
             .sidebar { 
@@ -171,7 +420,25 @@
             
             .cards-grid { 
                 grid-template-columns: 1fr; 
-            } 
+            }
+
+            .users-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 16px;
+            }
+
+            .users-filters {
+                flex-direction: column;
+            }
+
+            .users-table-container {
+                overflow-x: auto;
+            }
+
+            .users-table {
+                min-width: 600px;
+            }
         }
     </style>
 </head>
@@ -260,11 +527,94 @@
                 </div>
             </div>
 
-            <!-- Other Sections (placeholder) -->
+            <!-- Users Section -->
             <div id="users-section" class="section" style="display: none;">
-                <div class="card">
-                    <h2>Gestão de Funcionários</h2>
-                    <p>Em desenvolvimento...</p>
+                <!-- Header with Actions -->
+                <div class="users-header">
+                    <div class="users-title">
+                        <h2>Funcionários</h2>
+                        <p>Gerencie os funcionários da empresa</p>
+                    </div>
+                    <div class="users-actions">
+                        <button class="btn-secondary" onclick="refreshUsers()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Atualizar
+                        </button>
+                        <button class="btn-primary" onclick="openAddUserModal()">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Adicionar Funcionário
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="users-filters">
+                    <div class="search-box">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="userSearch" placeholder="Buscar funcionários..." onkeyup="filterUsers()">
+                    </div>
+                    <div class="filter-select">
+                        <select id="departmentFilter" onchange="filterUsers()">
+                            <option value="">Todos os departamentos</option>
+                        </select>
+                    </div>
+                    <div class="filter-select">
+                        <select id="statusFilter" onchange="filterUsers()">
+                            <option value="">Todos os status</option>
+                            <option value="active">Ativo</option>
+                            <option value="inactive">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="users-table-container">
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Departamento</th>
+                                <th>Cargo</th>
+                                <th>Status</th>
+                                <th>Data de Admissão</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="7" class="loading-row">
+                                    <div class="loading-spinner"></div>
+                                    Carregando funcionários...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination">
+                    <button class="pagination-btn" onclick="previousPage()" disabled id="prevBtn">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        Anterior
+                    </button>
+                    <span class="pagination-info">
+                        Página <span id="currentPage">1</span> de <span id="totalPages">1</span>
+                    </span>
+                    <button class="pagination-btn" onclick="nextPage()" disabled id="nextBtn">
+                        Próximo
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
 
@@ -369,6 +719,214 @@
             const targetSection = document.getElementById(`${sectionName}-section`);
             if (targetSection) {
                 targetSection.style.display = 'block';
+            }
+            
+            // Adicionar active ao nav-item
+            const activeNavItem = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+        }
+
+        // Variáveis globais para funcionários
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const usersPerPage = 10;
+
+        // Função para carregar funcionários
+        async function loadUsers() {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            console.log(' Carregando funcionários para tenant:', tenant);
+            
+            try {
+                const response = await fetchData(`/api/users?tenant=${tenant}`);
+                allUsers = response;
+                filteredUsers = [...allUsers];
+                
+                console.log(' Funcionários carregados:', allUsers.length);
+                renderUsers();
+                populateDepartmentFilter();
+                
+            } catch (error) {
+                console.error(' Erro ao carregar funcionários:', error);
+                showUsersError('Erro ao carregar funcionários');
+            }
+        }
+
+        // Função para renderizar a tabela de funcionários
+        function renderUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="loading-row">
+                            Nenhum funcionário encontrado
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = startIndex + usersPerPage;
+            const pageUsers = filteredUsers.slice(startIndex, endIndex);
+
+            tbody.innerHTML = pageUsers.map(user => `
+                <tr>
+                    <td>
+                        <div style="font-weight: 500;">${user.name || 'N/A'}</div>
+                    </td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.department || 'N/A'}</td>
+                    <td>${user.position || 'N/A'}</td>
+                    <td>
+                        <span class="status-badge ${user.status || 'active'}">
+                            ${user.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </span>
+                    </td>
+                    <td>${user.start_date ? new Date(user.start_date).toLocaleDateString('pt-BR') : 'N/A'}</td>
+                    <td>
+                        <div class="user-actions">
+                            <button class="action-btn edit" onclick="editUser('${user.id}')" title="Editar">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteUser('${user.id}')" title="Excluir">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            updatePagination();
+        }
+
+        // Função para filtrar funcionários
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const departmentFilter = document.getElementById('departmentFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredUsers = allUsers.filter(user => {
+                const matchesSearch = !searchTerm || 
+                    user.name?.toLowerCase().includes(searchTerm) ||
+                    user.email?.toLowerCase().includes(searchTerm) ||
+                    user.position?.toLowerCase().includes(searchTerm);
+
+                const matchesDepartment = !departmentFilter || user.department === departmentFilter;
+                const matchesStatus = !statusFilter || user.status === statusFilter;
+
+                return matchesSearch && matchesDepartment && matchesStatus;
+            });
+
+            currentPage = 1;
+            renderUsers();
+        }
+
+        // Função para popular o filtro de departamentos
+        function populateDepartmentFilter() {
+            const departmentFilter = document.getElementById('departmentFilter');
+            const departments = [...new Set(allUsers.map(user => user.department).filter(Boolean))];
+            
+            // Limpar opções existentes (exceto "Todos os departamentos")
+            departmentFilter.innerHTML = '<option value="">Todos os departamentos</option>';
+            
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentFilter.appendChild(option);
+            });
+        }
+
+        // Funções de paginação
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderUsers();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderUsers();
+            }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+            
+            document.getElementById('currentPage').textContent = currentPage;
+            document.getElementById('totalPages').textContent = totalPages;
+            
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+        }
+
+        // Funções de ação
+        function refreshUsers() {
+            loadUsers();
+        }
+
+        function editUser(userId) {
+            console.log(' Editar usuário:', userId);
+            alert('Funcionalidade de edição será implementada em breve!');
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Tem certeza que deseja excluir este funcionário?')) {
+                console.log(' Excluir usuário:', userId);
+                alert('Funcionalidade de exclusão será implementada em breve!');
+            }
+        }
+
+        function openAddUserModal() {
+            console.log(' Abrir modal de adicionar usuário');
+            alert('Funcionalidade de adicionar usuário será implementada em breve!');
+        }
+
+        function showUsersError(message) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="loading-row" style="color: #ef4444;">
+                        ${message}
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Função para alternar seções (atualizada)
+        function showSection(sectionName) {
+            console.log(' Alternando para seção:', sectionName);
+            
+            // Esconder todas as seções
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remover active de todos os nav-items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Mostrar seção selecionada
+            const targetSection = document.getElementById(`${sectionName}-section`);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+                
+                // Carregar dados específicos da seção
+                if (sectionName === 'users') {
+                    loadUsers();
+                }
             }
             
             // Adicionar active ao nav-item
