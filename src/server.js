@@ -1583,7 +1583,7 @@ app.get('/api/debug/tenants', async (req, res) => {
 // Endpoint para criar tenant demo manualmente
 app.post('/api/tenants/demo', async (req, res) => {
   try {
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // Garantir que o pool está inicializado
       if (!getPool()) {
         console.log('Inicializando pool PostgreSQL...');
@@ -1605,10 +1605,26 @@ app.post('/api/tenants/demo', async (req, res) => {
       
       res.json({ message: 'Tenant demo criado com sucesso', tenant: { id: demoId, name: 'Empresa Demo', subdomain: 'demo' } });
     } else {
-      res.status(500).json({ error: 'DATABASE_URL não configurada' });
+      res.status(500).json({ error: 'PostgreSQL não configurado' });
     }
   } catch (error) {
     console.error('Erro ao criar tenant demo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+// Endpoint para forçar migração
+app.post('/api/debug/migrate', async (req, res) => {
+  try {
+    if (usePostgres()) {
+      console.log('Forçando migração PostgreSQL...');
+      await migratePG();
+      res.json({ message: 'Migração executada com sucesso' });
+    } else {
+      res.status(500).json({ error: 'PostgreSQL não configurado' });
+    }
+  } catch (error) {
+    console.error('Erro na migração forçada:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
