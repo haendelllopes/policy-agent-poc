@@ -27,8 +27,9 @@ function initializePool() {
     if (host && database && user && password) {
       // Se for host do Supabase direto, usar session pooler (IPv4)
       let finalHost = host;
-      if (host.includes('db.gxqwfltteimexngybwna.supabase.co')) {
-        finalHost = 'aws-1-sa-east-1.pooler.supabase.com';
+      if (host.includes('supabase.co')) {
+        // Usar o pooler específico do projeto
+        finalHost = host.replace('.supabase.co', '.pooler.supabase.co');
         console.log('Usando session pooler Supabase para IPv4:', finalHost);
       }
       
