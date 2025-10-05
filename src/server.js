@@ -2139,3 +2139,31 @@ app.post('/api/debug/migrate', async (req, res) => {
   }
 });
 
+// Endpoint para configurar RLS no Supabase
+app.post('/api/debug/setup-rls', async (req, res) => {
+  try {
+    if (!usePostgres()) {
+      return res.status(500).json({ error: 'PostgreSQL não configurado' });
+    }
+
+    console.log('Configurando RLS no Supabase...');
+    
+    // Read the RLS setup SQL file
+    const fs = require('fs');
+    const sqlPath = path.join(__dirname, '../supabase-rls-setup.sql');
+    const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+    
+    // Execute the SQL script
+    await query(sqlContent);
+    
+    console.log('RLS configurado com sucesso!');
+    res.json({ 
+      message: 'RLS configurado com sucesso! Todas as tabelas agora têm Row Level Security habilitado.',
+      details: 'Políticas criadas para service_role e usuários autenticados'
+    });
+  } catch (error) {
+    console.error('Erro ao configurar RLS:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
