@@ -1496,3 +1496,30 @@ app.get('/api/health', (req, res) => {
     time: new Date().toISOString(),
   });
 });
+
+// Endpoint para criar tenant demo manualmente
+app.post('/api/tenants/demo', async (req, res) => {
+  try {
+    if (process.env.DATABASE_URL) {
+      // Verificar se já existe
+      const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', ['demo']);
+      if (existing.rows.length > 0) {
+        return res.json({ message: 'Tenant demo já existe', tenant: existing.rows[0] });
+      }
+      
+      // Criar tenant demo
+      const demoId = uuidv4();
+      await query(
+        'INSERT INTO tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, $4)',
+        [demoId, 'Empresa Demo', 'demo', new Date().toISOString()]
+      );
+      
+      res.json({ message: 'Tenant demo criado com sucesso', tenant: { id: demoId, name: 'Empresa Demo', subdomain: 'demo' } });
+    } else {
+      res.status(500).json({ error: 'DATABASE_URL não configurada' });
+    }
+  } catch (error) {
+    console.error('Erro ao criar tenant demo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
