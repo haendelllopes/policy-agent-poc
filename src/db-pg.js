@@ -69,31 +69,69 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
+    // Configurações otimizadas para serverless (Vercel)
+    max: 1, // Máximo 1 conexão por função serverless
+    min: 0, // Sem conexões mínimas
+    idleTimeoutMillis: 10000, // Timeout mais baixo
+    connectionTimeoutMillis: 5000, // Timeout mais alto para conexão inicial
+    acquireTimeoutMillis: 10000, // Timeout para adquirir conexão
+    // Configurações de retry
+    retryDelayMs: 1000,
+    retryAttempts: 3,
+    // Forçar IPv4
+    family: 4
   });
-  console.log('Pool PostgreSQL inicializado');
+
+  // Tratamento de erros do pool
+  pool.on('error', (err) => {
+    console.error('Erro inesperado no pool PostgreSQL:', err);
+    // Não fechar o pool em caso de erro, deixar o Vercel gerenciar
+  });
+
+  pool.on('connect', (client) => {
+    console.log('Nova conexão PostgreSQL estabelecida');
+  });
+
+  pool.on('remove', (client) => {
+    console.log('Conexão PostgreSQL removida do pool');
+  });
+
+  console.log('Pool PostgreSQL inicializado com configurações serverless');
   return pool;
 }
 
-// Função para executar queries
-async function query(text, params = []) {
+// Função para executar queries com retry
+async function query(text, params = [], retries = 3) {
   const pgPool = initializePool();
   
   if (!pgPool) {
     throw new Error('Pool PostgreSQL não inicializado');
   }
   
-  try {
-    const start = Date.now();
-    const res = await pgPool.query(text, params);
-    const duration = Date.now() - start;
-    console.log('Query executada', { text, duration, rows: res.rowCount });
-    return res;
-  } catch (error) {
-    console.error('Erro na query:', error);
-    throw error;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const start = Date.now();
+      const res = await pgPool.query(text, params);
+      const duration = Date.now() - start;
+      console.log('Query executada', { text: text.substring(0, 50) + '...', duration, rows: res.rowCount });
+      return res;
+    } catch (error) {
+      console.error(`Erro na query (tentativa ${attempt}/${retries}):`, error.message);
+      
+      // Se for erro de conexão e ainda há tentativas, aguardar e tentar novamente
+      if (attempt < retries && (
+        error.message.includes('connection terminated') ||
+        error.message.includes('db_termination') ||
+        error.message.includes('ENOTFOUND') ||
+        error.message.includes('timeout')
+      )) {
+        console.log(`Aguardando ${attempt * 1000}ms antes da próxima tentativa...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      
+      throw error;
+    }
   }
 }
 

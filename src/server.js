@@ -1532,6 +1532,10 @@ async function initializeDatabase() {
       console.log('Inicializando PostgreSQL...');
       initializePool();
       if (getPool()) {
+        // Testar conexão com uma query simples
+        await query('SELECT 1 as test');
+        console.log('Conexão PostgreSQL testada com sucesso');
+        
         await migratePG();
         console.log('PostgreSQL inicializado com sucesso!');
         return;
@@ -1539,7 +1543,20 @@ async function initializeDatabase() {
         console.warn('Pool PostgreSQL não disponível após initializePool()');
       }
     } catch (error) {
-      console.error('Erro ao inicializar PostgreSQL:', error);
+      console.error('Erro ao inicializar PostgreSQL:', error.message);
+      if (error.message.includes('db_termination') || error.message.includes('connection terminated')) {
+        console.log('Erro de conexão detectado, aguardando antes de tentar novamente...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+          console.log('Tentando reconectar...');
+          await query('SELECT 1 as test');
+          await migratePG();
+          console.log('PostgreSQL reconectado com sucesso!');
+          return;
+        } catch (retryError) {
+          console.error('Falha na reconexão:', retryError.message);
+        }
+      }
       console.log('Usando SQLite como fallback...');
     }
     
@@ -1592,14 +1609,43 @@ if (require.main === module) {
   bootstrap();
 }
 
-// Healthcheck simples para diagnosticar ambiente e disponibilidade
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    env: process.env.VERCEL ? 'vercel' : (process.env.NODE_ENV || 'development'),
-    postgres: usePostgres() ? 'available' : 'unavailable',
-    time: new Date().toISOString(),
-  });
+// Healthcheck melhorado para diagnosticar ambiente e disponibilidade
+app.get('/api/health', async (req, res) => {
+  try {
+    const health = {
+      ok: true,
+      env: process.env.VERCEL ? 'vercel' : (process.env.NODE_ENV || 'development'),
+      postgres: usePostgres() ? 'available' : 'unavailable',
+      time: new Date().toISOString(),
+      database: {
+        status: 'unknown',
+        connectionTime: null,
+        error: null
+      }
+    };
+
+    // Testar conexão com o banco se PostgreSQL estiver disponível
+    if (usePostgres()) {
+      try {
+        const start = Date.now();
+        await query('SELECT 1 as test');
+        health.database.status = 'connected';
+        health.database.connectionTime = Date.now() - start;
+      } catch (dbError) {
+        health.database.status = 'error';
+        health.database.error = dbError.message;
+        health.ok = false;
+      }
+    }
+
+    res.json(health);
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message,
+      time: new Date().toISOString()
+    });
+  }
 });
 
 // Endpoint para testar conexão com banco
