@@ -198,6 +198,12 @@ async function getTenantBySubdomain(subdomain) {
 
 // Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
 function usePostgres() {
+  // Em produção (Vercel), forçar uso de dados demo devido a problemas de conexão
+  if (process.env.VERCEL) {
+    console.log('Vercel detectado - usando dados demo devido a limitações do Supabase');
+    return false;
+  }
+  
   try {
     if (!getPool()) {
       initializePool();
@@ -206,6 +212,98 @@ function usePostgres() {
   } catch (_e) {
     return false;
   }
+}
+
+// Função helper para dados demo
+function getDemoData() {
+  return {
+    tenants: [
+      { id: 'demo-tenant-1', name: 'Empresa Demo', subdomain: 'demo' },
+      { id: 'demo-tenant-2', name: 'TechCorp', subdomain: 'techcorp' }
+    ],
+    users: [
+      {
+        id: 'demo-user-1',
+        tenant_id: 'demo-tenant-1',
+        name: 'João Silva',
+        email: 'joao@empresademo.com',
+        phone: '(11) 99999-9999',
+        position: 'Desenvolvedor',
+        department: 'Tecnologia',
+        start_date: '2024-01-15',
+        status: 'active',
+        created_at: '2024-01-15T10:00:00Z'
+      },
+      {
+        id: 'demo-user-2',
+        tenant_id: 'demo-tenant-1',
+        name: 'Maria Santos',
+        email: 'maria@empresademo.com',
+        phone: '(11) 88888-8888',
+        position: 'Analista',
+        department: 'RH',
+        start_date: '2024-02-01',
+        status: 'active',
+        created_at: '2024-02-01T10:00:00Z'
+      },
+      {
+        id: 'demo-user-3',
+        tenant_id: 'demo-tenant-1',
+        name: 'Pedro Costa',
+        email: 'pedro@empresademo.com',
+        phone: '(11) 77777-7777',
+        position: 'Gerente',
+        department: 'Vendas',
+        start_date: '2024-01-01',
+        status: 'active',
+        created_at: '2024-01-01T10:00:00Z'
+      },
+      {
+        id: 'demo-user-4',
+        tenant_id: 'demo-tenant-1',
+        name: 'Ana Oliveira',
+        email: 'ana@empresademo.com',
+        phone: '(11) 66666-6666',
+        position: 'Assistente',
+        department: 'Administração',
+        start_date: '2024-03-01',
+        status: 'inactive',
+        created_at: '2024-03-01T10:00:00Z'
+      }
+    ],
+    documents: [
+      {
+        id: 'demo-doc-1',
+        tenant_id: 'demo-tenant-1',
+        name: 'Contrato de Trabalho - João Silva',
+        type: 'contrato',
+        status: 'processado',
+        created_at: '2024-01-15T10:00:00Z'
+      },
+      {
+        id: 'demo-doc-2',
+        tenant_id: 'demo-tenant-1',
+        name: 'Ficha de Admissão - Maria Santos',
+        type: 'admissao',
+        status: 'pendente',
+        created_at: '2024-02-01T10:00:00Z'
+      },
+      {
+        id: 'demo-doc-3',
+        tenant_id: 'demo-tenant-1',
+        name: 'Avaliação de Desempenho - Pedro Costa',
+        type: 'avaliacao',
+        status: 'processado',
+        created_at: '2024-01-01T10:00:00Z'
+      }
+    ],
+    departments: [
+      { id: 'demo-dept-1', tenant_id: 'demo-tenant-1', name: 'Tecnologia' },
+      { id: 'demo-dept-2', tenant_id: 'demo-tenant-1', name: 'RH' },
+      { id: 'demo-dept-3', tenant_id: 'demo-tenant-1', name: 'Vendas' },
+      { id: 'demo-dept-4', tenant_id: 'demo-tenant-1', name: 'Administração' }
+    ]
+  };
 }
 
 app.get('/api/tenants', async (_req, res) => {
@@ -1759,35 +1857,82 @@ app.post('/api/auth/validate', async (req, res) => {
       });
     }
 
-    // Buscar tenant pelo nome da empresa
-    const tenantResult = await query(
-      'SELECT * FROM public.tenants WHERE name = $1', 
-      [companyName.trim()]
-    );
+    console.log('Validando login:', { companyName, email });
 
-    if (tenantResult.rows.length === 0) {
+    // Tentar PostgreSQL primeiro, com fallback para SQLite
+    try {
+      if (usePostgres()) {
+        // Buscar tenant pelo nome da empresa
+        const tenantResult = await query(
+          'SELECT * FROM public.tenants WHERE name = $1', 
+          [companyName.trim()]
+        );
+
+        if (tenantResult.rows.length === 0) {
+          return res.status(404).json({ 
+            error: 'Empresa não encontrada. Verifique o nome da empresa ou entre em contato com o administrador.' 
+          });
+        }
+
+        const tenant = tenantResult.rows[0];
+
+        // Buscar usuário pelo email e tenant_id
+        const userResult = await query(
+          'SELECT * FROM public.users WHERE email = $1 AND tenant_id = $2', 
+          [email.trim(), tenant.id]
+        );
+
+        if (userResult.rows.length === 0) {
+          return res.status(404).json({ 
+            error: 'Usuário não encontrado neste tenant. Verifique seu email ou entre em contato com o administrador.' 
+          });
+        }
+
+        const user = userResult.rows[0];
+
+        // Login válido
+        return res.json({
+          success: true,
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            subdomain: tenant.subdomain
+          },
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email
+          }
+        });
+      }
+    } catch (pgError) {
+      console.error('Erro no PostgreSQL, tentando SQLite:', pgError.message);
+    }
+
+    // Fallback para dados demo
+    console.log('Usando dados demo para validação');
+    
+    const demoData = getDemoData();
+
+    // Buscar tenant demo
+    const tenant = demoData.tenants.find(t => t.name.toLowerCase() === companyName.trim().toLowerCase());
+    
+    if (!tenant) {
       return res.status(404).json({ 
-        error: 'Empresa não encontrada. Verifique o nome da empresa ou entre em contato com o administrador.' 
+        error: 'Empresa não encontrada. Empresas disponíveis: Empresa Demo, TechCorp' 
       });
     }
 
-    const tenant = tenantResult.rows[0];
-
-    // Buscar usuário pelo email e tenant_id
-    const userResult = await query(
-      'SELECT * FROM public.users WHERE email = $1 AND tenant_id = $2', 
-      [email.trim(), tenant.id]
-    );
-
-    if (userResult.rows.length === 0) {
+    // Buscar usuário demo
+    const user = demoData.users.find(u => u.tenant_id === tenant.id && u.email.toLowerCase() === email.trim().toLowerCase());
+    
+    if (!user) {
       return res.status(404).json({ 
         error: 'Usuário não encontrado neste tenant. Verifique seu email ou entre em contato com o administrador.' 
       });
     }
 
-    const user = userResult.rows[0];
-
-    // Login válido
+    // Login válido (demo)
     res.json({
       success: true,
       tenant: {
@@ -1799,7 +1944,8 @@ app.post('/api/auth/validate', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email
-      }
+      },
+      demo: true // Indicar que são dados demo
     });
 
   } catch (error) {

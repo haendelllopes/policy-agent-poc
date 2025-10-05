@@ -132,7 +132,9 @@ async function query(text, params = [], retries = 5) {
         error.message.includes('timeout') ||
         error.message.includes('ECONNRESET') ||
         error.message.includes('ETIMEDOUT') ||
-        error.message.includes('Connection terminated due to connection timeout')
+        error.message.includes('Connection terminated due to connection timeout') ||
+        error.message.includes('MaxClientsInSessionMode') ||
+        error.code === 'XX000' // Erro fatal do PostgreSQL
       );
       
       // Se for erro de conexão e ainda há tentativas, aguardar e tentar novamente
