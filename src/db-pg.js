@@ -9,32 +9,57 @@ function initializePool() {
   const connectionString = process.env.DATABASE_URL;
   
   if (!connectionString) {
-    console.warn('DATABASE_URL não encontrada, usando SQLite local');
+    // Tentar montar a conexão a partir de variáveis separadas (fallback)
+    const host = process.env.PGHOST;
+    const port = process.env.PGPORT || '5432';
+    const database = process.env.PGDATABASE;
+    const user = process.env.PGUSER;
+    const password = process.env.PGPASSWORD;
+    
+    if (host && database && user && password) {
+      const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+      console.warn('DATABASE_URL ausente. Usando variáveis PG* para montar a conexão.');
+      return createPool(assembled);
+    }
+    
+    console.warn('DATABASE_URL não encontrada e variáveis PG* ausentes. Usando SQLite local');
     return null;
   }
   
   try {
     // Validar se a URL é válida
     if (!connectionString.includes('postgres://') && !connectionString.includes('postgresql://')) {
-      console.warn('DATABASE_URL inválida, usando SQLite local');
+      console.warn('DATABASE_URL inválida. Tentando interpretar com variáveis PG*...');
+      const host = process.env.PGHOST;
+      const port = process.env.PGPORT || '5432';
+      const database = process.env.PGDATABASE;
+      const user = process.env.PGUSER;
+      const password = process.env.PGPASSWORD;
+      if (host && database && user && password) {
+        const assembled = `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`;
+        return createPool(assembled);
+      }
+      console.warn('Sem variáveis PG*. Usando SQLite local');
       return null;
     }
-    
-    pool = new Pool({
-      connectionString,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-      max: 20,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
-    });
-    
-    console.log('Pool PostgreSQL inicializado');
-    return pool;
+    return createPool(connectionString);
   } catch (error) {
     console.error('Erro ao criar pool PostgreSQL:', error.message);
     console.warn('Usando SQLite como fallback');
     return null;
   }
+}
+
+function createPool(connStr) {
+  pool = new Pool({
+    connectionString: connStr,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+  console.log('Pool PostgreSQL inicializado');
+  return pool;
 }
 
 // Função para executar queries
