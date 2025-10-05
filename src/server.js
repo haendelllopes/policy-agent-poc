@@ -1513,6 +1513,7 @@ app.get('/api/debug/connection', async (req, res) => {
       hasDatabaseUrl: Boolean(dbUrl),
       urlLength: dbUrl ? dbUrl.length : 0,
       urlPreview: dbUrl ? dbUrl.substring(0, 50) + '...' : null,
+      urlEnd: dbUrl ? '...' + dbUrl.substring(dbUrl.length - 20) : null,
       message: 'Informações da conexão'
     });
   } catch (error) {
