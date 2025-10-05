@@ -4,6 +4,24 @@ const { Pool } = require('pg');
 let pool;
 
 function initializePool() {
+  // No Vercel, sempre usar Session Pooler se variáveis PG* estiverem disponíveis
+  if (process.env.VERCEL && process.env.PGUSER && process.env.PGPASSWORD) {
+    if (pool) {
+      // Fechar pool existente se houver
+      try {
+        pool.end();
+      } catch (e) {
+        // Ignorar erros ao fechar
+      }
+      pool = null;
+    }
+    
+    console.log('Vercel detectado - usando Session Pooler do Supabase');
+    const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
+    console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
+    return createPool(sessionPoolerUrl);
+  }
+  
   if (pool) return pool;
   
   const connectionString = process.env.DATABASE_URL;
@@ -43,24 +61,24 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações balanceadas para Supabase
+    // Configurações otimizadas para Session Pooler do Supabase
     max: 1, // Apenas 1 conexão para evitar sobrecarga
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 30000, // 30 segundos
-    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
-    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
+    idleTimeoutMillis: 10000, // 10 segundos
+    connectionTimeoutMillis: 8000, // 8 segundos para conexão inicial
+    acquireTimeoutMillis: 8000, // 8 segundos para adquirir conexão
     // Configurações de retry
-    retryDelayMs: 1000, // 1 segundo entre tentativas
-    retryAttempts: 2, // 2 tentativas
+    retryDelayMs: 500, // 500ms entre tentativas
+    retryAttempts: 1, // 1 tentativa apenas
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
     keepAlive: false, // Desabilitar keepAlive
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 30000, // 30 segundos para queries
-    query_timeout: 30000, // 30 segundos para queries
+    statement_timeout: 10000, // 10 segundos para queries
+    query_timeout: 10000, // 10 segundos para queries
     application_name: 'navigator-app',
-    // Configurações específicas para Supabase
+    // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
   });
 
