@@ -361,7 +361,7 @@
                 <li><a href="#features">Recursos</a></li>
                 <li><a href="#contact">Contato</a></li>
             </ul>
-            <a href="#" class="cta-button" onclick="showLoginModal()">Entrar</a>
+            <a href="#" class="cta-button" onclick="openLoginModal()">Entrar</a>
         </nav>
     </header>
 
@@ -375,7 +375,7 @@
                 automatize tarefas e tome decisões baseadas em dados reais.
             </p>
             <div class="hero-buttons">
-                <button class="btn-primary" onclick="showLoginModal()">
+                <button class="btn-primary" onclick="openRegisterModal()">
                     Começar Agora
                 </button>
                 <button class="btn-secondary" onclick="scrollToFeatures()">
@@ -482,10 +482,13 @@
         </div>
     </footer>
 
-    <!-- Login Modal -->
+    <!-- Login Modal (ENTRAR) -->
     <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%;">
-            <h2 style="margin-bottom: 1rem; text-align: center;">Acessar Navigator</h2>
+            <h2 style="margin-bottom: 1rem; text-align: center;">Entrar no Navigator</h2>
+            <p style="margin-bottom: 1.5rem; color: #64748b; text-align: center; font-size: 0.9rem;">
+                Digite as credenciais da sua empresa
+            </p>
             <form id="loginForm">
                 <div style="margin-bottom: 1rem;">
                     <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nome da Empresa:</label>
@@ -496,9 +499,44 @@
                     <input type="email" id="userEmail" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="seu@email.com" required>
                 </div>
                 <button type="submit" class="btn-primary" style="width: 100%; margin-bottom: 1rem;">
-                    Entrar no Sistema
+                    Entrar
                 </button>
                 <button type="button" onclick="closeLoginModal()" style="width: 100%; background: #f1f5f9; color: #64748b; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer;">
+                    Cancelar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal (COMEÇAR AGORA) -->
+    <div id="registerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 12px; max-width: 400px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h2 style="margin-bottom: 1rem; text-align: center;">Criar Conta no Navigator</h2>
+            <p style="margin-bottom: 1.5rem; color: #64748b; text-align: center; font-size: 0.9rem;">
+                Cadastre sua empresa e crie sua conta
+            </p>
+            <form id="registerForm">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nome da Empresa:</label>
+                    <input type="text" id="regCompanyName" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="Digite o nome da sua empresa" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Subdomain:</label>
+                    <input type="text" id="regSubdomain" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="subdomain-da-empresa" required>
+                    <small style="color: #64748b; font-size: 0.8rem;">Apenas letras minúsculas, números e hífens</small>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Seu Nome:</label>
+                    <input type="text" id="regUserName" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="Seu nome completo" required>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Seu E-mail:</label>
+                    <input type="email" id="regUserEmail" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="seu@email.com" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-bottom: 1rem;">
+                    Criar Conta
+                </button>
+                <button type="button" onclick="closeRegisterModal()" style="width: 100%; background: #f1f5f9; color: #64748b; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer;">
                     Cancelar
                 </button>
             </form>
@@ -514,7 +552,7 @@
         }
 
         // Modal functions
-        function showLoginModal() {
+        function openLoginModal() {
             document.getElementById('loginModal').style.display = 'block';
         }
 
@@ -522,7 +560,15 @@
             document.getElementById('loginModal').style.display = 'none';
         }
 
-        // Login form handling
+        function openRegisterModal() {
+            document.getElementById('registerModal').style.display = 'block';
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').style.display = 'none';
+        }
+
+        // Login form handling (ENTRAR - Validar credenciais)
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -537,25 +583,78 @@
             // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Carregando...';
+            submitBtn.textContent = 'Validando...';
             submitBtn.disabled = true;
 
             try {
-                // Gerar subdomain único baseado no nome da empresa + timestamp
-                let baseSubdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                
-                // Se o subdomain ficar vazio, usar uma versão simplificada
-                if (!baseSubdomain || baseSubdomain.length === 0) {
-                    baseSubdomain = 'empresa';
+                console.log('Validando credenciais:', { companyName, userEmail });
+
+                // Validar credenciais (não criar nada)
+                const validateResponse = await fetch('/api/auth/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        companyName: companyName,
+                        email: userEmail
+                    })
+                });
+
+                console.log('Resposta da validação:', validateResponse.status);
+
+                if (validateResponse.ok) {
+                    const data = await validateResponse.json();
+                    console.log('Login válido:', data);
+                    
+                    // Redirect to dashboard com subdomain
+                    window.location.href = `/inicio?tenant=${data.tenant.subdomain}`;
+                } else {
+                    const errorData = await validateResponse.json();
+                    console.error('Erro na validação:', errorData);
+                    
+                    // Mostrar mensagem de erro específica
+                    alert(`Erro: ${errorData.error}`);
                 }
-                
-                // Adicionar timestamp para garantir unicidade
-                const timestamp = Date.now().toString().slice(-6);
-                const subdomain = `${baseSubdomain}-${timestamp}`;
+            } catch (error) {
+                console.error('Erro no login:', error);
+                alert(`Erro ao validar credenciais: ${error.message}`);
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
 
-                console.log('Criando tenant:', { name: companyName, subdomain });
+        // Register form handling (COMEÇAR AGORA - Criar conta)
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const companyName = document.getElementById('regCompanyName').value.trim();
+            const subdomain = document.getElementById('regSubdomain').value.trim();
+            const userName = document.getElementById('regUserName').value.trim();
+            const userEmail = document.getElementById('regUserEmail').value.trim();
+            
+            if (!companyName || !subdomain || !userName || !userEmail) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
 
-                // Create tenant if it doesn't exist
+            // Validar formato do subdomain
+            if (!/^[a-z0-9-]+$/.test(subdomain)) {
+                alert('Subdomain deve conter apenas letras minúsculas, números e hífens.');
+                return;
+            }
+
+            // Show loading state
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Criando conta...';
+            submitBtn.disabled = true;
+
+            try {
+                console.log('Criando conta:', { companyName, subdomain, userName, userEmail });
+
+                // Criar tenant e usuário
                 const createResponse = await fetch('/api/tenants', {
                     method: 'POST',
                     headers: {
@@ -563,49 +662,31 @@
                     },
                     body: JSON.stringify({
                         name: companyName,
-                        subdomain: subdomain
+                        subdomain: subdomain,
+                        userName: userName,
+                        userEmail: userEmail
                     })
                 });
 
-                console.log('Resposta da API:', createResponse.status);
+                console.log('Resposta da criação:', createResponse.status);
 
                 if (createResponse.ok) {
-                    console.log('Tenant criado com sucesso, redirecionando...');
-                    // Redirect to dashboard
-                    window.location.href = `/inicio?tenant=${subdomain}`;
-                } else if (createResponse.status === 409) {
-                    console.log('Tenant já existe, tentando com subdomain diferente...');
-                    // Se o tenant já existe, tentar com um subdomain ligeiramente diferente
-                    const newSubdomain = `${baseSubdomain}-${Date.now()}`;
-                    console.log('Tentando com novo subdomain:', newSubdomain);
+                    const data = await createResponse.json();
+                    console.log('Conta criada com sucesso:', data);
                     
-                    // Tentar criar novamente com subdomain diferente
-                    const retryResponse = await fetch('/api/tenants', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            name: companyName,
-                            subdomain: newSubdomain
-                        })
-                    });
-                    
-                    if (retryResponse.ok) {
-                        window.location.href = `/inicio?tenant=${newSubdomain}`;
-                    } else {
-                        // Se ainda falhar, usar o tenant demo
-                        console.log('Usando tenant demo como fallback');
-                        window.location.href = `/inicio?tenant=demo`;
-                    }
+                    // Redirect to dashboard com subdomain
+                    window.location.href = `/inicio?tenant=${data.tenant.subdomain}`;
                 } else {
                     const errorData = await createResponse.json();
-                    console.error('Erro da API:', errorData);
-                    throw new Error(`Erro ao criar conta: ${errorData.error?.formErrors?.[0] || 'Erro desconhecido'}`);
+                    console.error('Erro na criação:', errorData);
+                    
+                    // Mostrar mensagem de erro específica
+                    const errorMsg = errorData.error?.formErrors?.[0] || 'Erro desconhecido';
+                    alert(`Erro ao criar conta: ${errorMsg}`);
                 }
             } catch (error) {
-                console.error('Erro no login:', error);
-                alert(`Erro ao acessar o sistema: ${error.message}`);
+                console.error('Erro no registro:', error);
+                alert(`Erro ao criar conta: ${error.message}`);
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
@@ -616,6 +697,12 @@
         document.getElementById('loginModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeLoginModal();
+            }
+        });
+
+        document.getElementById('registerModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRegisterModal();
             }
         });
 

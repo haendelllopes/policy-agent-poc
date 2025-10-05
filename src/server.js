@@ -244,7 +244,9 @@ app.get('/api/tenants', async (_req, res) => {
 app.post('/api/tenants', async (req, res) => {
   const schema = z.object({ 
     name: z.string().min(1),
-    subdomain: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Subdomain deve conter apenas letras minúsculas, números e hífens')
+    subdomain: z.string().min(1).regex(/^[a-z0-9-]+$/, 'Subdomain deve conter apenas letras minúsculas, números e hífens'),
+    userName: z.string().min(1),
+    userEmail: z.string().email()
   });
   const parse = schema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
@@ -253,14 +255,37 @@ app.post('/api/tenants', async (req, res) => {
     // Use PostgreSQL if available, otherwise SQLite
     if (usePostgres()) {
       // PostgreSQL
-      const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', [parse.data.subdomain]);
+      const existing = await query('SELECT id FROM public.tenants WHERE subdomain = $1', [parse.data.subdomain]);
       if (existing.rows.length > 0) {
-        return res.status(400).json({ error: { formErrors: ['Subdomain já existe'] } });
+        return res.status(400).json({ error: { formErrors: ['Subdomain já existe. Escolha outro subdomain.'] } });
       }
 
-      const id = uuidv4();
-      await query('INSERT INTO tenants (id, name, subdomain) VALUES ($1, $2, $3)', [id, parse.data.name, parse.data.subdomain]);
-      res.status(201).json({ id, name: parse.data.name, subdomain: parse.data.subdomain });
+      // Verificar se email já existe
+      const existingEmail = await query('SELECT id FROM public.users WHERE email = $1', [parse.data.userEmail]);
+      if (existingEmail.rows.length > 0) {
+        return res.status(400).json({ error: { formErrors: ['Email já está em uso. Escolha outro email.'] } });
+      }
+
+      const tenantId = uuidv4();
+      const userId = uuidv4();
+
+      // Criar tenant e usuário em uma transação
+      await query('BEGIN');
+      
+      // Criar tenant
+      await query('INSERT INTO public.tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, $4)', 
+        [tenantId, parse.data.name, parse.data.subdomain, new Date().toISOString()]);
+      
+      // Criar usuário admin para o tenant
+      await query('INSERT INTO public.users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', 
+        [userId, tenantId, parse.data.userName, parse.data.userEmail, 'Não informado', 'Administrador', 'Administração', new Date().toISOString().split('T')[0], 'active', new Date().toISOString()]);
+      
+      await query('COMMIT');
+
+      res.status(201).json({ 
+        tenant: { id: tenantId, name: parse.data.name, subdomain: parse.data.subdomain },
+        user: { id: userId, name: parse.data.userName, email: parse.data.userEmail }
+      });
     } else {
       // SQLite fallback
       const { db, SQL } = await openDatabase();
@@ -1712,6 +1737,66 @@ app.get('/api/debug/tenants', async (req, res) => {
 });
 
 // Endpoint para criar tenant demo manualmente
+// Endpoint para validar login (botão ENTRAR)
+app.post('/api/auth/validate', async (req, res) => {
+  try {
+    const { companyName, email } = req.body;
+    
+    if (!companyName || !email) {
+      return res.status(400).json({ 
+        error: 'Nome da empresa e email são obrigatórios' 
+      });
+    }
+
+    // Buscar tenant pelo nome da empresa
+    const tenantResult = await query(
+      'SELECT * FROM public.tenants WHERE name = $1', 
+      [companyName.trim()]
+    );
+
+    if (tenantResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Empresa não encontrada. Verifique o nome da empresa ou entre em contato com o administrador.' 
+      });
+    }
+
+    const tenant = tenantResult.rows[0];
+
+    // Buscar usuário pelo email e tenant_id
+    const userResult = await query(
+      'SELECT * FROM public.users WHERE email = $1 AND tenant_id = $2', 
+      [email.trim(), tenant.id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Usuário não encontrado neste tenant. Verifique seu email ou entre em contato com o administrador.' 
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    // Login válido
+    res.json({
+      success: true,
+      tenant: {
+        id: tenant.id,
+        name: tenant.name,
+        subdomain: tenant.subdomain
+      },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao validar login:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 app.post('/api/tenants/demo', async (req, res) => {
   try {
     if (usePostgres()) {
