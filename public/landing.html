@@ -539,6 +539,21 @@
             submitBtn.disabled = true;
 
             try {
+                // Gerar subdomain válido
+                let subdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                
+                // Se o subdomain ficar vazio, usar uma versão simplificada
+                if (!subdomain || subdomain.length === 0) {
+                    subdomain = 'empresa-' + Date.now().toString().slice(-6);
+                }
+                
+                // Garantir que o subdomain tenha pelo menos 1 caractere
+                if (subdomain.length === 0) {
+                    subdomain = 'empresa';
+                }
+
+                console.log('Criando tenant:', { name: companyName, subdomain });
+
                 // Create tenant if it doesn't exist
                 const createResponse = await fetch('/api/tenants', {
                     method: 'POST',
@@ -547,21 +562,28 @@
                     },
                     body: JSON.stringify({
                         name: companyName,
-                        subdomain: companyName.toLowerCase().replace(/[^a-z0-9]/g, ''),
-                        email: userEmail
+                        subdomain: subdomain
                     })
                 });
 
-                if (createResponse.ok || createResponse.status === 409) {
+                console.log('Resposta da API:', createResponse.status);
+
+                if (createResponse.ok) {
+                    console.log('Tenant criado com sucesso, redirecionando...');
                     // Redirect to dashboard
-                    const subdomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    window.location.href = `/inicio?tenant=${subdomain}`;
+                } else if (createResponse.status === 409) {
+                    console.log('Tenant já existe, redirecionando...');
+                    // Tenant already exists, redirect anyway
                     window.location.href = `/inicio?tenant=${subdomain}`;
                 } else {
-                    throw new Error('Erro ao criar conta');
+                    const errorData = await createResponse.json();
+                    console.error('Erro da API:', errorData);
+                    throw new Error(`Erro ao criar conta: ${errorData.error?.formErrors?.[0] || 'Erro desconhecido'}`);
                 }
             } catch (error) {
                 console.error('Erro no login:', error);
-                alert('Erro ao acessar o sistema. Tente novamente.');
+                alert(`Erro ao acessar o sistema: ${error.message}`);
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
