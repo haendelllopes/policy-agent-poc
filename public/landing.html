@@ -594,7 +594,7 @@
                 showAlert('signupAlert', 'success', `Empresa "${data.name}" criada com sucesso! Redirecionando...`);
                 
                 setTimeout(() => {
-                    window.location.href = `/dashboard?tenant=${data.subdomain}`;
+                    window.location.href = `/inicio?tenant=${data.subdomain}`;
                 }, 2000);
                 
             } catch (error) {
@@ -631,7 +631,7 @@
                 showAlert('loginAlert', 'success', `Bem-vindo, ${user.name}! Redirecionando...`);
                 
                 setTimeout(() => {
-                    window.location.href = `/dashboard?tenant=${data.subdomain}`;
+                    window.location.href = `/inicio?tenant=${data.subdomain}`;
                 }, 2000);
                 
             } catch (error) {
