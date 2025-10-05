@@ -4,7 +4,8 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const mammoth = require('mammoth');
-const pdfParse = require('pdf-parse');
+// pdf-parse não funciona no Vercel (requer @napi-rs/canvas)
+// const pdfParse = require('pdf-parse');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
 const { z } = require('zod');
@@ -531,16 +532,9 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
     if (req.file.mimetype === 'text/plain') {
       text = req.file.buffer.toString('utf8');
     } else if (req.file.mimetype === 'application/pdf' || req.file.originalname.endsWith('.pdf')) {
-      // Para PDF usando pdf-parse
-      const pdfData = await pdfParse(req.file.buffer);
-      text = pdfData.text;
-      
-      // Log de informações do PDF
-      console.log('PDF processado:', {
-        pages: pdfData.numpages,
-        info: pdfData.info,
-        textLength: text.length
-      });
+      // PDF parsing desabilitado no Vercel (requer @napi-rs/canvas)
+      text = '[PDF não suportado no ambiente Vercel - use Render.com para processamento de PDF]';
+      console.log('PDF não processado - ambiente Vercel');
     } else if (req.file.mimetype.includes('word') || req.file.mimetype.includes('document') || 
                req.file.originalname.endsWith('.docx') || req.file.originalname.endsWith('.doc')) {
       // Para DOC/DOCX usando mammoth
