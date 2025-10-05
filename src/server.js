@@ -14,6 +14,11 @@ const app = express();
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static('public'));
 
+// Rota específica para dashboard-onboardflow
+app.get('/dashboard-onboardflow', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/dashboard-onboardflow.html'));
+});
+
 // Middleware para extrair tenant do subdomínio (apenas para rotas da API)
 app.use('/api', (req, res, next) => {
   const host = req.get('host') || '';
