@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowly - Onboarding Inteligente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2563eb;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #f9fafb;
+            border-color: #9ca3af;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero-text h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+        }
+        
+        .hero-text p {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .btn-hero {
+            background: #f59e0b;
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-hero:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .hero-image {
+            position: relative;
+        }
+        
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 6rem 0;
+            background: white;
+        }
+        
+        .features-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+        
+        .features h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .features p {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 3rem;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            padding: 2rem;
+            border-radius: 16px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card p {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .required {
+            color: #dc2626;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                text-align: center;
+            }
+            
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+            
+            .header-content {
+                padding: 0 1rem;
+            }
+            
+            .features-content {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🤖</div>
+                <span>Flowly</span>
+            </div>
+            <div class="header-buttons">
+                <button class="btn btn-secondary" onclick="openLoginModal()">Entrar</button>
+                <button class="btn btn-primary" onclick="openSignupModal()">Começar Agora</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Onboarding Inteligente e Automatizado</h1>
+                <p>Transforme a integração de novos colaboradores em uma experiência memorável. Gerencie documentos, políticas e comunique-se via WhatsApp com IA.</p>
+                <a href="#" class="btn-hero" onclick="openSignupModal()">
+                    Experimentar Grátis →
+                </a>
+            </div>
+            <div class="hero-image">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23f0f9ff'/%3E%3Cstop offset='100%25' style='stop-color:%23e0f2fe'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg)'/%3E%3Ccircle cx='100' cy='80' r='30' fill='%232563eb' opacity='0.8'/%3E%3Ccircle cx='300' cy='120' r='25' fill='%23f59e0b' opacity='0.8'/%3E%3Ccircle cx='200' cy='200' r='35' fill='%2310b981' opacity='0.8'/%3E%3Crect x='50' y='150' width='300' height='100' rx='10' fill='white' opacity='0.9'/%3E%3Ctext x='200' y='200' text-anchor='middle' font-family='Arial' font-size='16' fill='%23374151'%3E🤖 Agente IA WhatsApp%3C/text%3E%3C/svg%3E" alt="Policy Agent Dashboard">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-content">
+            <h2>Por que Flowly?</h2>
+            <p>Reduza o tempo de integração em 60% e aumente a satisfação dos novos colaboradores</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>WhatsApp Integrado</h3>
+                    <p>Comunicação direta via WhatsApp com agente de IA para responder dúvidas sobre políticas e benefícios.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📄</div>
+                    <h3>Gestão de Documentos</h3>
+                    <p>Upload e organização de políticas internas, benefícios e documentos corporativos em uma plataforma centralizada.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Busca Inteligente</h3>
+                    <p>IA avançada para encontrar informações relevantes nos documentos e responder perguntas dos colaboradores.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🏢 Criar Nova Empresa</h2>
+                <button class="close-btn" onclick="closeModal('signupModal')">&times;</button>
+            </div>
+            
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="companyName">Nome da Empresa <span class="required">*</span></label>
+                    <input type="text" id="companyName" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="subdomain">Subdomain <span class="required">*</span></label>
+                    <input type="text" id="subdomain" name="subdomain" placeholder="minha-empresa" required>
+                    <small style="color: #6b7280; font-size: 0.875rem;">Apenas letras minúsculas, números e hífens</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminName">Nome do Administrador <span class="required">*</span></label>
+                    <input type="text" id="adminName" name="adminName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminEmail">Email do Administrador <span class="required">*</span></label>
+                    <input type="email" id="adminEmail" name="adminEmail" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adminPhone">Telefone do Administrador <span class="required">*</span></label>
+                    <input type="text" id="adminPhone" name="adminPhone" placeholder="+55 11 98765-4321" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                    Criar Empresa e Administrador
+                </button>
+            </form>
+            
+            <div id="signupAlert" class="alert hidden"></div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Entrar</h2>
+                <button class="close-btn" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginSubdomain">Subdomain da Empresa <span class="required">*</span></label>
+                    <input type="text" id="loginSubdomain" name="subdomain" placeholder="minha-empresa" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginEmail">Email <span class="required">*</span></label>
+                    <input type="email" id="loginEmail" name="email" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                    Entrar no Dashboard
+                </button>
+            </form>
+            
+            <div id="loginAlert" class="alert hidden"></div>
+            
+            <div style="text-align: center; margin-top: 1rem;">
+                <p style="color: #6b7280;">Não tem uma empresa cadastrada?</p>
+                <button class="btn btn-secondary" onclick="switchToSignup()" style="margin-top: 0.5rem;">
+                    Criar Nova Empresa
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        
+        // Modal functions
+        function openSignupModal() {
+            document.getElementById('signupModal').classList.add('active');
+        }
+        
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        function switchToSignup() {
+            closeModal('loginModal');
+            openSignupModal();
+        }
+        
+        // Close modal on outside click
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+        
+        // Signup form
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                // Criar tenant
+                const tenantResponse = await fetch(`${API_BASE}/api/tenants`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: data.name,
+                        subdomain: data.subdomain
+                    })
+                });
+                
+                const tenantResult = await tenantResponse.json();
+                
+                if (!tenantResponse.ok) {
+                    throw new Error(tenantResult.error?.formErrors?.[0] || 'Erro ao criar empresa');
+                }
+                
+                // Criar admin user
+                const userResponse = await fetch(`${API_BASE}/api/users?tenant=${data.subdomain}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: data.adminName,
+                        email: data.adminEmail,
+                        phone: data.adminPhone,
+                        position: 'Administrador',
+                        department: 'Administração'
+                    })
+                });
+                
+                const userResult = await userResponse.json();
+                
+                if (!userResponse.ok) {
+                    throw new Error(userResult.error?.formErrors?.[0] || 'Erro ao criar administrador');
+                }
+                
+                showAlert('signupAlert', 'success', `Empresa "${data.name}" criada com sucesso! Redirecionando...`);
+                
+                setTimeout(() => {
+                    window.location.href = `/inicio?tenant=${data.subdomain}`;
+                }, 2000);
+                
+            } catch (error) {
+                showAlert('signupAlert', 'error', error.message);
+            }
+        });
+        
+        // Login form
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                // Verificar se tenant existe
+                const response = await fetch(`${API_BASE}/api/tenants`);
+                const tenants = await response.json();
+                const tenant = tenants.find(t => t.subdomain === data.subdomain);
+                
+                if (!tenant) {
+                    throw new Error('Empresa não encontrada');
+                }
+                
+                // Verificar se usuário existe
+                const userResponse = await fetch(`${API_BASE}/api/users?tenant=${data.subdomain}`);
+                const users = await userResponse.json();
+                const user = users.find(u => u.email === data.email);
+                
+                if (!user) {
+                    throw new Error('Usuário não encontrado');
+                }
+                
+                showAlert('loginAlert', 'success', `Bem-vindo, ${user.name}! Redirecionando...`);
+                
+                setTimeout(() => {
+                    window.location.href = `/inicio?tenant=${data.subdomain}`;
+                }, 2000);
+                
+            } catch (error) {
+                showAlert('loginAlert', 'error', error.message);
+            }
+        });
+        
+        function showAlert(elementId, type, message) {
+            const alert = document.getElementById(elementId);
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.classList.remove('hidden');
+            
+            setTimeout(() => {
+                alert.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
