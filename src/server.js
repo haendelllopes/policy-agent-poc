@@ -202,6 +202,13 @@ function usePostgres() {
     if (!getPool()) {
       initializePool();
     }
+    
+    // Em produção (Vercel), priorizar dados demo se PostgreSQL falhar
+    if (process.env.VERCEL) {
+      console.log('Ambiente Vercel detectado - usando dados demo como fallback principal');
+      return false; // Forçar uso de dados demo em Vercel por enquanto
+    }
+    
     return Boolean(getPool());
   } catch (_e) {
     console.log('PostgreSQL não disponível, usando dados demo');
