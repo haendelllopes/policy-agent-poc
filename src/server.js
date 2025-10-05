@@ -731,20 +731,16 @@ app.get('/api/users', async (req, res) => {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
-    // Use PostgreSQL if available, otherwise SQLite
+    // Use PostgreSQL if available, otherwise demo data
     if (usePostgres()) {
       // PostgreSQL
       const users = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
       res.json(users.rows);
     } else {
-      // SQLite fallback
-      const { db } = await openDatabase();
-      try {
-        const users = runQuery(db, 'SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = ? ORDER BY name', [tenant.id]);
-        res.json(users);
-      } finally {
-        db.close();
-      }
+      // Demo data fallback
+      const demoData = getDemoData();
+      const users = demoData.users.filter(user => user.tenant_id === tenant.id);
+      res.json(users);
     }
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
@@ -943,7 +939,7 @@ app.get('/api/documents', async (req, res) => {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
-    // Use PostgreSQL if available, otherwise SQLite
+    // Use PostgreSQL if available, otherwise demo data
     if (usePostgres()) {
       // PostgreSQL
       const result = await query(
@@ -952,14 +948,10 @@ app.get('/api/documents', async (req, res) => {
       );
       res.json(result.rows);
     } else {
-      // SQLite fallback
-      const { db } = await openDatabase();
-      try {
-        const documents = runQuery(db, 'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = ? ORDER BY created_at DESC', [tenant.id]);
-        res.json(documents);
-      } finally {
-        db.close();
-      }
+      // Demo data fallback
+      const demoData = getDemoData();
+      const documents = demoData.documents.filter(doc => doc.tenant_id === tenant.id);
+      res.json(documents);
     }
   } catch (error) {
     console.error('Erro ao buscar documentos:', error);
@@ -1294,14 +1286,21 @@ app.post('/search/policy', async (req, res) => {
 // Departamentos
 app.get('/api/departments', async (req, res) => {
   try {
-    const tenantSubdomain = req.tenantSubdomain;
-    const tenant = await getTenantBySubdomainPG(tenantSubdomain);
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
-    
-    const result = await query('SELECT * FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
-    res.json(result.rows);
+
+    // Use PostgreSQL if available, otherwise demo data
+    if (usePostgres()) {
+      const result = await query('SELECT * FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      res.json(result.rows);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const departments = demoData.departments.filter(dept => dept.tenant_id === tenant.id);
+      res.json(departments);
+    }
   } catch (error) {
     console.error('Erro ao obter departamentos:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
