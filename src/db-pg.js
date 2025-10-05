@@ -28,8 +28,8 @@ function initializePool() {
       // Se for host do Supabase direto, usar session pooler (IPv4)
       let finalHost = host;
       if (host.includes('supabase.co')) {
-        // Usar o pooler específico do projeto
-        finalHost = host.replace('.supabase.co', '.pooler.supabase.co');
+        // Usar o pooler genérico do Supabase (mais confiável)
+        finalHost = 'aws-1-sa-east-1.pooler.supabase.com';
         console.log('Usando session pooler Supabase para IPv4:', finalHost);
       }
       
@@ -70,25 +70,25 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações ultra-agressivas para Supabase
+    // Configurações balanceadas para Supabase
     max: 1, // Apenas 1 conexão para evitar sobrecarga
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 5000, // 5 segundos (muito agressivo)
-    connectionTimeoutMillis: 5000, // 5 segundos para conexão inicial
-    acquireTimeoutMillis: 5000, // 5 segundos para adquirir conexão
-    // Configurações de retry mais agressivas
-    retryDelayMs: 200, // 200ms entre tentativas
-    retryAttempts: 1, // Apenas 1 tentativa
+    idleTimeoutMillis: 30000, // 30 segundos
+    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
+    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
+    // Configurações de retry
+    retryDelayMs: 1000, // 1 segundo entre tentativas
+    retryAttempts: 2, // 2 tentativas
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
     keepAlive: false, // Desabilitar keepAlive
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 5000, // 5 segundos para queries
-    query_timeout: 5000, // 5 segundos para queries
+    statement_timeout: 30000, // 30 segundos para queries
+    query_timeout: 30000, // 30 segundos para queries
     application_name: 'navigator-app',
     // Configurações específicas para Supabase
-    options: '-c default_transaction_isolation=read_committed -c statement_timeout=5000'
+    options: '-c default_transaction_isolation=read_committed'
   });
 
   // Tratamento de erros do pool
