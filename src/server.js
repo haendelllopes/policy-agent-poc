@@ -1615,6 +1615,50 @@ app.post('/api/tenants/demo', async (req, res) => {
   }
 });
 
+// Endpoint para testar conexão direta
+app.post('/api/debug/test-connection', async (req, res) => {
+  try {
+    const { Pool } = require('pg');
+    
+    // Montar DATABASE_URL das variáveis PG*
+    const pgHost = process.env.PGHOST;
+    const pgPort = process.env.PGPORT || '5432';
+    const pgDatabase = process.env.PGDATABASE;
+    const pgUser = process.env.PGUSER;
+    const pgPassword = process.env.PGPASSWORD;
+    
+    if (!pgHost || !pgDatabase || !pgUser || !pgPassword) {
+      return res.status(400).json({ error: 'Variáveis PG* incompletas' });
+    }
+    
+    const assembledUrl = `postgresql://${encodeURIComponent(pgUser)}:${encodeURIComponent(pgPassword)}@${pgHost}:${pgPort}/${pgDatabase}`;
+    
+    console.log('Testando conexão direta com:', assembledUrl.substring(0, 50) + '...');
+    
+    const testPool = new Pool({
+      connectionString: assembledUrl,
+      ssl: { rejectUnauthorized: false },
+      max: 1,
+      idleTimeoutMillis: 5000,
+      connectionTimeoutMillis: 5000,
+    });
+    
+    const client = await testPool.connect();
+    const result = await client.query('SELECT NOW() as current_time');
+    client.release();
+    await testPool.end();
+    
+    res.json({ 
+      success: true, 
+      message: 'Conexão PostgreSQL funcionando',
+      currentTime: result.rows[0].current_time
+    });
+  } catch (error) {
+    console.error('Erro na conexão de teste:', error);
+    res.status(500).json({ error: 'Erro na conexão', details: error.message });
+  }
+});
+
 // Endpoint para forçar migração
 app.post('/api/debug/migrate', async (req, res) => {
   try {
