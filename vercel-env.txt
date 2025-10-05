@@ -1,0 +1,18 @@
+# Flowly - Environment Variables para Vercel
+# Copie e cole estas variáveis no painel do Vercel
+
+DATABASE_URL=postgresql://postgres:qJ5Ddh?.4yv-yH.@db.gxqwfltteimexngybwna.supabase.co:5432/postgres
+SUPABASE_URL=https://gxqwfltteimexngybwna.supabase.co
+SUPABASE_ANON_KEY=eyJhbGci0iJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3Mi0iJzdXE
+NODE_ENV=production
+PORT=3000
+N8N_WEBHOOK_URL=https://hndll.app.n8n.cloud/webhook/onboarding
+
+# Instruções:
+# 1. Acesse: https://vercel.com/dashboard
+# 2. Selecione seu projeto "navigator"
+# 3. Vá em: Settings → Environment Variables
+# 4. Clique em "Add New" para cada variável
+# 5. Environment: Production (ou All)
+# 6. Save e aguarde o redeploy automático
+
