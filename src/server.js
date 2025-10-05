@@ -1505,6 +1505,37 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Endpoint para verificar estrutura da tabela tenants
+app.get('/api/debug/tenants', async (req, res) => {
+  try {
+    if (process.env.DATABASE_URL) {
+      // Garantir que o pool está inicializado
+      if (!getPool()) {
+        console.log('Inicializando pool PostgreSQL...');
+        initializePool();
+      }
+      
+      // Verificar estrutura da tabela
+      const result = await query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'tenants' 
+        ORDER BY ordinal_position
+      `);
+      
+      res.json({ 
+        columns: result.rows,
+        message: 'Estrutura da tabela tenants'
+      });
+    } else {
+      res.status(500).json({ error: 'DATABASE_URL não configurada' });
+    }
+  } catch (error) {
+    console.error('Erro ao verificar estrutura da tabela:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
 // Endpoint para criar tenant demo manualmente
 app.post('/api/tenants/demo', async (req, res) => {
   try {
