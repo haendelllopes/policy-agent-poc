@@ -79,6 +79,14 @@
         .header { 
             margin-bottom: 32px; 
         }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
         
         .header h1 { 
             font-size: 32px; 
@@ -90,6 +98,26 @@
         .header p { 
             color: #64748b; 
             font-size: 16px; 
+        }
+
+        .header button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #64748b;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .header button:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #475569;
         }
         
         /* Cards Grid */
@@ -477,8 +505,18 @@
         <!-- Main Content -->
         <main class="main">
             <div class="header">
-                <h1>Início</h1>
-                <p>Visão geral do sistema Flowly</p>
+                <div class="header-content">
+                    <div class="header-text">
+                        <h1>Início</h1>
+                        <p>Visão geral do sistema Flowly</p>
+                    </div>
+                    <button class="btn-secondary" onclick="updateDashboard(true)" title="Atualizar dados">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Atualizar
+                    </button>
+                </div>
             </div>
 
             <!-- Dashboard Section -->
@@ -647,18 +685,50 @@
             }
         }
 
+        // Variáveis de controle de atualização
+        let isUpdating = false;
+        let updateInterval = null;
+        let lastUpdateTime = 0;
+        const UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+
         // Função para atualizar os cards
-        async function updateDashboard() {
+        async function updateDashboard(force = false) {
+            const now = Date.now();
+            
+            // Evitar múltiplas atualizações simultâneas
+            if (isUpdating) {
+                console.log(' Atualização já em andamento, ignorando...');
+                return;
+            }
+
+            // Verificar se deve atualizar (forçar ou se passou 5 minutos)
+            if (!force && (now - lastUpdateTime) < UPDATE_INTERVAL_MS) {
+                console.log(' Atualização muito recente, ignorando...');
+                return;
+            }
+
+            isUpdating = true;
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            console.log(' Tenant:', tenant);
+            console.log(' Atualizando dashboard para tenant:', tenant);
             
             try {
-                // Buscar dados em paralelo
+                // Mostrar indicador de carregamento nos cards
+                document.getElementById('total-employees').textContent = '...';
+                document.getElementById('total-documents').textContent = '...';
+                document.getElementById('total-departments').textContent = '...';
+                document.getElementById('average-progress').textContent = '...';
+
+                // Buscar dados em paralelo com timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
                 const [users, documents, departments] = await Promise.allSettled([
-                    fetchData(`/api/users?tenant=${tenant}`),
-                    fetchData(`/api/documents?tenant=${tenant}`),
-                    fetchData(`/api/departments?tenant=${tenant}`)
+                    fetchData(`/api/users?tenant=${tenant}`, { signal: controller.signal }),
+                    fetchData(`/api/documents?tenant=${tenant}`, { signal: controller.signal }),
+                    fetchData(`/api/departments?tenant=${tenant}`, { signal: controller.signal })
                 ]);
+
+                clearTimeout(timeoutId);
 
                 // Atualizar card de funcionários
                 if (users.status === 'fulfilled') {
@@ -696,8 +766,50 @@
                     document.getElementById('average-progress').textContent = '-';
                 }
 
+                lastUpdateTime = now;
+                console.log(' Dashboard atualizado com sucesso!');
+
             } catch (error) {
                 console.error(' Erro geral ao atualizar dashboard:', error);
+                
+                // Manter valores de erro nos cards
+                if (document.getElementById('total-employees').textContent === '...') {
+                    document.getElementById('total-employees').textContent = 'Erro';
+                }
+                if (document.getElementById('total-documents').textContent === '...') {
+                    document.getElementById('total-documents').textContent = 'Erro';
+                }
+                if (document.getElementById('total-departments').textContent === '...') {
+                    document.getElementById('total-departments').textContent = 'Erro';
+                }
+                if (document.getElementById('average-progress').textContent === '...') {
+                    document.getElementById('average-progress').textContent = '-';
+                }
+            } finally {
+                isUpdating = false;
+            }
+        }
+
+        // Função para iniciar o intervalo de atualização
+        function startUpdateInterval() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            
+            updateInterval = setInterval(() => {
+                console.log(' Atualização automática (5 minutos)...');
+                updateDashboard();
+            }, UPDATE_INTERVAL_MS);
+            
+            console.log(' Intervalo de atualização iniciado (5 minutos)');
+        }
+
+        // Função para parar o intervalo de atualização
+        function stopUpdateInterval() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+                console.log(' Intervalo de atualização parado');
             }
         }
 
@@ -725,6 +837,15 @@
             const activeNavItem = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
             if (activeNavItem) {
                 activeNavItem.classList.add('active');
+            }
+
+            // Atualizar dados específicos da seção
+            if (sectionName === 'dashboard') {
+                console.log(' Navegando para dashboard, atualizando dados...');
+                updateDashboard(true); // Forçar atualização
+            } else if (sectionName === 'users') {
+                console.log(' Navegando para funcionários, carregando dados...');
+                loadUsers();
             }
         }
 
@@ -938,12 +1059,27 @@
 
         // Carregar dados quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
-            console.log(' DOM carregado, iniciando busca de dados...');
-            updateDashboard();
+            console.log(' DOM carregado, iniciando dashboard...');
+            
+            // Atualizar dashboard na inicialização
+            updateDashboard(true);
+            
+            // Iniciar intervalo de atualização automática (5 minutos)
+            startUpdateInterval();
         });
 
-        // Atualizar dados a cada 30 segundos
-        setInterval(updateDashboard, 30000);
+        // Parar atualizações quando a página não está visível
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log(' Página não visível, parando atualizações automáticas');
+                stopUpdateInterval();
+            } else {
+                console.log(' Página visível, reiniciando atualizações automáticas');
+                startUpdateInterval();
+                // Atualizar dados quando voltar a ficar visível
+                updateDashboard(true);
+            }
+        });
         
         console.log(' Dashboard inicializado com sucesso!');
     </script>
