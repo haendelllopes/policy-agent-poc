@@ -1505,6 +1505,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Endpoint para testar conexão com banco
+app.get('/api/debug/connection', async (req, res) => {
+  try {
+    const dbUrl = process.env.DATABASE_URL;
+    res.json({
+      hasDatabaseUrl: Boolean(dbUrl),
+      urlLength: dbUrl ? dbUrl.length : 0,
+      urlPreview: dbUrl ? dbUrl.substring(0, 50) + '...' : null,
+      message: 'Informações da conexão'
+    });
+  } catch (error) {
+    console.error('Erro ao verificar conexão:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
 // Endpoint para verificar estrutura da tabela tenants
 app.get('/api/debug/tenants', async (req, res) => {
   try {
