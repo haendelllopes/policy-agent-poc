@@ -1446,7 +1446,13 @@ async function initializeDatabase() {
       }
     }
     
-    // Sempre inicializar SQLite como fallback
+    // Em ambiente Vercel, evitar SQLite (filesystem é imutável)
+    if (process.env.VERCEL) {
+      console.warn('VERCEL detectado e DATABASE_URL ausente. Pulando SQLite. Configure DATABASE_URL no Vercel.');
+      return;
+    }
+
+    // Em ambientes fora do Vercel, inicializar SQLite como fallback
     console.log('Inicializando SQLite...');
     const { db, SQL } = await openDatabase();
     migrate(db);
@@ -1486,3 +1492,13 @@ module.exports = app;
 if (require.main === module) {
   bootstrap();
 }
+
+// Healthcheck simples para diagnosticar ambiente e disponibilidade
+app.get('/api/health', (req, res) => {
+  res.json({
+    ok: true,
+    env: process.env.VERCEL ? 'vercel' : (process.env.NODE_ENV || 'development'),
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    time: new Date().toISOString(),
+  });
+});
