@@ -16,6 +16,11 @@ app.use(express.static('public'));
 
 // Rota específica para dashboard-onboardflow
 app.get('/dashboard-onboardflow', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
   res.sendFile(path.join(__dirname, '../public/dashboard-onboardflow.html'));
 });
 
@@ -1701,3 +1706,4 @@ app.post('/api/debug/migrate', async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
+
