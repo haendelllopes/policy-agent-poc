@@ -34,6 +34,26 @@ app.get('/dashboard-simple-onboardflow', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/dashboard-simple-onboardflow.html'));
 });
 
+// Rota específica para dashboard teste simples
+app.get('/dashboard-test-simple', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/dashboard-test-simple.html'));
+});
+
+// Rota específica para dashboard teste simples com .html
+app.get('/dashboard-test-simple.html', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/dashboard-test-simple.html'));
+});
+
 // Middleware para extrair tenant do subdomínio (apenas para rotas da API)
 app.use('/api', (req, res, next) => {
   const host = req.get('host') || '';
