@@ -198,18 +198,13 @@ async function getTenantBySubdomain(subdomain) {
 
 // Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
 function usePostgres() {
-  // Em produção (Vercel), forçar uso de dados demo devido a problemas de conexão
-  if (process.env.VERCEL) {
-    console.log('Vercel detectado - usando dados demo devido a limitações do Supabase');
-    return false;
-  }
-  
   try {
     if (!getPool()) {
       initializePool();
     }
     return Boolean(getPool());
   } catch (_e) {
+    console.log('PostgreSQL não disponível, usando dados demo');
     return false;
   }
 }
@@ -1951,6 +1946,95 @@ app.post('/api/auth/validate', async (req, res) => {
   } catch (error) {
     console.error('Erro ao validar login:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Endpoint para popular dados demo no Supabase Pro
+app.post('/api/demo/populate', async (req, res) => {
+  try {
+    if (!usePostgres()) {
+      return res.status(400).json({ error: 'PostgreSQL não disponível' });
+    }
+
+    console.log('Populando dados demo no Supabase...');
+
+    // Criar tenant demo se não existir
+    const tenantCheck = await query('SELECT id FROM public.tenants WHERE subdomain = $1', ['demo']);
+    
+    if (tenantCheck.rows.length === 0) {
+      const tenantId = uuidv4();
+      await query(
+        'INSERT INTO public.tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, $4)',
+        [tenantId, 'Empresa Demo', 'demo', new Date().toISOString()]
+      );
+      console.log('Tenant demo criado:', tenantId);
+    }
+
+    // Buscar tenant demo
+    const tenantResult = await query('SELECT id FROM public.tenants WHERE subdomain = $1', ['demo']);
+    const tenantId = tenantResult.rows[0].id;
+
+    // Criar usuários demo se não existirem
+    const usersCheck = await query('SELECT COUNT(*) as count FROM public.users WHERE tenant_id = $1', [tenantId]);
+    
+    if (parseInt(usersCheck.rows[0].count) === 0) {
+      const demoUsers = [
+        {
+          name: 'João Silva',
+          email: 'joao@empresademo.com',
+          phone: '(11) 99999-9999',
+          position: 'Desenvolvedor',
+          department: 'Tecnologia',
+          status: 'active'
+        },
+        {
+          name: 'Maria Santos',
+          email: 'maria@empresademo.com',
+          phone: '(11) 88888-8888',
+          position: 'Analista',
+          department: 'RH',
+          status: 'active'
+        },
+        {
+          name: 'Pedro Costa',
+          email: 'pedro@empresademo.com',
+          phone: '(11) 77777-7777',
+          position: 'Gerente',
+          department: 'Vendas',
+          status: 'active'
+        }
+      ];
+
+      for (const user of demoUsers) {
+        const userId = uuidv4();
+        await query(
+          'INSERT INTO public.users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+          [
+            userId,
+            tenantId,
+            user.name,
+            user.email,
+            user.phone,
+            user.position,
+            user.department,
+            new Date().toISOString().split('T')[0],
+            user.status,
+            new Date().toISOString()
+          ]
+        );
+      }
+      console.log('Usuários demo criados');
+    }
+
+    res.json({
+      success: true,
+      message: 'Dados demo populados com sucesso no Supabase Pro',
+      tenant: 'demo'
+    });
+
+  } catch (error) {
+    console.error('Erro ao popular dados demo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 

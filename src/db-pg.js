@@ -69,15 +69,15 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações otimizadas para serverless (Vercel)
-    max: 1, // Máximo 1 conexão por função serverless
+    // Configurações otimizadas para Supabase Pro
+    max: 2, // Aumentado para Supabase Pro (pode ter mais conexões)
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 30000, // 30 segundos (aumentado)
-    connectionTimeoutMillis: 20000, // 20 segundos para conexão inicial (aumentado)
-    acquireTimeoutMillis: 25000, // 25 segundos para adquirir conexão (aumentado)
+    idleTimeoutMillis: 30000, // 30 segundos
+    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
+    acquireTimeoutMillis: 20000, // 20 segundos para adquirir conexão
     // Configurações de retry melhoradas
-    retryDelayMs: 2000, // 2 segundos entre tentativas
-    retryAttempts: 5, // Mais tentativas
+    retryDelayMs: 1000, // 1 segundo entre tentativas
+    retryAttempts: 3, // Menos tentativas (Supabase Pro é mais estável)
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
@@ -106,8 +106,8 @@ function createPool(connStr) {
   return pool;
 }
 
-// Função para executar queries com retry melhorado
-async function query(text, params = [], retries = 5) {
+// Função para executar queries com retry otimizado para Supabase Pro
+async function query(text, params = [], retries = 3) {
   const pgPool = initializePool();
   
   if (!pgPool) {
