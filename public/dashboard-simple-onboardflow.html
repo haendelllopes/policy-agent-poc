@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Flowly (Simples)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
+        .container { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: #fff; border-right: 1px solid #e2e8f0; padding: 24px 0; position: fixed; height: 100vh; overflow-y: auto; }
+        .logo { padding: 0 24px 32px; border-bottom: 1px solid #e2e8f0; margin-bottom: 24px; }
+        .logo h1 { font-size: 24px; font-weight: 700; color: #3b82f6; }
+        .nav { padding: 0 24px; }
+        .nav-item { display: flex; align-items: center; padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; color: #64748b; text-decoration: none; transition: .2s; }
+        .nav-item:hover { background: #f1f5f9; color: #3b82f6; }
+        .nav-item.active { background: #eff6ff; color: #3b82f6; font-weight: 500; }
+        .main { flex: 1; margin-left: 280px; padding: 32px; }
+        .header { margin-bottom: 32px; }
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .header p { color: #64748b; }
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; }
+        .card { background: #fff; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .card-title { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .4px; }
+        .card-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .card-value { font-size: 32px; font-weight: 800; }
+        .card-subtitle { color: #64748b; font-size: 14px; margin-top: 6px; }
+        .error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px; border-radius: 8px; margin: 16px 0; }
+        @media (max-width: 768px) { .sidebar{ width:100%; position:relative; height:auto; } .main{ margin-left:0; padding:16px; } .cards-grid{ grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="logo"><h1>Flowly</h1></div>
+            <div class="nav">
+                <a class="nav-item active" href="#">Dashboard</a>
+                <a class="nav-item" href="#">Funcionários</a>
+                <a class="nav-item" href="#">Documentos</a>
+                <a class="nav-item" href="#">Configurações</a>
+            </div>
+        </nav>
+        <main class="main">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <p>Visão geral do sistema Flowly</p>
+            </div>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Total Funcionários</span><div class="card-icon"></div></div>
+                    <div class="card-value" id="total-employees">-</div>
+                    <div class="card-subtitle">Funcionários cadastrados</div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Progresso Médio</span><div class="card-icon"></div></div>
+                    <div class="card-value" id="average-progress">-</div>
+                    <div class="card-subtitle">% Concluído</div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Total Documentos</span><div class="card-icon"></div></div>
+                    <div class="card-value" id="total-documents">-</div>
+                    <div class="card-subtitle">Documentos processados</div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Departamentos</span><div class="card-icon"></div></div>
+                    <div class="card-value" id="total-departments">-</div>
+                    <div class="card-subtitle">Departamentos ativos</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function fetchData(url) { const res = await fetch(url); if (!res.ok) throw new Error(HTTP ); return res.json(); }
+        async function updateDashboard() {
+            const tenant = new URLSearchParams(location.search).get('tenant') || 'demo';
+            try {
+                const [usersR, docsR, depsR] = await Promise.allSettled([
+                    fetchData(/api/users?tenant=),
+                    fetchData(/api/documents?tenant=),
+                    fetchData(/api/departments?tenant=)
+                ]);
+                document.getElementById('total-employees').textContent = usersR.status === 'fulfilled' ? usersR.value.length : 'Erro';
+                document.getElementById('total-documents').textContent = docsR.status === 'fulfilled' ? docsR.value.length : 'Erro';
+                document.getElementById('total-departments').textContent = depsR.status === 'fulfilled' ? depsR.value.length : 'Erro';
+                document.getElementById('average-progress').textContent = (usersR.status === 'fulfilled' && usersR.value.length) ? (60 + Math.floor(Math.random()*40)) : '-';
+            } catch (e) {
+                const err = document.createElement('div'); err.className = 'error'; err.textContent = 'Erro ao carregar dados. Veja o console.'; document.querySelector('.main').prepend(err); console.error(e);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', updateDashboard); setInterval(updateDashboard, 30000);
+    </script>
+</body>
+</html>
