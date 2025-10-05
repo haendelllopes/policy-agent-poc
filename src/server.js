@@ -113,10 +113,22 @@ async function getTenantBySubdomain(subdomain) {
   }
 }
 
+// Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
+function usePostgres() {
+  try {
+    if (!getPool()) {
+      initializePool();
+    }
+    return Boolean(getPool());
+  } catch (_e) {
+    return false;
+  }
+}
+
 app.get('/api/tenants', async (_req, res) => {
   try {
     // Tentar PostgreSQL primeiro
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       try {
         // Garantir que o pool está inicializado
         if (!getPool()) {
@@ -156,7 +168,7 @@ app.post('/api/tenants', async (req, res) => {
   
   try {
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL
       const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', [parse.data.subdomain]);
       if (existing.rows.length > 0) {
@@ -195,7 +207,7 @@ app.get('/api/tenants/:subdomain', async (req, res) => {
     const { subdomain } = req.params;
     
     // Tentar PostgreSQL primeiro
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       try {
         const result = await query('SELECT id, name, subdomain FROM tenants WHERE subdomain = $1', [subdomain]);
         if (result.rows.length === 0) {
@@ -295,7 +307,7 @@ app.post('/api/users', async (req, res) => {
 
     // Use PostgreSQL if available, otherwise SQLite
     let userId;
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL
       const existing = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2', [tenant.id, parse.data.email]);
       if (existing.rows.length > 0) {
@@ -383,7 +395,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
       console.log('DELETE /users - Using PostgreSQL with single connection');
       
@@ -463,7 +475,7 @@ app.get('/test-consistency/:userId', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       const pool = getPool();
       const client = await pool.connect();
       
@@ -501,7 +513,7 @@ app.get('/api/users', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL
       const users = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
       res.json(users.rows);
@@ -571,7 +583,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   const createdAt = new Date().toISOString();
   
   // Use PostgreSQL if available, otherwise SQLite
-  if (process.env.DATABASE_URL) {
+  if (usePostgres()) {
     // Parse tags
     const tags = body.data.tags ? JSON.parse(body.data.tags) : [];
     
@@ -713,7 +725,7 @@ app.get('/api/documents', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL
       const result = await query(
         'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
@@ -752,7 +764,7 @@ app.delete('/api/documents/:id', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
       console.log('DELETE /documents - Using PostgreSQL with single connection');
 
@@ -838,7 +850,7 @@ app.get('/documents/:id/download', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL
       const docResult = await query(
         'SELECT id, title, category, status FROM documents WHERE id = $1 AND tenant_id = $2',
@@ -916,7 +928,7 @@ app.post('/documents/categorization-result', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (process.env.DATABASE_URL) {
+    if (usePostgres()) {
       // PostgreSQL - Atualizar documento com categorização
       const result = await query(
         'UPDATE documents SET category = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3',
@@ -1005,7 +1017,7 @@ app.post('/search/policy', async (req, res) => {
   const qEmbed = await embed(query);
   
   // Use PostgreSQL if available, otherwise SQLite
-  if (process.env.DATABASE_URL) {
+  if (usePostgres()) {
     // PostgreSQL
     const result = await query(
       `SELECT c.id, c.content, c.embedding, c.section, d.title, d.version
@@ -1432,23 +1444,25 @@ async function initializeDatabase() {
   try {
     console.log('Inicializando banco de dados...');
     
-    // Tentar inicializar PostgreSQL primeiro
-    if (process.env.DATABASE_URL) {
-      try {
-        console.log('Inicializando PostgreSQL...');
-        initializePool();
+    // Tentar inicializar PostgreSQL primeiro (via DATABASE_URL ou PG*)
+    try {
+      console.log('Inicializando PostgreSQL...');
+      initializePool();
+      if (getPool()) {
         await migratePG();
         console.log('PostgreSQL inicializado com sucesso!');
         return;
-      } catch (error) {
-        console.error('Erro ao inicializar PostgreSQL:', error);
-        console.log('Usando SQLite como fallback...');
+      } else {
+        console.warn('Pool PostgreSQL não disponível após initializePool()');
       }
+    } catch (error) {
+      console.error('Erro ao inicializar PostgreSQL:', error);
+      console.log('Usando SQLite como fallback...');
     }
     
     // Em ambiente Vercel, evitar SQLite (filesystem é imutável)
     if (process.env.VERCEL) {
-      console.warn('VERCEL detectado e DATABASE_URL ausente. Pulando SQLite. Configure DATABASE_URL no Vercel.');
+      console.warn('VERCEL detectado e PostgreSQL indisponível. Pulando SQLite. Configure PGHOST/PG* no Vercel.');
       return;
     }
 
@@ -1500,7 +1514,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     env: process.env.VERCEL ? 'vercel' : (process.env.NODE_ENV || 'development'),
-    hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+    postgres: usePostgres() ? 'available' : 'unavailable',
     time: new Date().toISOString(),
   });
 });
