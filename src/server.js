@@ -1541,6 +1541,8 @@ app.get('/api/debug/connection', async (req, res) => {
         PGUSER: pgUser ? 'SET' : 'MISSING',
         PGPASSWORD: pgPassword ? 'SET' : 'MISSING'
       },
+      pgHostPreview: pgHost ? pgHost.substring(0, 30) + '...' : null,
+      pgUserPreview: pgUser ? pgUser.substring(0, 10) + '...' : null,
       message: 'Informações da conexão'
     });
   } catch (error) {
