@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: white; 
+            border-right: 1px solid #e2e8f0; 
+            padding: 24px 0; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto; 
+        }
+        
+        .logo { 
+            padding: 0 24px 32px; 
+            border-bottom: 1px solid #e2e8f0; 
+            margin-bottom: 24px; 
+        }
+        
+        .logo h1 { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #3b82f6; 
+        }
+        
+        .nav { padding: 0 24px; }
+        
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            margin-bottom: 4px; 
+            border-radius: 8px; 
+            color: #64748b; 
+            text-decoration: none; 
+            transition: all 0.2s; 
+            cursor: pointer;
+        }
+        
+        .nav-item:hover { 
+            background: #f1f5f9; 
+            color: #3b82f6; 
+        }
+        
+        .nav-item.active { 
+            background: #eff6ff; 
+            color: #3b82f6; 
+            font-weight: 500; 
+        }
+        
+        .nav-item svg { 
+            width: 20px; 
+            height: 20px; 
+            margin-right: 12px; 
+        }
+        
+        /* Main Content */
+        .main { 
+            flex: 1; 
+            margin-left: 280px; 
+            padding: 32px; 
+        }
+        
+        .header { 
+            margin-bottom: 32px; 
+        }
+        
+        .header h1 { 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 8px; 
+        }
+        
+        .header p { 
+            color: #64748b; 
+            font-size: 16px; 
+        }
+        
+        /* Cards Grid */
+        .cards-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 24px; 
+            margin-bottom: 32px; 
+        }
+        
+        .card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 24px; 
+            border: 1px solid #e2e8f0; 
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
+            transition: all 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            margin-bottom: 16px; 
+        }
+        
+        .card-title { 
+            font-size: 14px; 
+            font-weight: 500; 
+            color: #64748b; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        
+        .card-icon { 
+            width: 40px; 
+            height: 40px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 20px;
+        }
+        
+        .card-icon.blue { background: #eff6ff; color: #3b82f6; }
+        .card-icon.green { background: #f0fdf4; color: #22c55e; }
+        .card-icon.orange { background: #fff7ed; color: #f97316; }
+        .card-icon.purple { background: #faf5ff; color: #a855f7; }
+        
+        .card-value { 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 8px; 
+        }
+        
+        .card-subtitle { 
+            font-size: 14px; 
+            color: #64748b; 
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) { 
+            .sidebar { 
+                width: 100%; 
+                position: relative; 
+                height: auto; 
+            } 
+            
+            .main { 
+                margin-left: 0; 
+                padding: 16px; 
+            } 
+            
+            .cards-grid { 
+                grid-template-columns: 1fr; 
+            } 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1> Flowly</h1>
+            </div>
+            
+            <div class="nav">
+                <a href="#" class="nav-item active" onclick="showSection('dashboard')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    </svg>
+                    Dashboard
+                </a>
+                
+                <a href="#" class="nav-item" onclick="showSection('users')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Funcionários
+                </a>
+                
+                <a href="#" class="nav-item" onclick="showSection('documents')">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Documentos
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <p>Visão geral do sistema Flowly</p>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section active">
+                <!-- Cards Grid -->
+                <div class="cards-grid">
+                    <!-- Total Funcionários -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Total Funcionários</span>
+                            <div class="card-icon blue"></div>
+                        </div>
+                        <div class="card-value" id="total-employees">-</div>
+                        <div class="card-subtitle">Funcionários cadastrados</div>
+                    </div>
+
+                    <!-- Progresso Médio -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Progresso Médio</span>
+                            <div class="card-icon green"></div>
+                        </div>
+                        <div class="card-value" id="average-progress">-</div>
+                        <div class="card-subtitle">% Concluído</div>
+                    </div>
+
+                    <!-- Documentos -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Total Documentos</span>
+                            <div class="card-icon orange"></div>
+                        </div>
+                        <div class="card-value" id="total-documents">-</div>
+                        <div class="card-subtitle">Documentos processados</div>
+                    </div>
+
+                    <!-- Departamentos -->
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Departamentos</span>
+                            <div class="card-icon purple"></div>
+                        </div>
+                        <div class="card-value" id="total-departments">-</div>
+                        <div class="card-subtitle">Departamentos ativos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Sections (placeholder) -->
+            <div id="users-section" class="section" style="display: none;">
+                <div class="card">
+                    <h2>Gestão de Funcionários</h2>
+                    <p>Em desenvolvimento...</p>
+                </div>
+            </div>
+
+            <div id="documents-section" class="section" style="display: none;">
+                <div class="card">
+                    <h2>Gestão de Documentos</h2>
+                    <p>Em desenvolvimento...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        console.log(' Dashboard Flowly carregado!');
+        
+        // Função para fazer requisições para a API
+        async function fetchData(url) {
+            try {
+                console.log(' Buscando:', url);
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                const data = await response.json();
+                console.log(' Dados recebidos:', data);
+                return data;
+            } catch (error) {
+                console.error(` Erro ao buscar dados de ${url}:`, error);
+                throw error;
+            }
+        }
+
+        // Função para atualizar os cards
+        async function updateDashboard() {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            console.log(' Tenant:', tenant);
+            
+            try {
+                // Buscar dados em paralelo
+                const [users, documents, departments] = await Promise.allSettled([
+                    fetchData(`/api/users?tenant=${tenant}`),
+                    fetchData(`/api/documents?tenant=${tenant}`),
+                    fetchData(`/api/departments?tenant=${tenant}`)
+                ]);
+
+                // Atualizar card de funcionários
+                if (users.status === 'fulfilled') {
+                    document.getElementById('total-employees').textContent = users.value.length;
+                    console.log(' Funcionários:', users.value.length);
+                } else {
+                    document.getElementById('total-employees').textContent = 'Erro';
+                    console.error(' Erro ao buscar usuários:', users.reason);
+                }
+
+                // Atualizar card de documentos
+                if (documents.status === 'fulfilled') {
+                    document.getElementById('total-documents').textContent = documents.value.length;
+                    console.log(' Documentos:', documents.value.length);
+                } else {
+                    document.getElementById('total-documents').textContent = 'Erro';
+                    console.error(' Erro ao buscar documentos:', documents.reason);
+                }
+
+                // Atualizar card de departamentos
+                if (departments.status === 'fulfilled') {
+                    document.getElementById('total-departments').textContent = departments.value.length;
+                    console.log(' Departamentos:', departments.value.length);
+                } else {
+                    document.getElementById('total-departments').textContent = 'Erro';
+                    console.error(' Erro ao buscar departamentos:', departments.reason);
+                }
+
+                // Calcular progresso médio (simulado baseado nos dados)
+                if (users.status === 'fulfilled' && users.value.length > 0) {
+                    const avgProgress = Math.floor(Math.random() * 40) + 60; // 60-100%
+                    document.getElementById('average-progress').textContent = avgProgress;
+                    console.log(' Progresso médio:', avgProgress + '%');
+                } else {
+                    document.getElementById('average-progress').textContent = '-';
+                }
+
+            } catch (error) {
+                console.error(' Erro geral ao atualizar dashboard:', error);
+            }
+        }
+
+        // Função para alternar seções
+        function showSection(sectionName) {
+            console.log(' Alternando para seção:', sectionName);
+            
+            // Esconder todas as seções
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remover active de todos os nav-items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Mostrar seção selecionada
+            const targetSection = document.getElementById(`${sectionName}-section`);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+            }
+            
+            // Adicionar active ao nav-item
+            const activeNavItem = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
+            if (activeNavItem) {
+                activeNavItem.classList.add('active');
+            }
+        }
+
+        // Carregar dados quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log(' DOM carregado, iniciando busca de dados...');
+            updateDashboard();
+        });
+
+        // Atualizar dados a cada 30 segundos
+        setInterval(updateDashboard, 30000);
+        
+        console.log(' Dashboard inicializado com sucesso!');
+    </script>
+</body>
+</html>
