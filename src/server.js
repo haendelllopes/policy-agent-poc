@@ -118,6 +118,12 @@ app.get('/api/tenants', async (_req, res) => {
     // Tentar PostgreSQL primeiro
     if (process.env.DATABASE_URL) {
       try {
+        // Garantir que o pool está inicializado
+        if (!getPool()) {
+          console.log('Inicializando pool PostgreSQL...');
+          initializePool();
+        }
+        
         const result = await query('SELECT id, name, subdomain FROM tenants ORDER BY name');
         return res.json(result.rows);
       } catch (error) {
@@ -1478,7 +1484,9 @@ async function bootstrap() {
 // Para Vercel, inicializar banco de dados e exportar o app
 if (process.env.VERCEL) {
   // No Vercel, inicializar apenas o banco de dados
-  initializeDatabase().catch(console.error);
+  initializeDatabase().catch((error) => {
+    console.error('Erro ao inicializar banco no Vercel:', error);
+  });
 }
 module.exports = app;
 
@@ -1501,6 +1509,12 @@ app.get('/api/health', (req, res) => {
 app.post('/api/tenants/demo', async (req, res) => {
   try {
     if (process.env.DATABASE_URL) {
+      // Garantir que o pool está inicializado
+      if (!getPool()) {
+        console.log('Inicializando pool PostgreSQL...');
+        initializePool();
+      }
+      
       // Verificar se já existe
       const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', ['demo']);
       if (existing.rows.length > 0) {
