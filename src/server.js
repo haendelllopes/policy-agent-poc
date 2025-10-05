@@ -1428,9 +1428,9 @@ app.delete('/api/tags/:id', async (req, res) => {
   }
 });
 
-async function bootstrap() {
+async function initializeDatabase() {
   try {
-    console.log('Inicializando servidor...');
+    console.log('Inicializando banco de dados...');
     
     // Tentar inicializar PostgreSQL primeiro
     if (process.env.DATABASE_URL) {
@@ -1439,6 +1439,7 @@ async function bootstrap() {
         initializePool();
         await migratePG();
         console.log('PostgreSQL inicializado com sucesso!');
+        return;
       } catch (error) {
         console.error('Erro ao inicializar PostgreSQL:', error);
         console.log('Usando SQLite como fallback...');
@@ -1452,6 +1453,15 @@ async function bootstrap() {
     persistDatabase(SQL, db);
     db.close();
     console.log('SQLite inicializado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao inicializar banco de dados:', error);
+    throw error;
+  }
+}
+
+async function bootstrap() {
+  try {
+    await initializeDatabase();
     
     const port = Number(process.env.PORT || 3000);
     app.listen(port, () => {
@@ -1465,10 +1475,14 @@ async function bootstrap() {
   }
 }
 
-// Para Vercel, exportar o app
+// Para Vercel, inicializar banco de dados e exportar o app
+if (process.env.VERCEL) {
+  // No Vercel, inicializar apenas o banco de dados
+  initializeDatabase().catch(console.error);
+}
 module.exports = app;
 
-// Para desenvolvimento local, inicializar o servidor
+// Para desenvolvimento local, inicializar o servidor completo
 if (require.main === module) {
   bootstrap();
 }
