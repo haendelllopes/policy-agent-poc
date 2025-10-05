@@ -1509,11 +1509,24 @@ app.get('/api/health', (req, res) => {
 app.get('/api/debug/connection', async (req, res) => {
   try {
     const dbUrl = process.env.DATABASE_URL;
+    const pgHost = process.env.PGHOST;
+    const pgPort = process.env.PGPORT;
+    const pgDatabase = process.env.PGDATABASE;
+    const pgUser = process.env.PGUSER;
+    const pgPassword = process.env.PGPASSWORD;
+    
     res.json({
       hasDatabaseUrl: Boolean(dbUrl),
       urlLength: dbUrl ? dbUrl.length : 0,
       urlPreview: dbUrl ? dbUrl.substring(0, 50) + '...' : null,
       urlEnd: dbUrl ? '...' + dbUrl.substring(dbUrl.length - 20) : null,
+      pgVariables: {
+        PGHOST: pgHost ? 'SET' : 'MISSING',
+        PGPORT: pgPort ? pgPort : 'MISSING',
+        PGDATABASE: pgDatabase ? 'SET' : 'MISSING',
+        PGUSER: pgUser ? 'SET' : 'MISSING',
+        PGPASSWORD: pgPassword ? 'SET' : 'MISSING'
+      },
       message: 'Informações da conexão'
     });
   } catch (error) {
