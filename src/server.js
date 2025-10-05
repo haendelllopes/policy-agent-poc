@@ -1641,6 +1641,8 @@ app.post('/api/debug/test-connection', async (req, res) => {
       max: 1,
       idleTimeoutMillis: 5000,
       connectionTimeoutMillis: 5000,
+      // Forçar IPv4
+      family: 4
     });
     
     const client = await testPool.connect();
@@ -1650,7 +1652,7 @@ app.post('/api/debug/test-connection', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: 'Conexão PostgreSQL funcionando',
+      message: 'Conexão PostgreSQL funcionando (IPv4)',
       currentTime: result.rows[0].current_time
     });
   } catch (error) {
