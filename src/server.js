@@ -177,13 +177,17 @@ async function getTenantBySubdomain(subdomain) {
     } catch (error) {
       console.error('Erro ao buscar tenant no PostgreSQL:', error);
       // Não cair automaticamente para SQLite no Vercel
-      if (process.env.VERCEL) return null;
+      if (process.env.VERCEL) {
+        console.log('Vercel detectado, usando dados demo para tenant:', subdomain);
+        return getTenantFromDemoData(subdomain);
+      }
     }
   }
   
-  // Evitar SQLite no Vercel (filesystem imutável / schema diferente)
+  // Usar dados demo no Vercel
   if (process.env.VERCEL) {
-    return null;
+    console.log('Vercel detectado, usando dados demo para tenant:', subdomain);
+    return getTenantFromDemoData(subdomain);
   }
   
   // Fallback para SQLite apenas fora do Vercel
@@ -214,6 +218,13 @@ function usePostgres() {
     console.log('PostgreSQL não disponível, usando dados demo');
     return false;
   }
+}
+
+// Função helper para buscar tenant nos dados demo
+function getTenantFromDemoData(subdomain) {
+  const demoData = getDemoData();
+  const tenant = demoData.tenants.find(t => t.subdomain === subdomain);
+  return tenant || null;
 }
 
 // Função helper para dados demo
