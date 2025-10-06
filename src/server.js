@@ -63,11 +63,11 @@ async function getCachedData(tenantId, dataType, fetchFunction) {
     
     // Verificar se o cache existe antes de tentar usar
     if (dataCache[dataType]) {
-      const cachedData = dataCache[dataType].get(tenantId);
-      if (cachedData) {
-        console.log(`Usando dados em cache para ${dataType} do tenant ${tenantId}`);
-        return cachedData;
-      }
+    const cachedData = dataCache[dataType].get(tenantId);
+    if (cachedData) {
+      console.log(`Usando dados em cache para ${dataType} do tenant ${tenantId}`);
+      return cachedData;
+    }
     }
     
     // Se não há cache disponível, retornar dados vazios em vez de falhar
@@ -1214,15 +1214,15 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Arquivo muito grande. Tamanho máximo: 5MB' });
     }
 
-    const documentId = uuidv4();
-    const createdAt = new Date().toISOString();
+  const documentId = uuidv4();
+  const createdAt = new Date().toISOString();
     const fileData = req.file.buffer.toString('base64');
-    
-    // Use PostgreSQL if available, otherwise SQLite
-    if (await usePostgres()) {
-      // PostgreSQL
+  
+  // Use PostgreSQL if available, otherwise SQLite
+  if (await usePostgres()) {
+    // PostgreSQL
       await query('INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)', [
-        documentId,
+      documentId,
         tenant.id,
         title,
         category,
@@ -1231,9 +1231,9 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
         req.file.originalname,
         fileData,
         req.file.size,
-        'published',
-        createdAt,
-      ]);
+      'published',
+      createdAt,
+    ]);
     } else {
       // SQLite fallback
       const db = await openDatabase();
@@ -1263,7 +1263,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 
     res.json({ 
       success: true, 
-      documentId,
+        documentId,
       message: 'Documento enviado com sucesso' 
     });
   } catch (error) {
@@ -1387,7 +1387,7 @@ app.put('/api/documents/:id', async (req, res) => {
     const { id } = req.params;
     const { title, category, department, description } = req.body;
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
-    
+
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
@@ -1456,84 +1456,6 @@ app.delete('/api/documents/:id', async (req, res) => {
         db.close();
       }
     }
-    console.log('DELETE /documents - documentId:', documentId);
-    console.log('DELETE /documents - tenantSubdomain:', req.tenantSubdomain);
-
-    // Buscar tenant pelo subdomain
-    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
-    console.log('DELETE /documents - tenant:', tenant);
-
-    if (!tenant) {
-      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
-    }
-
-    // Use PostgreSQL if available, otherwise SQLite
-    if (await usePostgres()) {
-      // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
-      console.log('DELETE /documents - Using PostgreSQL with single connection');
-
-      const pool = getPool();
-      const client = await pool.connect();
-      try {
-        // Usar transação para garantir consistência
-        await client.query('BEGIN');
-
-        // Verificar se o documento existe
-        const checkDoc = await client.query('SELECT id, title, tenant_id FROM documents WHERE id = $1', [documentId]);
-        console.log('DELETE /documents - Check document exists:', checkDoc.rows);
-
-        if (checkDoc.rows.length === 0) {
-          console.log('DELETE /documents - Document not found in database');
-          await client.query('ROLLBACK');
-          return res.status(404).json({ error: { formErrors: ['Documento não encontrado no banco de dados'] } });
-        }
-
-        // Verificar se o documento pertence ao tenant correto
-        if (checkDoc.rows[0].tenant_id !== tenant.id) {
-          console.log('DELETE /documents - Document belongs to different tenant');
-          await client.query('ROLLBACK');
-          return res.status(403).json({ error: { formErrors: ['Documento não pertence a este tenant'] } });
-        }
-
-        // Deletar o documento (cascade vai deletar os chunks automaticamente)
-        const result = await client.query('DELETE FROM documents WHERE id = $1 AND tenant_id = $2', [documentId, tenant.id]);
-        console.log('DELETE /documents - Result rowCount:', result.rowCount);
-
-        if (result.rowCount === 0) {
-          await client.query('ROLLBACK');
-          return res.status(404).json({ error: { formErrors: ['Documento não encontrado'] } });
-        }
-
-        // Confirmar transação
-        await client.query('COMMIT');
-        console.log('DELETE /documents - Transaction committed successfully');
-
-      } catch (error) {
-        console.error('DELETE /documents - Error in transaction:', error);
-        await client.query('ROLLBACK');
-        throw error;
-      } finally {
-        client.release();
-      }
-    } else {
-      // SQLite fallback
-      const { db, SQL } = await openDatabase();
-      try {
-        const existing = runQuery(db, 'SELECT id FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenant.id]);
-        if (existing.length === 0) {
-          return res.status(404).json({ error: { formErrors: ['Documento não encontrado'] } });
-        }
-
-        // Deletar chunks primeiro (cascade não funciona no SQLite)
-        runExec(db, 'DELETE FROM chunks WHERE document_id = ?', [documentId]);
-        runExec(db, 'DELETE FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenant.id]);
-        persistDatabase(SQL, db);
-      } finally {
-        db.close();
-      }
-    }
-
-    res.status(200).json({ message: 'Documento excluído com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir documento:', error);
     res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
@@ -1786,13 +1708,13 @@ app.get('/api/departments', async (req, res) => {
 
     // Cache por tenant para departamentos
     const departments = await getCachedData(tenant.id, 'departments', async () => {
-      if (await usePostgres()) {
+    if (await usePostgres()) {
         const result = await query('SELECT id, name, created_at FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
         return result.rows;
-      } else {
-        const demoData = getDemoData();
+    } else {
+      const demoData = getDemoData();
         return demoData.departments.filter(dept => dept.tenant_id === tenant.id);
-      }
+    }
     });
     res.json(departments);
   } catch (error) {
