@@ -15,6 +15,8 @@ const dataCache = {
   users: new Map(),
   documents: new Map(),
   departments: new Map(),
+  categories: new Map(),
+  positions: new Map(),
   lastUpdate: new Map()
 };
 
@@ -30,6 +32,12 @@ function isCacheValid(tenantId, dataType) {
 
 // Função para obter dados do cache ou buscar novos
 async function getCachedData(tenantId, dataType, fetchFunction) {
+  // Verificar se o cache para este tipo de dados existe
+  if (!dataCache[dataType]) {
+    console.log(`Cache para ${dataType} não inicializado, criando...`);
+    dataCache[dataType] = new Map();
+  }
+  
   if (isCacheValid(tenantId, dataType)) {
     console.log(`Usando cache para ${dataType} do tenant ${tenantId}`);
     return dataCache[dataType].get(tenantId);
@@ -38,17 +46,33 @@ async function getCachedData(tenantId, dataType, fetchFunction) {
   try {
     console.log(`Buscando dados frescos para ${dataType} do tenant ${tenantId}`);
     const data = await fetchFunction();
+    
+    // Garantir que o cache existe antes de usar
+    if (!dataCache[dataType]) {
+      dataCache[dataType] = new Map();
+    }
+    if (!dataCache.lastUpdate) {
+      dataCache.lastUpdate = new Map();
+    }
+    
     dataCache[dataType].set(tenantId, data);
     dataCache.lastUpdate.set(`${tenantId}-${dataType}`, Date.now());
     return data;
   } catch (error) {
     console.log(`Erro ao buscar ${dataType}, usando cache se disponível:`, error.message);
-    const cachedData = dataCache[dataType].get(tenantId);
-    if (cachedData) {
-      console.log(`Usando dados em cache para ${dataType} do tenant ${tenantId}`);
-      return cachedData;
+    
+    // Verificar se o cache existe antes de tentar usar
+    if (dataCache[dataType]) {
+      const cachedData = dataCache[dataType].get(tenantId);
+      if (cachedData) {
+        console.log(`Usando dados em cache para ${dataType} do tenant ${tenantId}`);
+        return cachedData;
+      }
     }
-    throw error;
+    
+    // Se não há cache disponível, retornar dados vazios em vez de falhar
+    console.log(`Nenhum cache disponível para ${dataType}, retornando dados vazios`);
+    return [];
   }
 }
 
@@ -62,27 +86,45 @@ function generateETag(data) {
 // Middleware para cache HTTP com ETag
 function httpCacheMiddleware(req, res, next) {
   const originalJson = res.json;
+  let headersSent = false;
   
   res.json = function(data) {
-    // Gerar ETag baseado nos dados
-    const etag = generateETag(data);
-    
-    // Verificar se o cliente já tem a versão mais recente
-    const clientETag = req.headers['if-none-match'];
-    if (clientETag === etag) {
-      res.status(304).end();
-      return;
+    // Evitar definir headers se já foram enviados
+    if (headersSent) {
+      return originalJson.call(this, data);
     }
     
-    // Definir headers de cache
-    res.set({
-      'ETag': etag,
-      'Cache-Control': 'public, max-age=60', // Cache por 60 segundos
-      'Last-Modified': new Date().toUTCString()
-    });
-    
-    // Enviar dados
-    originalJson.call(this, data);
+    try {
+      // Gerar ETag baseado nos dados
+      const etag = generateETag(data);
+      
+      // Verificar se o cliente já tem a versão mais recente
+      const clientETag = req.headers['if-none-match'];
+      if (clientETag === etag) {
+        if (!res.headersSent) {
+          res.status(304).end();
+          headersSent = true;
+        }
+        return;
+      }
+      
+      // Definir headers de cache apenas se ainda não foram enviados
+      if (!res.headersSent) {
+        res.set({
+          'ETag': etag,
+          'Cache-Control': 'public, max-age=60', // Cache por 60 segundos
+          'Last-Modified': new Date().toUTCString()
+        });
+      }
+      
+      // Enviar dados
+      originalJson.call(this, data);
+      headersSent = true;
+    } catch (error) {
+      console.error('Erro no middleware de cache:', error);
+      // Fallback para resposta normal
+      originalJson.call(this, data);
+    }
   };
   
   next();
