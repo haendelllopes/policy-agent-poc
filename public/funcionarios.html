@@ -581,14 +581,24 @@
         let filteredUsers = [];
         let currentPage = 1;
         const usersPerPage = 10;
+        // Caches em memória para reduzir requisições repetidas
+        let cachedPositions = null;
+        let cachedDepartments = null;
+        const FETCH_TIMEOUT_MS = 15000;
 
         // Utility function for API calls
         async function fetchData(url, options = {}) {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? FETCH_TIMEOUT_MS);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } finally {
+                clearTimeout(timeout);
             }
-            return await response.json();
         }
 
         // Load users
@@ -773,7 +783,8 @@
             const select = document.getElementById('userDepartment');
             select.innerHTML = '<option value="">Selecione um departamento</option>';
             try {
-                const departments = await (await fetch(`/api/departments?tenant=${tenant}`)).json();
+                const departments = cachedDepartments || await fetchData(`/api/departments?tenant=${tenant}`);
+                cachedDepartments = departments;
                 (departments || []).forEach(dep => {
                     const option = document.createElement('option');
                     const value = dep.name || dep.id;
@@ -792,7 +803,8 @@
             const select = document.getElementById('userPosition');
             select.innerHTML = '<option value="">Selecione um cargo</option>';
             try {
-                const positions = await (await fetch(`/api/positions?tenant=${tenant}`)).json();
+                const positions = cachedPositions || await fetchData(`/api/positions?tenant=${tenant}`);
+                cachedPositions = positions;
                 positions.forEach(pos => {
                     const option = document.createElement('option');
                     const value = pos.name || pos.id;
@@ -942,8 +954,7 @@
                 
                 // Marcar como edição
                 document.getElementById('addUserForm').dataset.editingUserId = userId;
-                
-                populateDepartmentDropdown();
+
                 document.getElementById('addUserModal').style.display = 'flex';
                 document.getElementById('userName').focus();
                 
