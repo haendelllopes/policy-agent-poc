@@ -288,10 +288,33 @@
             <div class="section">
                 <div class="card">
                     <h2>Gestão de Documentos</h2>
-                    
-                    <div class="coming-soon">
-                        <h3>Em Desenvolvimento</h3>
-                        <p>Esta seção está sendo desenvolvida e em breve estará disponível com funcionalidades completas para gerenciamento de documentos da empresa.</p>
+
+                    <!-- Toolbar: search and filters -->
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
+                        <input id="searchInput" type="text" placeholder="Buscar por título..." 
+                               style="flex:1; min-width:220px; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px;">
+
+                        <select id="categoryFilter" style="min-width:220px; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px;">
+                            <option value="">Todas as categorias</option>
+                        </select>
+
+                        <select id="departmentFilter" style="min-width:220px; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px;">
+                            <option value="">Todos os departamentos</option>
+                        </select>
+
+                        <button class="btn-secondary" onclick="clearFilters()">Limpar filtros</button>
+                    </div>
+
+                    <!-- Documents Table -->
+                    <div id="documentsTableContainer">
+                        <div class="loading">Carregando documentos...</div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div id="pagination" style="display:none; justify-content: space-between; align-items:center; margin-top:16px;">
+                        <button id="prevBtn" class="btn-secondary" onclick="previousPage()">Anterior</button>
+                        <span id="pageInfo" style="color:#64748b;">Página 1 de 1</span>
+                        <button id="nextBtn" class="btn-secondary" onclick="nextPage()">Próxima</button>
                     </div>
                 </div>
             </div>
@@ -308,30 +331,190 @@
             return await response.json();
         }
 
-        // Load documents
+        // State
+        let allDocuments = [];
+        let filteredDocuments = [];
+        let currentPage = 1;
+        const docsPerPage = 10;
+
+        // Load documents + filters
         async function loadDocuments() {
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            console.log('Carregando documentos para tenant:', tenant);
-            
             try {
-                const response = await fetchData(`/api/documents?tenant=${tenant}`);
-                console.log('Documentos carregados:', response.length);
-                // TODO: Implement document rendering
+                const [docs, categories, departments] = await Promise.all([
+                    fetchData(`/api/documents?tenant=${tenant}`),
+                    fetchData(`/api/categories?tenant=${tenant}`),
+                    fetchData(`/api/departments?tenant=${tenant}`)
+                ]);
+
+                allDocuments = Array.isArray(docs) ? docs : [];
+                populateCategoryFilter(categories);
+                populateDepartmentFilter(departments);
+                filterDocuments();
             } catch (error) {
                 console.error('Erro ao carregar documentos:', error);
-                // TODO: Show error message
+                showDocumentsError('Erro ao carregar documentos. Tente novamente.');
             }
         }
 
-        // Refresh documents
-        function refreshDocuments() {
-            loadDocuments();
+        function refreshDocuments() { loadDocuments(); }
+        function uploadDocument() { alert('Funcionalidade de upload será implementada em breve.'); }
+
+        function populateCategoryFilter(categories) {
+            const select = document.getElementById('categoryFilter');
+            const selected = select.value;
+            select.innerHTML = '<option value="">Todas as categorias</option>';
+            (categories || []).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name || c.id;
+                opt.textContent = c.name;
+                select.appendChild(opt);
+            });
+            if (selected) select.value = selected;
         }
 
-        // Upload document
-        function uploadDocument() {
-            alert('Funcionalidade de upload será implementada em breve.');
+        function populateDepartmentFilter(departments) {
+            const select = document.getElementById('departmentFilter');
+            const selected = select.value;
+            select.innerHTML = '<option value="">Todos os departamentos</option>';
+            (departments || []).forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.name || d.id;
+                opt.textContent = d.name;
+                select.appendChild(opt);
+            });
+            if (selected) select.value = selected;
         }
+
+        // Filtering
+        function filterDocuments() {
+            const term = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+            const category = document.getElementById('categoryFilter').value;
+            const department = document.getElementById('departmentFilter').value;
+
+            filteredDocuments = (allDocuments || []).filter(doc => {
+                const matchesTerm = !term || (doc.title || '').toLowerCase().includes(term);
+                const matchesCategory = !category || (doc.category === category || doc.category_name === category);
+                const matchesDept = !department || (doc.department === department || doc.department_name === department);
+                return matchesTerm && matchesCategory && matchesDept;
+            });
+
+            currentPage = 1;
+            renderDocuments();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('departmentFilter').value = '';
+            filterDocuments();
+        }
+
+        // Render
+        function renderDocuments() {
+            const container = document.getElementById('documentsTableContainer');
+            if (!filteredDocuments.length) {
+                container.innerHTML = '<div class="loading">Nenhum documento encontrado.</div>';
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+
+            const start = (currentPage - 1) * docsPerPage;
+            const pageDocs = filteredDocuments.slice(start, start + docsPerPage);
+
+            let html = '';
+            html += '<table style="width:100%; border-collapse:collapse;">';
+            html += '<thead><tr>' +
+                    '<th style="text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">Título</th>' +
+                    '<th style="text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">Categoria</th>' +
+                    '<th style="text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">Departamento</th>' +
+                    '<th style="text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">Data</th>' +
+                    '<th style="text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">Status</th>' +
+                    '<th style="text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">Ações</th>' +
+                '</tr></thead><tbody>';
+
+            pageDocs.forEach(doc => {
+                const dateStr = doc.created_at ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '-';
+                const status = doc.status || '-';
+                const cat = doc.category_name || doc.category || '-';
+                const dept = doc.department_name || doc.department || '-';
+                const title = doc.title || doc.name || '(sem título)';
+
+                html += '<tr>' +
+                    `<td style="padding:12px; border-bottom:1px solid #e2e8f0;"><strong>${title}</strong></td>` +
+                    `<td style="padding:12px; border-bottom:1px solid #e2e8f0;">${cat}</td>` +
+                    `<td style="padding:12px; border-bottom:1px solid #e2e8f0;">${dept}</td>` +
+                    `<td style="padding:12px; border-bottom:1px solid #e2e8f0;">${dateStr}</td>` +
+                    `<td style="padding:12px; border-bottom:1px solid #e2e8f0;">${status}</td>` +
+                    `<td style="padding:12px; border-bottom:1px solid #e2e8f0;">` +
+                        `<button class="btn-secondary" onclick="viewDocument('${doc.id || ''}')">Ver</button> ` +
+                        `<button class="btn-secondary" onclick="editDocument('${doc.id || ''}')">Editar</button> ` +
+                        `<button class="btn-secondary" onclick="deleteDocument('${doc.id || ''}')">Excluir</button>` +
+                    `</td>` +
+                '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            updatePagination();
+        }
+
+        function showDocumentsError(message) {
+            const container = document.getElementById('documentsTableContainer');
+            container.innerHTML = `<div class="error">${message}</div>`;
+            document.getElementById('pagination').style.display = 'none';
+        }
+
+        // Pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredDocuments.length / docsPerPage);
+            const pagination = document.getElementById('pagination');
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+
+            pagination.style.display = 'flex';
+            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderDocuments();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredDocuments.length / docsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderDocuments();
+            }
+        }
+
+        // Actions (placeholders)
+        function viewDocument(id) { alert('Visualização em breve. ID: ' + id); }
+        function editDocument(id) { alert('Edição em breve. ID: ' + id); }
+        async function deleteDocument(id) { alert('Exclusão em breve. ID: ' + id); }
+
+        // Events
+        document.addEventListener('input', (e) => {
+            if (e.target && (e.target.id === 'searchInput')) {
+                filterDocuments();
+            }
+        });
+        document.addEventListener('change', (e) => {
+            if (e.target && (e.target.id === 'categoryFilter' || e.target.id === 'departmentFilter')) {
+                filterDocuments();
+            }
+        });
 
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
