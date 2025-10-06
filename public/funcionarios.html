@@ -768,18 +768,23 @@
             document.getElementById('addUserModal').style.display = 'none';
         }
 
-        function populateDepartmentDropdown() {
-            const departments = [...new Set(allUsers.map(user => user.department).filter(Boolean))];
+        async function populateDepartmentDropdown(selectedValue = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
             const select = document.getElementById('userDepartment');
-            
             select.innerHTML = '<option value="">Selecione um departamento</option>';
-            
-            departments.forEach(dept => {
-                const option = document.createElement('option');
-                option.value = dept;
-                option.textContent = dept;
-                select.appendChild(option);
-            });
+            try {
+                const departments = await (await fetch(`/api/departments?tenant=${tenant}`)).json();
+                (departments || []).forEach(dep => {
+                    const option = document.createElement('option');
+                    const value = dep.name || dep.id;
+                    option.value = value;
+                    option.textContent = dep.name;
+                    select.appendChild(option);
+                });
+                if (selectedValue) select.value = selectedValue;
+            } catch (e) {
+                console.error('Erro ao carregar departamentos:', e);
+            }
         }
 
         async function populatePositionDropdown(selectedValue = '') {
@@ -926,7 +931,7 @@
                 document.getElementById('userName').value = user.name || '';
                 document.getElementById('userEmail').value = user.email || '';
                 await populatePositionDropdown(user.position || '');
-                document.getElementById('userDepartment').value = user.department || '';
+                await populateDepartmentDropdown(user.department || '');
                 document.getElementById('userStartDate').value = user.start_date || '';
                 document.getElementById('userPhone').value = user.phone ? user.phone.replace(/^55/, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '';
                 document.getElementById('userStatus').value = user.status || 'active';
