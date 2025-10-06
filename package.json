@@ -17,6 +17,7 @@
   "dependencies": {
     "@types/pg": "^8.15.5",
     "axios": "^1.12.2",
+    "cloudconvert": "^3.0.0",
     "compression": "^1.7.4",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",

@@ -2,11 +2,73 @@ const { OpenAI } = require('openai');
 // pdf-parse não funciona no Vercel (requer @napi-rs/canvas)
 // const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
+const CloudConvert = require('cloudconvert');
 
 // Inicializar OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+// Inicializar CloudConvert
+const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
+
+/**
+ * Extrai texto de PDF usando CloudConvert
+ */
+async function extractTextFromPDF(fileBuffer, fileName) {
+  try {
+    // Criar job de conversão
+    const job = await cloudConvert.jobs.create({
+      tasks: {
+        'upload-my-file': {
+          operation: 'import/upload'
+        },
+        'convert-my-file': {
+          operation: 'convert',
+          input: 'upload-my-file',
+          output_format: 'txt',
+          options: {
+            extract_text: true
+          }
+        },
+        'export-my-file': {
+          operation: 'export/url',
+          input: 'convert-my-file'
+        }
+      }
+    });
+
+    // Upload do arquivo
+    const uploadTask = job.tasks.find(task => task.name === 'upload-my-file');
+    const uploadUrl = uploadTask.result.files[0].upload_url;
+    
+    await cloudConvert.upload(uploadUrl, fileBuffer, fileName);
+
+    // Aguardar conversão
+    let conversionTask = job.tasks.find(task => task.name === 'convert-my-file');
+    while (conversionTask.status === 'waiting' || conversionTask.status === 'processing') {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const updatedJob = await cloudConvert.jobs.show(job.id);
+      conversionTask = updatedJob.tasks.find(task => task.name === 'convert-my-file');
+    }
+
+    if (conversionTask.status === 'finished') {
+      // Download do resultado
+      const exportTask = job.tasks.find(task => task.name === 'export-my-file');
+      const downloadUrl = exportTask.result.files[0].url;
+      
+      const response = await fetch(downloadUrl);
+      const textContent = await response.text();
+      
+      return textContent;
+    } else {
+      throw new Error(`Falha na conversão: ${conversionTask.status}`);
+    }
+  } catch (error) {
+    console.error('Erro na extração de texto do PDF:', error);
+    throw error;
+  }
+}
 
 /**
  * Extrai texto de diferentes tipos de arquivo
@@ -17,15 +79,18 @@ async function extractText(fileBuffer, fileName, mimeType) {
       return fileBuffer.toString('utf8');
     } 
     else if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      // pdf-parse não funciona no Vercel
-      if (process.env.VERCEL) {
-        console.warn('PDF parsing não suportado no Vercel. Use Render.com para processamento completo de PDF.');
-        return '[Conteúdo PDF - processamento completo disponível apenas em ambientes com suporte a canvas]';
+      // Usar CloudConvert para extrair texto do PDF
+      if (process.env.CLOUDCONVERT_API_KEY) {
+        try {
+          return await extractTextFromPDF(fileBuffer, fileName);
+        } catch (error) {
+          console.error('Erro ao extrair texto do PDF via CloudConvert:', error);
+          return '[Erro ao processar PDF - conteúdo não disponível]';
+        }
+      } else {
+        console.warn('CLOUDCONVERT_API_KEY não configurado. PDF não será processado.');
+        return '[PDF não processado - configure CLOUDCONVERT_API_KEY para processamento completo]';
       }
-      // Para outros ambientes, você pode descomentar e usar pdf-parse
-      // const pdfData = await pdfParse(fileBuffer);
-      // return pdfData.text;
-      throw new Error('PDF parsing não configurado para este ambiente');
     } 
     else if (mimeType.includes('word') || mimeType.includes('document') || 
              fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
