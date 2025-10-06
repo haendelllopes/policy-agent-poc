@@ -68,22 +68,22 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações conservadoras para Session Pooler do Supabase
+    // Configurações ultra-conservadoras para Session Pooler do Supabase
     max: 1, // Apenas 1 conexão para evitar MaxClientsInSessionMode
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 10000, // 10 segundos para conexões idle (liberar rapidamente)
-    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
-    acquireTimeoutMillis: 10000, // 10 segundos para adquirir conexão
+    idleTimeoutMillis: 5000, // 5 segundos para conexões idle (liberar muito rapidamente)
+    connectionTimeoutMillis: 8000, // 8 segundos para conexão inicial
+    acquireTimeoutMillis: 5000, // 5 segundos para adquirir conexão
     // Configurações de retry
-    retryDelayMs: 2000, // 2 segundos entre tentativas
+    retryDelayMs: 1000, // 1 segundo entre tentativas
     retryAttempts: 1, // Apenas 1 tentativa para evitar sobrecarga
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
     keepAlive: false, // Desabilitar keepAlive para liberar conexões rapidamente
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 20000, // 20 segundos para queries
-    query_timeout: 15000, // 15 segundos para queries
+    statement_timeout: 10000, // 10 segundos para queries
+    query_timeout: 8000, // 8 segundos para queries
     application_name: 'navigator-app',
     // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
