@@ -115,6 +115,26 @@ app.get('/inicio', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/inicio.html'));
 });
 
+// Página de funcionários
+app.get('/funcionarios', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/funcionarios.html'));
+});
+
+// Página de documentos
+app.get('/documentos', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/documentos.html'));
+});
+
 // Nova landing page melhorada
 app.get('/landing-new', (req, res) => {
   res.set({
