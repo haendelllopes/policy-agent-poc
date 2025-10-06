@@ -458,6 +458,18 @@ async function migrate() {
       )
     `);
     
+    // Criar tabela tenant_settings
+    await query(`
+      CREATE TABLE IF NOT EXISTS tenant_settings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+        setting_key VARCHAR(255) NOT NULL,
+        setting_value TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(tenant_id, setting_key)
+      )
+    `);
+    
     // Criar índices otimizados para performance
     await query(`CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id)`);
@@ -466,6 +478,7 @@ async function migrate() {
     await query(`CREATE INDEX IF NOT EXISTS idx_categories_tenant ON categories(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_positions_tenant ON positions(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_tags_tenant ON tags(tenant_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_tenant_settings_tenant ON tenant_settings(tenant_id)`);
     // Índices compostos para queries mais específicas
     await query(`CREATE INDEX IF NOT EXISTS idx_users_tenant_status ON users(tenant_id, status)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant_status ON documents(tenant_id, status)`);
