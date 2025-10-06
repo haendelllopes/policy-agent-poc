@@ -865,9 +865,26 @@
                     closeAddUserModal();
                     loadUsers();
                 } else {
-                    const result = await response.json();
-                    console.error('Erro ao adicionar usuário:', result);
-                    alert('Erro ao adicionar funcionário: ' + (result.error || 'Erro desconhecido'));
+                    let errorText = 'Erro desconhecido';
+                    try {
+                        const result = await response.json();
+                        const err = result?.error ?? result;
+                        if (typeof err === 'string') {
+                            errorText = err;
+                        } else if (err?.message) {
+                            errorText = err.message;
+                        } else if (Array.isArray(err?.formErrors)) {
+                            errorText = err.formErrors.join(', ');
+                        } else if (err?.details) {
+                            errorText = err.details;
+                        } else {
+                            errorText = JSON.stringify(err);
+                        }
+                        console.error('Erro ao adicionar usuário:', result);
+                    } catch(e) {
+                        errorText = await response.text().catch(() => errorText);
+                    }
+                    alert('Erro ao adicionar funcionário: ' + errorText);
                 }
                 
             } catch (error) {
