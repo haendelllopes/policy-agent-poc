@@ -365,17 +365,19 @@ async function migrate() {
         tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
         title VARCHAR(255) NOT NULL,
         category VARCHAR(100),
-        department VARCHAR(100),
-        description TEXT,
-        file_name VARCHAR(255),
-        file_data TEXT,
-        file_size INTEGER,
         status VARCHAR(50) DEFAULT 'published',
         metadata JSONB,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )
     `);
+
+    // Adicionar colunas que podem não existir em tabelas antigas
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS department VARCHAR(100)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS description TEXT`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_name VARCHAR(255)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data TEXT`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_size INTEGER`);
     
     // Criar tabela chunks
     await query(`
