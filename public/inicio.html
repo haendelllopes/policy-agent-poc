@@ -185,31 +185,6 @@
         }
         
         /* Users Section Styles */
-        .users-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 24px;
-            gap: 24px;
-        }
-
-        .users-title h2 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 4px;
-        }
-
-        .users-title p {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .users-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
 
         .btn-primary, .btn-secondary {
             display: flex;
@@ -450,11 +425,6 @@
                 grid-template-columns: 1fr; 
             }
 
-            .users-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 16px;
-            }
 
             .users-filters {
                 flex-direction: column;
@@ -510,12 +480,14 @@
                         <h1>Início</h1>
                         <p>Visão geral do sistema Flowly</p>
                     </div>
-                    <button class="btn-secondary" onclick="updateDashboard(true)" title="Atualizar dados">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Atualizar
-                    </button>
+                    <div class="header-actions" id="headerActions">
+                        <button class="btn-secondary" onclick="updateDashboard(true)" title="Atualizar dados">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Atualizar
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -567,27 +539,6 @@
 
             <!-- Users Section -->
             <div id="users-section" class="section" style="display: none;">
-                <!-- Header with Actions -->
-                <div class="users-header">
-                    <div class="users-title">
-                        <h2>Funcionários</h2>
-                        <p>Gerencie os funcionários da empresa</p>
-                    </div>
-                    <div class="users-actions">
-                        <button class="btn-secondary" onclick="refreshUsers()">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Atualizar
-                        </button>
-                        <button class="btn-primary" onclick="openAddUserModal()">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Adicionar Funcionário
-                        </button>
-                    </div>
-                </div>
 
                 <!-- Search and Filters -->
                 <div class="users-filters">
@@ -880,12 +831,28 @@
         }
 
         // Função para atualizar o header
-        function updateHeader(title, subtitle) {
+        function updateHeader(title, subtitle, actions = null) {
             const headerTitle = document.querySelector('.header h1');
             const headerSubtitle = document.querySelector('.header p');
+            const headerActions = document.getElementById('headerActions');
             
             if (headerTitle) headerTitle.textContent = title;
             if (headerSubtitle) headerSubtitle.textContent = subtitle;
+            
+            // Atualizar botões de ação se fornecidos
+            if (headerActions && actions) {
+                headerActions.innerHTML = actions;
+            } else if (headerActions && title === 'Início') {
+                // Botão padrão para dashboard
+                headerActions.innerHTML = `
+                    <button class="btn-secondary" onclick="updateDashboard(true)" title="Atualizar dados">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Atualizar
+                    </button>
+                `;
+            }
         }
 
         // Função para alternar seções
@@ -922,7 +889,21 @@
             } else if (sectionName === 'users') {
                 console.log(' Navegando para funcionários, carregando dados...');
                 loadUsers();
-                updateHeader('Funcionários', 'Gerencie os funcionários da empresa');
+                const userActions = `
+                    <button class="btn-secondary" onclick="refreshUsers()" title="Atualizar funcionários">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Atualizar
+                    </button>
+                    <button class="btn-primary" onclick="openAddUserModal()" title="Adicionar funcionário">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar Funcionário
+                    </button>
+                `;
+                updateHeader('Funcionários', 'Gerencie os funcionários da empresa', userActions);
             } else if (sectionName === 'documents') {
                 console.log(' Navegando para documentos...');
                 updateHeader('Documentos', 'Gerencie os documentos da empresa');
