@@ -68,25 +68,25 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações otimizadas para Vercel + Supabase Session Pooler
-    max: 1, // Apenas 1 conexão para evitar MaxClientsInSessionMode
+    // Configurações ultra-conservadoras para Supabase Session Pooler
+    max: 1, // Apenas 1 conexão
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 30000, // 30 segundos para conexões idle
-    connectionTimeoutMillis: 30000, // 30 segundos para conexão inicial (mais tempo)
-    acquireTimeoutMillis: 30000, // 30 segundos para adquirir conexão (mais tempo)
-    // Configurações de retry mais agressivas
-    retryDelayMs: 5000, // 5 segundos entre tentativas
-    retryAttempts: 5, // 5 tentativas para maior robustez
+    idleTimeoutMillis: 10000, // 10 segundos para conexões idle (liberar rapidamente)
+    connectionTimeoutMillis: 20000, // 20 segundos para conexão inicial
+    acquireTimeoutMillis: 20000, // 20 segundos para adquirir conexão
+    // Configurações de retry conservadoras
+    retryDelayMs: 10000, // 10 segundos entre tentativas (mais tempo)
+    retryAttempts: 2, // Apenas 2 tentativas para evitar sobrecarga
     // Forçar IPv4
     family: 4,
-    // Configurações adicionais para estabilidade
-    keepAlive: true, // Habilitar keepAlive para manter conexões
-    keepAliveInitialDelayMillis: 10000,
-    statement_timeout: 60000, // 60 segundos para queries (mais tempo)
-    query_timeout: 60000, // 60 segundos para queries (mais tempo)
+    // Configurações para liberar recursos rapidamente
+    keepAlive: false, // Desabilitar keepAlive para liberar recursos
+    keepAliveInitialDelayMillis: 0,
+    statement_timeout: 30000, // 30 segundos para queries
+    query_timeout: 30000, // 30 segundos para queries
     // Configurações específicas para Lambda/Vercel
     allowExitOnIdle: true, // Permitir saída quando idle
-    maxUses: 7500, // Limite de usos por conexão
+    maxUses: 1000, // Limite baixo de usos por conexão
     application_name: 'navigator-app',
     // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
@@ -111,7 +111,7 @@ function createPool(connStr) {
 }
 
 // Função para executar queries com retry otimizado para Supabase Pro
-async function query(text, params = [], retries = 5) {
+async function query(text, params = [], retries = 2) {
   let pgPool = initializePool();
   
   if (!pgPool) {
