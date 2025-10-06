@@ -20,7 +20,7 @@ const dataCache = {
   lastUpdate: new Map()
 };
 
-const CACHE_DURATION = 60000; // 1 minuto
+const CACHE_DURATION = 20000; // 20 segundos - mais responsivo
 const { z } = require('zod');
 
 // Função para verificar se o cache é válido

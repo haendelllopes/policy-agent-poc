@@ -714,7 +714,7 @@
         let isUpdating = false;
         let updateInterval = null;
         let lastUpdateTime = 0;
-        const UPDATE_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+        const UPDATE_INTERVAL_MS = 2 * 60 * 1000; // 2 minutos - mais responsivo
 
         // Função para atualizar os cards
         async function updateDashboard(force = false) {
@@ -822,11 +822,11 @@
             }
             
             updateInterval = setInterval(() => {
-                console.log(' Atualização automática (5 minutos)...');
+                console.log(' Atualização automática (2 minutos)...');
                 updateDashboard();
             }, UPDATE_INTERVAL_MS);
             
-            console.log(' Intervalo de atualização iniciado (5 minutos)');
+            console.log(' Intervalo de atualização iniciado (2 minutos)');
         }
 
         // Função para parar o intervalo de atualização
@@ -1346,8 +1346,22 @@
             // Adicionar listener para mudanças de hash
             window.addEventListener('hashchange', handleHashChange);
             
-            // Iniciar intervalo de atualização automática (5 minutos)
+            // Iniciar intervalo de atualização automática (2 minutos)
             startUpdateInterval();
+            
+            // Refresh automático quando a página ganha foco (usuário volta para a aba)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    console.log(' Página ganhou foco, atualizando dados...');
+                    updateDashboard(true);
+                }
+            });
+            
+            // Refresh automático quando a janela ganha foco
+            window.addEventListener('focus', function() {
+                console.log(' Janela ganhou foco, atualizando dados...');
+                updateDashboard(true);
+            });
             
             // Adicionar event listeners para o formulário
             setupAddUserForm();
