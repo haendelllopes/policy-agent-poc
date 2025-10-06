@@ -2699,3 +2699,63 @@ app.get('/api/categories/:id', async (req, res) => {
   }
 });
 
+// Communication Type API
+app.get('/api/communication-type', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    if (await usePostgres()) {
+      const result = await query('SELECT * FROM tenant_settings WHERE tenant_id = $1 AND setting_key = $2', [tenant.id, 'communication_type']);
+      
+      if (result.rows.length > 0) {
+        res.json({ type: result.rows[0].setting_value });
+      } else {
+        res.json({ type: null });
+      }
+    } else {
+      // Demo data fallback - return null for demo tenant
+      res.json({ type: null });
+    }
+  } catch (error) {
+    console.error('Erro ao buscar tipo de comunicação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.post('/api/communication-type', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { type } = req.body;
+    
+    if (!type || !['whatsapp', 'telegram', 'slack'].includes(type)) {
+      return res.status(400).json({ error: 'Tipo de comunicação inválido' });
+    }
+
+    if (await usePostgres()) {
+      // Delete existing setting
+      await query('DELETE FROM tenant_settings WHERE tenant_id = $1 AND setting_key = $2', [tenant.id, 'communication_type']);
+      
+      // Insert new setting
+      await query(
+        'INSERT INTO tenant_settings (id, tenant_id, setting_key, setting_value, created_at) VALUES ($1, $2, $3, $4, NOW())',
+        [uuidv4(), tenant.id, 'communication_type', type]
+      );
+      
+      res.json({ type, message: 'Tipo de comunicação atualizado com sucesso' });
+    } else {
+      // Demo data fallback
+      res.json({ type, message: 'Tipo de comunicação atualizado com sucesso' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar tipo de comunicação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+

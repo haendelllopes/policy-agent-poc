@@ -130,35 +130,95 @@
             color: #3b82f6;
         }
 
-        /* Lists */
-        .config-list {
-            list-style: none;
+        /* Configuration Description */
+        .config-description {
+            color: #64748b;
+            font-size: 14px;
             margin-bottom: 16px;
         }
 
-        .config-item {
+        /* Configuration List */
+        .config-list-container {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .config-item-link {
+            display: flex;
             align-items: center;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background: #f8fafc;
-        }
-
-        .config-item:hover {
-            background: #f1f5f9;
-        }
-
-        .config-item-name {
+            gap: 12px;
+            padding: 16px;
+            color: #3b82f6;
+            text-decoration: none;
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.2s;
             font-weight: 500;
-            color: #374151;
         }
 
-        .config-item-actions {
+        .config-item-link:hover {
+            background: #f8fafc;
+            color: #2563eb;
+        }
+
+        .config-item-link svg {
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+        }
+
+        .config-item-link:hover svg {
+            color: #3b82f6;
+        }
+
+        /* Communication Toggle */
+        .communication-toggle-container {
             display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .communication-toggle {
+            display: flex;
+            align-items: center;
             gap: 8px;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            color: #64748b;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 120px;
+            justify-content: center;
+        }
+
+        .communication-toggle:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .communication-toggle.active {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .communication-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .communication-status {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 14px;
+            text-align: center;
         }
 
         .btn-edit {
@@ -415,67 +475,39 @@
 
             <!-- Configuration Sections -->
             <div class="config-sections">
-                <!-- Document Categories -->
+                <!-- Cadastros List -->
                 <div class="config-section">
                     <h3>
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        Categorias de Documentos
+                        Cadastros (3)
                     </h3>
                     
-                    <ul class="config-list" id="categoriesList">
-                        <li class="loading">Carregando categorias...</li>
-                    </ul>
+                    <p class="config-description">Selecione a rotina de Cadastros na lista abaixo:</p>
                     
-                    <button class="btn-add" onclick="openAddModal('category')">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Adicionar Categoria
-                    </button>
-                </div>
-
-                <!-- Employee Positions -->
-                <div class="config-section">
-                    <h3>
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
-                        </svg>
-                        Cargos de Funcionários
-                    </h3>
-                    
-                    <ul class="config-list" id="positionsList">
-                        <li class="loading">Carregando cargos...</li>
-                    </ul>
-                    
-                    <button class="btn-add" onclick="openAddModal('position')">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Adicionar Cargo
-                    </button>
-                </div>
-
-                <!-- Departments -->
-                <div class="config-section">
-                    <h3>
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                        Departamentos da Empresa
-                    </h3>
-                    
-                    <ul class="config-list" id="departmentsList">
-                        <li class="loading">Carregando departamentos...</li>
-                    </ul>
-                    
-                    <button class="btn-add" onclick="openAddModal('department')">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Adicionar Departamento
-                    </button>
+                    <div class="config-list-container">
+                        <a href="configurador-categorias.html" class="config-item-link">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                            </svg>
+                            Categoria de Documentos
+                        </a>
+                        
+                        <a href="configurador-cargos.html" class="config-item-link">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
+                            </svg>
+                            Cargo de Funcionários
+                        </a>
+                        
+                        <a href="configurador-departamentos.html" class="config-item-link">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            Departamentos da Empresa
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Communication Types -->
@@ -484,64 +516,46 @@
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                         </svg>
-                        Tipos de Comunicação
+                        Tipo de Comunicação com o Agente
                     </h3>
                     
-                    <ul class="config-list" id="communicationTypesList">
-                        <li class="loading">Carregando tipos de comunicação...</li>
-                    </ul>
+                    <p class="config-description">Selecione o tipo de comunicação para integração com n8n:</p>
                     
-                    <button class="btn-add" onclick="openAddModal('communication')">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Adicionar Tipo
-                    </button>
+                    <div class="communication-toggle-container">
+                        <button class="communication-toggle" data-type="whatsapp" onclick="toggleCommunication('whatsapp')">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                            </svg>
+                            WhatsApp
+                        </button>
+                        
+                        <button class="communication-toggle" data-type="telegram" onclick="toggleCommunication('telegram')">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                            Telegram
+                        </button>
+                        
+                        <button class="communication-toggle" data-type="slack" onclick="toggleCommunication('slack')">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                            </svg>
+                            Slack
+                        </button>
+                    </div>
+                    
+                    <div class="communication-status">
+                        <span id="communicationStatus">Nenhum tipo selecionado</span>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div id="configModal" class="modal">
-        <div class="modal-content">
-            <h2 id="modalTitle">Adicionar Item</h2>
-            
-            <form id="configForm">
-                <div class="form-group">
-                    <label for="configName">Nome *</label>
-                    <input type="text" id="configName" name="name" required>
-                </div>
-                
-                <div class="form-group" id="communicationTypeGroup" style="display: none;">
-                    <label for="communicationType">Tipo *</label>
-                    <select id="communicationType" name="type">
-                        <option value="">Selecione um tipo</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="telegram">Telegram</option>
-                        <option value="slack">Slack</option>
-                        <option value="email">Email</option>
-                        <option value="sms">SMS</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="configDescription">Descrição</label>
-                    <input type="text" id="configDescription" name="description" placeholder="Descrição opcional">
-                </div>
-                
-                <div class="modal-buttons">
-                    <button type="button" onclick="closeModal()" class="btn-secondary">Cancelar</button>
-                    <button type="submit" id="submitBtn" class="btn-primary">Salvar</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <script>
         // Global variables
-        let currentEditingId = null;
-        let currentType = null;
+        let currentCommunicationType = null;
 
         // Utility function for API calls
         async function fetchData(url, options = {}) {
@@ -552,299 +566,83 @@
             return await response.json();
         }
 
-        // Load all configuration data
-        async function loadConfigData() {
+        // Load communication type setting
+        async function loadCommunicationType() {
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
             
             try {
-                // Load categories
-                await loadCategories(tenant);
-                
-                // Load positions
-                await loadPositions(tenant);
-                
-                // Load departments
-                await loadDepartments(tenant);
-                
-                // Load communication types
-                await loadCommunicationTypes(tenant);
-                
-            } catch (error) {
-                console.error('Erro ao carregar configurações:', error);
-            }
-        }
-
-        // Load categories
-        async function loadCategories(tenant) {
-            try {
-                const response = await fetchData(`/api/categories?tenant=${tenant}`);
-                renderConfigList('categoriesList', response, 'category');
-            } catch (error) {
-                console.error('Erro ao carregar categorias:', error);
-                document.getElementById('categoriesList').innerHTML = '<li class="error">Erro ao carregar categorias</li>';
-            }
-        }
-
-        // Load positions
-        async function loadPositions(tenant) {
-            try {
-                const response = await fetchData(`/api/positions?tenant=${tenant}`);
-                renderConfigList('positionsList', response, 'position');
-            } catch (error) {
-                console.error('Erro ao carregar cargos:', error);
-                document.getElementById('positionsList').innerHTML = '<li class="error">Erro ao carregar cargos</li>';
-            }
-        }
-
-        // Load departments
-        async function loadDepartments(tenant) {
-            try {
-                const response = await fetchData(`/api/departments?tenant=${tenant}`);
-                renderConfigList('departmentsList', response, 'department');
-            } catch (error) {
-                console.error('Erro ao carregar departamentos:', error);
-                document.getElementById('departmentsList').innerHTML = '<li class="error">Erro ao carregar departamentos</li>';
-            }
-        }
-
-        // Load communication types
-        async function loadCommunicationTypes(tenant) {
-            try {
-                const response = await fetchData(`/api/communication-types?tenant=${tenant}`);
-                renderConfigList('communicationTypesList', response, 'communication');
-            } catch (error) {
-                console.error('Erro ao carregar tipos de comunicação:', error);
-                document.getElementById('communicationTypesList').innerHTML = '<li class="error">Erro ao carregar tipos de comunicação</li>';
-            }
-        }
-
-        // Render configuration list
-        function renderConfigList(listId, items, type) {
-            const list = document.getElementById(listId);
-            
-            if (!items || items.length === 0) {
-                list.innerHTML = `
-                    <li class="empty-state">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-4 4m0 0l-4-4m4 4V3"></path>
-                        </svg>
-                        Nenhum item encontrado
-                    </li>
-                `;
-                return;
-            }
-
-            let html = '';
-            items.forEach(item => {
-                const displayName = item.type ? `${item.name} (${item.type})` : item.name;
-                html += `
-                    <li class="config-item">
-                        <span class="config-item-name">${displayName}</span>
-                        <div class="config-item-actions">
-                            <button class="btn-edit" onclick="editItem('${item.id}', '${type}')">Editar</button>
-                            <button class="btn-delete" onclick="deleteItem('${item.id}', '${type}')">Excluir</button>
-                        </div>
-                    </li>
-                `;
-            });
-            
-            list.innerHTML = html;
-        }
-
-        // Open add modal
-        function openAddModal(type) {
-            currentType = type;
-            currentEditingId = null;
-            
-            const modal = document.getElementById('configModal');
-            const title = document.getElementById('modalTitle');
-            const submitBtn = document.getElementById('submitBtn');
-            const form = document.getElementById('configForm');
-            const communicationGroup = document.getElementById('communicationTypeGroup');
-            
-            // Reset form
-            form.reset();
-            
-            // Set title and button text
-            const typeNames = {
-                'category': 'Categoria de Documento',
-                'position': 'Cargo de Funcionário',
-                'department': 'Departamento',
-                'communication': 'Tipo de Comunicação'
-            };
-            
-            title.textContent = `Adicionar ${typeNames[type]}`;
-            submitBtn.textContent = 'Adicionar';
-            
-            // Show/hide communication type field
-            if (type === 'communication') {
-                communicationGroup.style.display = 'block';
-                document.getElementById('communicationType').required = true;
-            } else {
-                communicationGroup.style.display = 'none';
-                document.getElementById('communicationType').required = false;
-            }
-            
-            modal.style.display = 'flex';
-            document.getElementById('configName').focus();
-        }
-
-        // Edit item
-        async function editItem(id, type) {
-            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            currentType = type;
-            currentEditingId = id;
-            
-            try {
-                const endpoint = getEndpoint(type);
-                const response = await fetchData(`/api/${endpoint}/${id}?tenant=${tenant}`);
-                
-                const modal = document.getElementById('configModal');
-                const title = document.getElementById('modalTitle');
-                const submitBtn = document.getElementById('submitBtn');
-                const form = document.getElementById('configForm');
-                const communicationGroup = document.getElementById('communicationTypeGroup');
-                
-                // Fill form
-                document.getElementById('configName').value = response.name || '';
-                document.getElementById('configDescription').value = response.description || '';
-                
-                if (type === 'communication') {
-                    communicationGroup.style.display = 'block';
-                    document.getElementById('communicationType').value = response.type || '';
-                    document.getElementById('communicationType').required = true;
-                } else {
-                    communicationGroup.style.display = 'none';
-                    document.getElementById('communicationType').required = false;
+                const response = await fetchData(`/api/communication-type?tenant=${tenant}`);
+                if (response.type) {
+                    currentCommunicationType = response.type;
+                    updateCommunicationUI();
                 }
-                
-                // Set title and button text
-                const typeNames = {
-                    'category': 'Categoria de Documento',
-                    'position': 'Cargo de Funcionário',
-                    'department': 'Departamento',
-                    'communication': 'Tipo de Comunicação'
-                };
-                
-                title.textContent = `Editar ${typeNames[type]}`;
-                submitBtn.textContent = 'Salvar Alterações';
-                
-                modal.style.display = 'flex';
-                document.getElementById('configName').focus();
-                
             } catch (error) {
-                console.error('Erro ao carregar item para edição:', error);
-                alert('Erro ao carregar dados do item. Tente novamente.');
+                console.error('Erro ao carregar tipo de comunicação:', error);
+                // Se não conseguir carregar, mantém como null
             }
         }
 
-        // Delete item
-        async function deleteItem(id, type) {
-            if (!confirm('Tem certeza que deseja excluir este item?')) {
-                return;
-            }
-
+        // Toggle communication type
+        async function toggleCommunication(type) {
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
             
             try {
-                const endpoint = getEndpoint(type);
-                const response = await fetch(`/api/${endpoint}/${id}?tenant=${tenant}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    loadConfigData(); // Reload all data
-                } else {
-                    const result = await response.json();
-                    console.error('Erro ao excluir item:', result);
-                    alert('Erro ao excluir item: ' + (result.error || 'Erro desconhecido'));
-                }
-                
-            } catch (error) {
-                console.error('Erro ao excluir item:', error);
-                alert('Erro ao excluir item. Tente novamente.');
-            }
-        }
-
-        // Get endpoint for API calls
-        function getEndpoint(type) {
-            const endpoints = {
-                'category': 'categories',
-                'position': 'positions',
-                'department': 'departments',
-                'communication': 'communication-types'
-            };
-            return endpoints[type];
-        }
-
-        // Close modal
-        function closeModal() {
-            document.getElementById('configModal').style.display = 'none';
-        }
-
-        // Form submission
-        document.getElementById('configForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const data = {
-                name: formData.get('name'),
-                description: formData.get('description')
-            };
-
-            // Add type for communication
-            if (currentType === 'communication') {
-                data.type = formData.get('type');
-            }
-
-            // Basic validation
-            if (!data.name) {
-                alert('Por favor, preencha o nome.');
-                return;
-            }
-
-            if (currentType === 'communication' && !data.type) {
-                alert('Por favor, selecione um tipo de comunicação.');
-                return;
-            }
-
-            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            const endpoint = getEndpoint(currentType);
-            
-            try {
-                const url = currentEditingId 
-                    ? `/api/${endpoint}/${currentEditingId}?tenant=${tenant}`
-                    : `/api/${endpoint}?tenant=${tenant}`;
-                
-                const method = currentEditingId ? 'PUT' : 'POST';
-                
-                const response = await fetch(url, {
-                    method: method,
+                const response = await fetch(`/api/communication-type?tenant=${tenant}`, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({ type })
                 });
 
                 if (response.ok) {
-                    closeModal();
-                    loadConfigData(); // Reload all data
+                    currentCommunicationType = type;
+                    updateCommunicationUI();
                 } else {
                     const result = await response.json();
-                    console.error('Erro ao salvar item:', result);
-                    alert('Erro ao salvar item: ' + (result.error || 'Erro desconhecido'));
+                    console.error('Erro ao alterar tipo de comunicação:', result);
+                    alert('Erro ao alterar tipo de comunicação: ' + (result.error || 'Erro desconhecido'));
                 }
                 
             } catch (error) {
-                console.error('Erro ao processar item:', error);
-                alert('Erro ao processar item. Tente novamente.');
+                console.error('Erro ao alterar tipo de comunicação:', error);
+                alert('Erro ao alterar tipo de comunicação. Tente novamente.');
             }
-        });
+        }
+
+        // Update communication UI
+        function updateCommunicationUI() {
+            // Remove active class from all buttons
+            document.querySelectorAll('.communication-toggle').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Add active class to selected button
+            if (currentCommunicationType) {
+                const activeBtn = document.querySelector(`[data-type="${currentCommunicationType}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+            }
+
+            // Update status text
+            const statusElement = document.getElementById('communicationStatus');
+            if (currentCommunicationType) {
+                const typeNames = {
+                    'whatsapp': 'WhatsApp',
+                    'telegram': 'Telegram',
+                    'slack': 'Slack'
+                };
+                statusElement.textContent = `Tipo ativo: ${typeNames[currentCommunicationType]}`;
+            } else {
+                statusElement.textContent = 'Nenhum tipo selecionado';
+            }
+        }
 
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de configurador carregada');
-            loadConfigData();
+            loadCommunicationType();
         });
     </script>
 </body>
