@@ -9,10 +9,13 @@ function initializePool() {
     if (pool) {
       // Verificar se o pool ainda está válido antes de reutilizar
       try {
-        // Testar se o pool ainda está funcionando
-        if (pool.totalCount >= 0 && pool.idleCount >= 0) {
+        // Testar se o pool ainda está funcionando e não atingiu limite
+        if (pool.totalCount >= 0 && pool.idleCount >= 0 && pool.totalCount < 1) {
           console.log('Reutilizando pool PostgreSQL existente no Vercel');
           return pool;
+        } else if (pool.totalCount >= 1) {
+          console.log('Pool atingiu limite máximo, forçando recriação...');
+          pool = null;
         }
       } catch (e) {
         console.log('Pool inválido, criando novo');
@@ -65,22 +68,22 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações equilibradas para Session Pooler do Supabase
-    max: 2, // Máximo 2 conexões
+    // Configurações conservadoras para Session Pooler do Supabase
+    max: 1, // Apenas 1 conexão para evitar MaxClientsInSessionMode
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 30000, // 30 segundos para conexões idle
-    connectionTimeoutMillis: 20000, // 20 segundos para conexão inicial
-    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
+    idleTimeoutMillis: 10000, // 10 segundos para conexões idle (liberar rapidamente)
+    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
+    acquireTimeoutMillis: 10000, // 10 segundos para adquirir conexão
     // Configurações de retry
-    retryDelayMs: 1000, // 1 segundo entre tentativas
-    retryAttempts: 2, // 2 tentativas
+    retryDelayMs: 2000, // 2 segundos entre tentativas
+    retryAttempts: 1, // Apenas 1 tentativa para evitar sobrecarga
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
-    keepAlive: true, // Habilitar keepAlive para manter conexões
-    keepAliveInitialDelayMillis: 10000,
-    statement_timeout: 30000, // 30 segundos para queries
-    query_timeout: 25000, // 25 segundos para queries
+    keepAlive: false, // Desabilitar keepAlive para liberar conexões rapidamente
+    keepAliveInitialDelayMillis: 0,
+    statement_timeout: 20000, // 20 segundos para queries
+    query_timeout: 15000, // 15 segundos para queries
     application_name: 'navigator-app',
     // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
@@ -105,7 +108,7 @@ function createPool(connStr) {
 }
 
 // Função para executar queries com retry otimizado para Supabase Pro
-async function query(text, params = [], retries = 2) {
+async function query(text, params = [], retries = 1) {
   let pgPool = initializePool();
   
   if (!pgPool) {
@@ -148,9 +151,9 @@ async function query(text, params = [], retries = 2) {
       
       // Se for erro de conexão e ainda há tentativas, aguardar e tentar novamente
       if (attempt < retries && isRetryableError) {
-        // Backoff exponencial com jitter
-        const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-        const jitter = Math.random() * 1000;
+        // Backoff linear com jitter (menos agressivo)
+        const baseDelay = 2000 * attempt; // 2s, 4s, 6s...
+        const jitter = Math.random() * 500;
         const delay = baseDelay + jitter;
         
         console.log(`Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
