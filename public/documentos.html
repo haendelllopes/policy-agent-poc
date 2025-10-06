@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentos - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: white; 
+            border-right: 1px solid #e2e8f0; 
+            padding: 24px 0; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto; 
+        }
+        
+        .logo { 
+            padding: 0 24px 32px; 
+            border-bottom: 1px solid #e2e8f0; 
+            margin-bottom: 24px; 
+        }
+        
+        .logo h1 { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #3b82f6; 
+        }
+        
+        .nav { padding: 0 24px; }
+        
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            margin-bottom: 4px; 
+            border-radius: 8px; 
+            color: #64748b; 
+            text-decoration: none; 
+            transition: all 0.2s; 
+            cursor: pointer;
+        }
+        
+        .nav-item:hover { 
+            background: #f1f5f9; 
+            color: #3b82f6; 
+        }
+        
+        .nav-item.active { 
+            background: #eff6ff; 
+            color: #3b82f6; 
+            font-weight: 500; 
+        }
+        
+        .nav-item svg { 
+            width: 20px; 
+            height: 20px; 
+            margin-right: 12px; 
+        }
+        
+        /* Main Content */
+        .main { 
+            flex: 1; 
+            margin-left: 280px; 
+            padding: 32px; 
+        }
+        
+        .header { 
+            margin-bottom: 32px; 
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header h1 { 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 8px; 
+        }
+        
+        .header p { 
+            color: #64748b; 
+            font-size: 16px; 
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        /* Documents Section */
+        .section {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            padding: 32px;
+        }
+
+        .error {
+            color: #dc2626;
+            text-align: center;
+            padding: 16px;
+            background: #fee2e2;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .coming-soon {
+            text-align: center;
+            padding: 64px 32px;
+            color: #64748b;
+        }
+
+        .coming-soon h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+        }
+
+        .coming-soon p {
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+            }
+            
+            .main {
+                margin-left: 0;
+                padding: 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Flowly</h1>
+            </div>
+            
+            <div class="nav">
+                <a href="inicio.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    </svg>
+                    Início
+                </a>
+                
+                <a href="funcionarios.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Funcionários
+                </a>
+                
+                <a href="documentos.html" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Documentos
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <div>
+                        <h1>Documentos</h1>
+                        <p>Gerencie os documentos da empresa</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-secondary" onclick="refreshDocuments()" title="Atualizar documentos">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Atualizar
+                        </button>
+                        <button class="btn-primary" onclick="uploadDocument()" title="Upload de documento">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            Upload Documento
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Documents Section -->
+            <div class="section">
+                <div class="card">
+                    <h2>Gestão de Documentos</h2>
+                    
+                    <div class="coming-soon">
+                        <h3>Em Desenvolvimento</h3>
+                        <p>Esta seção está sendo desenvolvida e em breve estará disponível com funcionalidades completas para gerenciamento de documentos da empresa.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Utility function for API calls
+        async function fetchData(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        // Load documents
+        async function loadDocuments() {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            console.log('Carregando documentos para tenant:', tenant);
+            
+            try {
+                const response = await fetchData(`/api/documents?tenant=${tenant}`);
+                console.log('Documentos carregados:', response.length);
+                // TODO: Implement document rendering
+            } catch (error) {
+                console.error('Erro ao carregar documentos:', error);
+                // TODO: Show error message
+            }
+        }
+
+        // Refresh documents
+        function refreshDocuments() {
+            loadDocuments();
+        }
+
+        // Upload document
+        function uploadDocument() {
+            alert('Funcionalidade de upload será implementada em breve.');
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de documentos carregada');
+            loadDocuments();
+        });
+    </script>
+</body>
+</html>
