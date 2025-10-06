@@ -136,11 +136,23 @@ app.use(compression({ threshold: 512 }));
 // Medir tempo de resposta
 app.use((req, res, next) => {
   const start = process.hrtime.bigint();
-  res.on('finish', () => {
-    const end = process.hrtime.bigint();
-    const durationMs = Number(end - start) / 1e6;
-    res.setHeader('X-Response-Time', `${durationMs.toFixed(1)}ms`);
-  });
+  
+  // Interceptar o evento 'finish' de forma mais segura
+  const originalFinish = res.emit;
+  res.emit = function(event, ...args) {
+    if (event === 'finish' && !res.headersSent) {
+      const end = process.hrtime.bigint();
+      const durationMs = Number(end - start) / 1e6;
+      try {
+        res.setHeader('X-Response-Time', `${durationMs.toFixed(1)}ms`);
+      } catch (error) {
+        // Ignorar erro se headers já foram enviados
+        console.log('Erro ao definir X-Response-Time:', error.message);
+      }
+    }
+    return originalFinish.call(this, event, ...args);
+  };
+  
   next();
 });
 app.use(express.json({ limit: '2mb' }));
@@ -297,14 +309,14 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// Aplicar cache HTTP para rotas GET da API
-app.use('/api', (req, res, next) => {
-  if (req.method === 'GET') {
-    httpCacheMiddleware(req, res, next);
-  } else {
-    next();
-  }
-});
+// Aplicar cache HTTP para rotas GET da API - DESABILITADO TEMPORARIAMENTE
+// app.use('/api', (req, res, next) => {
+//   if (req.method === 'GET') {
+//     httpCacheMiddleware(req, res, next);
+//   } else {
+//     next();
+//   }
+// });
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
