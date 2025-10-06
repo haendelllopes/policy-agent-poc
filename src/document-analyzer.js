@@ -1,13 +1,16 @@
-const { OpenAI } = require('openai');
 // pdf-parse não funciona no Vercel (requer @napi-rs/canvas)
 // const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 const CloudConvert = require('cloudconvert');
 
-// Inicializar OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Inicializar OpenAI (opcional - para embeddings)
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  const { OpenAI } = require('openai');
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 // Inicializar CloudConvert
 const cloudConvert = new CloudConvert(process.env.CLOUDCONVERT_API_KEY);
@@ -107,9 +110,14 @@ async function extractText(fileBuffer, fileName, mimeType) {
 }
 
 /**
- * Gera embedding usando OpenAI
+ * Gera embedding usando OpenAI (opcional)
  */
 async function generateEmbedding(text) {
+  if (!openai) {
+    console.warn('OpenAI não configurado. Embedding não será gerado.');
+    return null;
+  }
+  
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small",
@@ -126,114 +134,79 @@ async function generateEmbedding(text) {
  * Classifica o documento automaticamente
  */
 async function classifyDocument(text, title) {
-  try {
-    const prompt = `Analise este documento e classifique-o em uma das seguintes categorias:
-- RH (Recursos Humanos)
-- Financeiro
-- Legal
-- Operacional
-- Marketing
-- TI (Tecnologia)
-- Outros
-
-Título: ${title}
-Conteúdo: ${text.substring(0, 2000)}
-
-Responda apenas com a categoria mais apropriada:`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3,
-      max_tokens: 50
-    });
-
-    return response.choices[0].message.content.trim();
-  } catch (error) {
-    console.error('Erro ao classificar documento:', error);
+  // Para usar Gemini, a classificação será feita no n8n
+  // Aqui retornamos uma classificação básica baseada em palavras-chave
+  const content = (text + ' ' + title).toLowerCase();
+  
+  if (content.includes('rh') || content.includes('recursos humanos') || content.includes('funcionário') || content.includes('colaborador')) {
+    return 'RH';
+  } else if (content.includes('financeiro') || content.includes('orçamento') || content.includes('despesa') || content.includes('receita')) {
+    return 'Financeiro';
+  } else if (content.includes('legal') || content.includes('contrato') || content.includes('lei') || content.includes('jurídico')) {
+    return 'Legal';
+  } else if (content.includes('marketing') || content.includes('vendas') || content.includes('cliente')) {
+    return 'Marketing';
+  } else if (content.includes('ti') || content.includes('tecnologia') || content.includes('sistema') || content.includes('software')) {
+    return 'TI';
+  } else if (content.includes('operacional') || content.includes('processo') || content.includes('produção')) {
+    return 'Operacional';
+  } else {
     return 'Outros';
   }
 }
 
 /**
- * Analisa o sentimento do documento
+ * Analisa o sentimento do documento (básico)
  */
 async function analyzeSentiment(text) {
-  try {
-    const prompt = `Analise o sentimento deste documento em uma escala de -1 (muito negativo) a 1 (muito positivo).
-Responda apenas com um número decimal entre -1 e 1.
-
-Conteúdo: ${text.substring(0, 1500)}`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.1,
-      max_tokens: 10
-    });
-
-    const sentiment = parseFloat(response.choices[0].message.content.trim());
-    return isNaN(sentiment) ? 0 : sentiment;
-  } catch (error) {
-    console.error('Erro ao analisar sentimento:', error);
-    return 0;
-  }
+  // Análise básica de sentimento baseada em palavras-chave
+  const positiveWords = ['bom', 'excelente', 'ótimo', 'sucesso', 'positivo', 'feliz', 'satisfeito'];
+  const negativeWords = ['ruim', 'problema', 'erro', 'negativo', 'triste', 'insatisfeito', 'falha'];
+  
+  const content = text.toLowerCase();
+  let positiveCount = 0;
+  let negativeCount = 0;
+  
+  positiveWords.forEach(word => {
+    if (content.includes(word)) positiveCount++;
+  });
+  
+  negativeWords.forEach(word => {
+    if (content.includes(word)) negativeCount++;
+  });
+  
+  if (positiveCount === 0 && negativeCount === 0) return 0;
+  
+  const total = positiveCount + negativeCount;
+  return (positiveCount - negativeCount) / total;
 }
 
 /**
  * Gera resumo inteligente do documento
  */
 async function generateSummary(text, title) {
-  try {
-    const prompt = `Crie um resumo conciso e informativo deste documento em português brasileiro.
-Máximo 200 palavras. Foque nos pontos principais e informações relevantes.
-
-Título: ${title}
-Conteúdo: ${text.substring(0, 4000)}
-
-Resumo:`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3,
-      max_tokens: 300
-    });
-
-    return response.choices[0].message.content.trim();
-  } catch (error) {
-    console.error('Erro ao gerar resumo:', error);
-    return 'Resumo não disponível';
-  }
+  // Resumo básico baseado nas primeiras frases
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  const summary = sentences.slice(0, 3).join('. ').trim();
+  return summary || 'Resumo não disponível.';
 }
 
 /**
  * Gera tags automáticas
  */
 async function generateTags(text, title) {
-  try {
-    const prompt = `Analise este documento e gere 3-5 tags relevantes em português brasileiro.
-As tags devem ser palavras-chave que descrevam o conteúdo.
-Separe as tags com vírgula.
-
-Título: ${title}
-Conteúdo: ${text.substring(0, 2000)}
-
-Tags:`;
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.3,
-      max_tokens: 100
-    });
-
-    const tagsText = response.choices[0].message.content.trim();
-    return tagsText.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-  } catch (error) {
-    console.error('Erro ao gerar tags:', error);
-    return [];
-  }
+  // Tags básicas baseadas em palavras-chave
+  const content = (text + ' ' + title).toLowerCase();
+  const tags = [];
+  
+  if (content.includes('rh') || content.includes('funcionário')) tags.push('rh');
+  if (content.includes('financeiro') || content.includes('orçamento')) tags.push('financeiro');
+  if (content.includes('legal') || content.includes('contrato')) tags.push('legal');
+  if (content.includes('marketing') || content.includes('vendas')) tags.push('marketing');
+  if (content.includes('ti') || content.includes('tecnologia')) tags.push('ti');
+  if (content.includes('operacional') || content.includes('processo')) tags.push('operacional');
+  
+  return tags.length > 0 ? tags : ['documento'];
 }
 
 /**
