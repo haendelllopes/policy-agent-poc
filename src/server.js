@@ -202,28 +202,7 @@ async function getTenantBySubdomain(subdomain) {
 
 // Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
 function usePostgres() {
-  // No Vercel, ser mais conservador com PostgreSQL
-  if (process.env.VERCEL) {
-    // Verificar se as credenciais estão disponíveis
-    const hasCredentials = process.env.PGUSER && process.env.PGPASSWORD;
-    if (!hasCredentials) {
-      console.log('Vercel detectado - credenciais PostgreSQL ausentes, usando dados demo');
-      return false;
-    }
-    
-    // Tentar inicializar pool mas com timeout rápido
-    try {
-      if (!getPool()) {
-        initializePool();
-      }
-      return Boolean(getPool());
-    } catch (_e) {
-      console.log('PostgreSQL não disponível no Vercel, usando dados demo');
-      return false;
-    }
-  }
-  
-  // Ambiente local - comportamento normal
+  // Sempre tentar PostgreSQL primeiro, com fallback apenas em caso de erro
   try {
     if (!getPool()) {
       initializePool();
