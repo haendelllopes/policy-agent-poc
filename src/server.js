@@ -499,7 +499,8 @@ app.post('/api/users', async (req, res) => {
       phone: z.string().min(1),
       position: z.string().min(1),
       department: z.string().optional(),
-      start_date: z.string().optional()
+      start_date: z.string().optional(),
+      status: z.enum(['active', 'inactive']).optional()
     });
     
     const parse = schema.safeParse(req.body);
@@ -527,8 +528,8 @@ app.post('/api/users', async (req, res) => {
       }
 
       userId = uuidv4();
-      await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', 
-        [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
+      await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', 
+        [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active']);
     } else {
       // SQLite fallback
       const { db, SQL } = await openDatabase();
@@ -540,8 +541,8 @@ app.post('/api/users', async (req, res) => {
         }
 
         userId = uuidv4();
-        runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-          [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null]);
+        runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+          [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active']);
         
         persistDatabase(SQL, db);
       } finally {
@@ -583,10 +584,153 @@ app.post('/api/users', async (req, res) => {
       position: parse.data.position,
       department: parse.data.department,
       start_date: parse.data.start_date,
+      status: parse.data.status || 'active',
       tenant: tenant.name
     });
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
+    res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
+  }
+});
+
+// Endpoint para buscar usuário específico
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log('GET /users/:id - userId:', userId);
+    console.log('GET /users/:id - tenantSubdomain:', req.tenantSubdomain);
+    
+    // Buscar tenant pelo subdomain
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    console.log('GET /users/:id - tenant:', tenant);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    // Use PostgreSQL if available, otherwise SQLite
+    let user;
+    if (usePostgres()) {
+      // PostgreSQL
+      const result = await query('SELECT * FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
+      }
+      user = result.rows[0];
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const result = runQuery(db, 'SELECT * FROM users WHERE id = ? AND tenant_id = ?', [userId, tenant.id]);
+        if (result.length === 0) {
+          return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
+        }
+        user = result[0];
+      } finally {
+        closeDatabase(db);
+      }
+    }
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      position: user.position,
+      department: user.department,
+      start_date: user.start_date,
+      status: user.status || 'active',
+      created_at: user.created_at,
+      updated_at: user.updated_at
+    });
+  } catch (error) {
+    console.error('Erro ao buscar usuário:', error);
+    res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
+  }
+});
+
+// Endpoint para editar usuário
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log('PUT /users/:id - userId:', userId);
+    console.log('PUT /users/:id - tenantSubdomain:', req.tenantSubdomain);
+    
+    const schema = z.object({
+      name: z.string().min(1),
+      email: z.string().email(),
+      phone: z.string().min(1),
+      position: z.string().min(1),
+      department: z.string().optional(),
+      start_date: z.string().optional(),
+      status: z.enum(['active', 'inactive']).optional()
+    });
+    
+    const parse = schema.safeParse(req.body);
+    if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+
+    // Normalizar telefone para banco (com +)
+    const normalizedPhone = normalizePhone(parse.data.phone);
+    
+    // Buscar tenant pelo subdomain
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    // Use PostgreSQL if available, otherwise SQLite
+    if (usePostgres()) {
+      // PostgreSQL - Verificar se usuário existe
+      const existing = await query('SELECT id FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
+      }
+
+      // Verificar se email já existe em outro usuário
+      const emailCheck = await query('SELECT id FROM users WHERE email = $1 AND tenant_id = $2 AND id != $3', [parse.data.email, tenant.id, userId]);
+      if (emailCheck.rows.length > 0) {
+        return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
+      }
+
+      await query('UPDATE users SET name = $1, email = $2, phone = $3, position = $4, department = $5, start_date = $6, status = $7, updated_at = NOW() WHERE id = $8 AND tenant_id = $9', 
+        [parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active', userId, tenant.id]);
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        // Verificar se usuário existe
+        const existing = runQuery(db, 'SELECT id FROM users WHERE id = ? AND tenant_id = ?', [userId, tenant.id]);
+        if (existing.length === 0) {
+          return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
+        }
+
+        // Verificar se email já existe em outro usuário
+        const emailCheck = runQuery(db, 'SELECT id FROM users WHERE email = ? AND tenant_id = ? AND id != ?', [parse.data.email, tenant.id, userId]);
+        if (emailCheck.length > 0) {
+          return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
+        }
+
+        runExec(db, 'UPDATE users SET name = ?, email = ?, phone = ?, position = ?, department = ?, start_date = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?', 
+          [parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active', userId, tenant.id]);
+      } finally {
+        closeDatabase(db);
+      }
+    }
+
+    res.json({ 
+      message: 'Usuário atualizado com sucesso',
+      id: userId,
+      name: parse.data.name, 
+      email: parse.data.email,
+      phone: normalizedPhone,
+      position: parse.data.position,
+      department: parse.data.department,
+      start_date: parse.data.start_date,
+      status: parse.data.status || 'active',
+      tenant: tenant.name
+    });
+  } catch (error) {
+    console.error('Erro ao editar usuário:', error);
     res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
   }
 });

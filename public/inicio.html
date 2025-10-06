@@ -604,7 +604,7 @@
                     </div>
                     <div class="filter-select">
                         <select id="statusFilter" onchange="filterUsers()">
-                            <option value="">Todos os status</option>
+                            <option value="">Todas as situações</option>
                             <option value="active">Ativo</option>
                             <option value="inactive">Inativo</option>
                         </select>
@@ -620,7 +620,7 @@
                                 <th>Email</th>
                                 <th>Departamento</th>
                                 <th>Cargo</th>
-                                <th>Status</th>
+                                <th>Situação</th>
                                 <th>Data de Admissão</th>
                                 <th>Ações</th>
                             </tr>
@@ -700,7 +700,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Data de Admissão *</label>
                         <input type="date" id="userStartDate" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
@@ -710,13 +710,20 @@
                         <input type="tel" id="userPhone" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="(11) 99999-9999">
                         <small style="color: #64748b; font-size: 0.8rem;">Formato: (DDD) 99999-9999</small>
                     </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Situação *</label>
+                        <select id="userStatus" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: white;">
+                            <option value="active">Ativo</option>
+                            <option value="inactive">Inativo</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem; border-radius: 8px; border: none; font-weight: 500; cursor: pointer;">
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                    <button type="submit" class="btn-primary" style="padding: 0.75rem 2rem; border-radius: 8px; border: none; font-weight: 500; cursor: pointer;">
                         Adicionar Funcionário
                     </button>
-                    <button type="button" onclick="closeAddUserModal()" style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #64748b; font-weight: 500; cursor: pointer;">
+                    <button type="button" onclick="closeAddUserModal()" style="padding: 0.75rem 2rem; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #64748b; font-weight: 500; cursor: pointer;">
                         Cancelar
                     </button>
                 </div>
@@ -872,6 +879,15 @@
             }
         }
 
+        // Função para atualizar o header
+        function updateHeader(title, subtitle) {
+            const headerTitle = document.querySelector('.header h1');
+            const headerSubtitle = document.querySelector('.header p');
+            
+            if (headerTitle) headerTitle.textContent = title;
+            if (headerSubtitle) headerSubtitle.textContent = subtitle;
+        }
+
         // Função para alternar seções
         function showSection(sectionName) {
             console.log(' Alternando para seção:', sectionName);
@@ -902,9 +918,14 @@
             if (sectionName === 'dashboard') {
                 console.log(' Navegando para dashboard, atualizando dados...');
                 updateDashboard(true); // Forçar atualização
+                updateHeader('Início', 'Visão geral do sistema Flowly');
             } else if (sectionName === 'users') {
                 console.log(' Navegando para funcionários, carregando dados...');
                 loadUsers();
+                updateHeader('Funcionários', 'Gerencie os funcionários da empresa');
+            } else if (sectionName === 'documents') {
+                console.log(' Navegando para documentos...');
+                updateHeader('Documentos', 'Gerencie os documentos da empresa');
             }
         }
 
@@ -1056,15 +1077,91 @@
             loadUsers();
         }
 
-        function editUser(userId) {
-            console.log(' Editar usuário:', userId);
-            alert('Funcionalidade de edição será implementada em breve!');
+        async function editUser(userId) {
+            try {
+                console.log(' Editando usuário:', userId);
+                
+                // Buscar dados do usuário
+                const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+                const response = await fetch(`/api/users/${userId}?tenant=${tenant}`);
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar dados do usuário');
+                }
+                
+                const userData = await response.json();
+                console.log(' Dados do usuário:', userData);
+                
+                // Preencher formulário com dados existentes
+                document.getElementById('userName').value = userData.name || '';
+                document.getElementById('userEmail').value = userData.email || '';
+                document.getElementById('userDepartment').value = userData.department || '';
+                document.getElementById('userPosition').value = userData.position || '';
+                document.getElementById('userStartDate').value = userData.start_date || '';
+                document.getElementById('userStatus').value = userData.status || 'active';
+                
+                // Formatar telefone para exibição
+                const phone = userData.phone || '';
+                let displayPhone = phone;
+                if (phone.startsWith('55') && phone.length >= 12) {
+                    // Remover o 55 do início e formatar
+                    const cleanPhone = phone.substring(2);
+                    if (cleanPhone.length === 11) {
+                        displayPhone = `(${cleanPhone.substring(0,2)}) ${cleanPhone.substring(2,7)}-${cleanPhone.substring(7)}`;
+                    } else if (cleanPhone.length === 10) {
+                        displayPhone = `(${cleanPhone.substring(0,2)}) ${cleanPhone.substring(2,6)}-${cleanPhone.substring(6)}`;
+                    }
+                }
+                document.getElementById('userPhone').value = displayPhone;
+                
+                // Popular dropdown de departamentos
+                populateDepartmentDropdown();
+                
+                // Mostrar modal
+                document.getElementById('addUserModal').style.display = 'block';
+                
+                // Alterar título e botão para modo edição
+                document.querySelector('#addUserModal h2').textContent = 'Editar Funcionário';
+                document.querySelector('#addUserModal button[type="submit"]').textContent = 'Salvar Alterações';
+                
+                // Armazenar ID do usuário para edição
+                document.getElementById('addUserForm').dataset.editingUserId = userId;
+                
+                // Focar no primeiro campo
+                document.getElementById('userName').focus();
+                
+            } catch (error) {
+                console.error(' Erro ao carregar dados do usuário:', error);
+                alert('Erro ao carregar dados do funcionário. Tente novamente.');
+            }
         }
 
-        function deleteUser(userId) {
-            if (confirm('Tem certeza que deseja excluir este funcionário?')) {
-                console.log(' Excluir usuário:', userId);
-                alert('Funcionalidade de exclusão será implementada em breve!');
+        async function deleteUser(userId) {
+            if (confirm('Tem certeza que deseja excluir este funcionário? Esta ação não pode ser desfeita.')) {
+                try {
+                    console.log(' Excluindo usuário:', userId);
+                    
+                    const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+                    const response = await fetch(`/api/users/${userId}?tenant=${tenant}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        console.log(' Usuário excluído com sucesso');
+                        alert('Funcionário excluído com sucesso!');
+                        
+                        // Recarregar lista e dashboard
+                        loadUsers();
+                        updateDashboard(true);
+                    } else {
+                        const result = await response.json();
+                        console.error(' Erro ao excluir usuário:', result);
+                        alert('Erro ao excluir funcionário: ' + (result.error || 'Erro desconhecido'));
+                    }
+                } catch (error) {
+                    console.error(' Erro ao excluir usuário:', error);
+                    alert('Erro ao excluir funcionário. Tente novamente.');
+                }
             }
         }
 
@@ -1074,11 +1171,17 @@
             // Limpar formulário
             document.getElementById('addUserForm').reset();
             
+            // Resetar modal para modo adicionar
+            document.querySelector('#addUserModal h2').textContent = 'Adicionar Funcionário';
+            document.querySelector('#addUserModal button[type="submit"]').textContent = 'Adicionar Funcionário';
+            document.getElementById('addUserForm').removeAttribute('data-editing-user-id');
+            
             // Popular dropdown de departamentos
             populateDepartmentDropdown();
             
-            // Definir data padrão como hoje
+            // Definir data padrão como hoje e status como ativo
             document.getElementById('userStartDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('userStatus').value = 'active';
             
             // Mostrar modal
             document.getElementById('addUserModal').style.display = 'block';
@@ -1217,7 +1320,8 @@
 
         async function handleAddUser() {
             try {
-                console.log(' Processando adição de usuário...');
+                const isEditing = document.getElementById('addUserForm').dataset.editingUserId;
+                console.log(isEditing ? ' Processando edição de usuário...' : ' Processando adição de usuário...');
                 
                 // Coletar dados do formulário
                 const userData = {
@@ -1226,7 +1330,8 @@
                     department: document.getElementById('userDepartment').value,
                     position: document.getElementById('userPosition').value.trim(),
                     start_date: document.getElementById('userStartDate').value,
-                    phone: formatPhoneForDatabase(document.getElementById('userPhone').value)
+                    phone: formatPhoneForDatabase(document.getElementById('userPhone').value),
+                    status: document.getElementById('userStatus').value
                 };
                 
                 // Validações básicas
@@ -1252,8 +1357,11 @@
                 
                 // Enviar para a API
                 const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-                const response = await fetch(`/api/users?tenant=${tenant}`, {
-                    method: 'POST',
+                const url = isEditing ? `/api/users/${isEditing}?tenant=${tenant}` : `/api/users?tenant=${tenant}`;
+                const method = isEditing ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -1263,21 +1371,21 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    console.log(' Usuário adicionado com sucesso:', result);
-                    alert('Funcionário adicionado com sucesso!');
+                    console.log(isEditing ? ' Usuário editado com sucesso:' : ' Usuário adicionado com sucesso:', result);
+                    alert(isEditing ? 'Funcionário editado com sucesso!' : 'Funcionário adicionado com sucesso!');
                     
                     // Fechar modal e atualizar lista
                     closeAddUserModal();
                     loadUsers(); // Recarregar lista de usuários
                     updateDashboard(true); // Atualizar dashboard
                 } else {
-                    console.error(' Erro ao adicionar usuário:', result);
-                    alert('Erro ao adicionar funcionário: ' + (result.error || 'Erro desconhecido'));
+                    console.error(isEditing ? ' Erro ao editar usuário:' : ' Erro ao adicionar usuário:', result);
+                    alert(isEditing ? 'Erro ao editar funcionário: ' : 'Erro ao adicionar funcionário: ' + (result.error || 'Erro desconhecido'));
                 }
                 
             } catch (error) {
-                console.error(' Erro ao processar adição de usuário:', error);
-                alert('Erro ao adicionar funcionário. Tente novamente.');
+                console.error(' Erro ao processar usuário:', error);
+                alert('Erro ao processar funcionário. Tente novamente.');
             }
         }
 
