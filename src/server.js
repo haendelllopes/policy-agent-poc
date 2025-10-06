@@ -2711,6 +2711,37 @@ app.post('/api/debug/migrate', async (req, res) => {
   }
 });
 
+// Endpoint para criar tabela tenant_settings manualmente
+app.post('/api/debug/create-tenant-settings', async (req, res) => {
+  try {
+    if (await usePostgres()) {
+      console.log('Criando tabela tenant_settings...');
+      
+      // Criar tabela tenant_settings
+      await query(`
+        CREATE TABLE IF NOT EXISTS tenant_settings (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+          setting_key VARCHAR(255) NOT NULL,
+          setting_value TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          UNIQUE(tenant_id, setting_key)
+        )
+      `);
+      
+      // Criar índice
+      await query(`CREATE INDEX IF NOT EXISTS idx_tenant_settings_tenant ON tenant_settings(tenant_id)`);
+      
+      res.json({ message: 'Tabela tenant_settings criada com sucesso' });
+    } else {
+      res.status(500).json({ error: 'PostgreSQL não configurado' });
+    }
+  } catch (error) {
+    console.error('Erro ao criar tabela tenant_settings:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
 // Endpoint para configurar RLS no Supabase
 app.post('/api/debug/setup-rls', async (req, res) => {
   try {

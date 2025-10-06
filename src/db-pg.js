@@ -381,7 +381,7 @@ async function migrate() {
     
     // Colunas para análise de IA
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS extracted_text TEXT`);
-    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding VECTOR(1536)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding TEXT`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_classification VARCHAR(100)`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS sentiment_score DECIMAL(3,2)`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_summary TEXT`);
