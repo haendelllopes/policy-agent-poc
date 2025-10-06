@@ -11,6 +11,7 @@ const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('.
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
 const { analyzeDocument } = require('./document-analyzer');
 const TelegramBot = require('./telegram-bot');
+const QRCode = require('qrcode');
 
 // Cache simples para dados quando PostgreSQL está instável
 const dataCache = {
@@ -3017,6 +3018,69 @@ app.post('/api/communication-type', async (req, res) => {
     }
   } catch (error) {
     console.error('Erro ao atualizar tipo de comunicação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+// Geração de deep link e QR do Telegram para n8n
+app.post('/api/telegram/generate-link', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    const schema = z.object({
+      email: z.string().email().optional(),
+      userId: z.string().uuid().optional(),
+      name: z.string().optional()
+    }).refine((v) => Boolean(v.email || v.userId), { message: 'Informe email ou userId' });
+
+    const parsed = schema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+
+    const { email, userId } = parsed.data;
+
+    // Garantir que temos o username do bot para montar o deep link
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME;
+    if (!botUsername) {
+      return res.status(500).json({ error: 'TELEGRAM_BOT_USERNAME não configurado no ambiente' });
+    }
+
+    // Opcional: confirmar usuário no banco quando possível
+    let finalUserId = userId || null;
+    if (!finalUserId && email && (await usePostgres())) {
+      try {
+        const result = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2 LIMIT 1', [tenant.id, email]);
+        if (result.rows.length > 0) {
+          finalUserId = result.rows[0].id;
+        }
+      } catch (dbErr) {
+        console.log('Aviso: falha ao consultar usuário por email para deep link Telegram:', dbErr.message);
+      }
+    }
+
+    // Telegram limita o parâmetro `start` a 64 chars. Usar base64url curta.
+    const baseStr = `${tenant.id}:${finalUserId || ''}:${email || ''}`;
+    let startParam = Buffer.from(baseStr).toString('base64url');
+    if (startParam.length > 64) {
+      const crypto = require('crypto');
+      startParam = crypto.createHash('sha256').update(baseStr).digest('base64url').slice(0, 64);
+    }
+
+    const deepLink = `https://t.me/${botUsername}?start=${startParam}`;
+    const qrDataUrl = await QRCode.toDataURL(deepLink, { width: 320, margin: 1 });
+
+    return res.json({
+      tenantId: tenant.id,
+      start_param: startParam,
+      deep_link: deepLink,
+      qr_data_url: qrDataUrl
+    });
+  } catch (error) {
+    console.error('Erro ao gerar link/QR do Telegram:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
