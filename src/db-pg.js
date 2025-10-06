@@ -68,22 +68,25 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações balanceadas para Session Pooler do Supabase
+    // Configurações otimizadas para Vercel + Supabase Session Pooler
     max: 1, // Apenas 1 conexão para evitar MaxClientsInSessionMode
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 60000, // 60 segundos para conexões idle (manter conexões vivas)
-    connectionTimeoutMillis: 10000, // 10 segundos para conexão inicial
-    acquireTimeoutMillis: 10000, // 10 segundos para adquirir conexão
-    // Configurações de retry
-    retryDelayMs: 2000, // 2 segundos entre tentativas
-    retryAttempts: 3, // 3 tentativas para maior robustez
+    idleTimeoutMillis: 30000, // 30 segundos para conexões idle
+    connectionTimeoutMillis: 30000, // 30 segundos para conexão inicial (mais tempo)
+    acquireTimeoutMillis: 30000, // 30 segundos para adquirir conexão (mais tempo)
+    // Configurações de retry mais agressivas
+    retryDelayMs: 5000, // 5 segundos entre tentativas
+    retryAttempts: 5, // 5 tentativas para maior robustez
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
     keepAlive: true, // Habilitar keepAlive para manter conexões
     keepAliveInitialDelayMillis: 10000,
-    statement_timeout: 30000, // 30 segundos para queries
-    query_timeout: 25000, // 25 segundos para queries
+    statement_timeout: 60000, // 60 segundos para queries (mais tempo)
+    query_timeout: 60000, // 60 segundos para queries (mais tempo)
+    // Configurações específicas para Lambda/Vercel
+    allowExitOnIdle: true, // Permitir saída quando idle
+    maxUses: 7500, // Limite de usos por conexão
     application_name: 'navigator-app',
     // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
@@ -108,7 +111,7 @@ function createPool(connStr) {
 }
 
 // Função para executar queries com retry otimizado para Supabase Pro
-async function query(text, params = [], retries = 3) {
+async function query(text, params = [], retries = 5) {
   let pgPool = initializePool();
   
   if (!pgPool) {
@@ -151,9 +154,9 @@ async function query(text, params = [], retries = 3) {
       
       // Se for erro de conexão e ainda há tentativas, aguardar e tentar novamente
       if (attempt < retries && isRetryableError) {
-        // Backoff exponencial com jitter
-        const baseDelay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
-        const jitter = Math.random() * 1000;
+        // Backoff exponencial com jitter mais agressivo
+        const baseDelay = Math.min(2000 * Math.pow(1.5, attempt - 1), 15000);
+        const jitter = Math.random() * 2000;
         const delay = baseDelay + jitter;
         
         console.log(`Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);

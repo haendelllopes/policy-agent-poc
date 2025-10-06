@@ -584,6 +584,35 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
+// Endpoint para testar conectividade PostgreSQL
+app.get('/api/debug/test-pg-connection', async (req, res) => {
+  try {
+    console.log('Testando conectividade PostgreSQL...');
+    
+    if (!usePostgres()) {
+      return res.status(500).json({ error: 'PostgreSQL não disponível' });
+    }
+    
+    const start = Date.now();
+    const result = await query('SELECT NOW() as current_time, version() as pg_version');
+    const duration = Date.now() - start;
+    
+    res.json({
+      success: true,
+      message: 'Conexão PostgreSQL funcionando',
+      duration: `${duration}ms`,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Erro ao testar conexão PostgreSQL:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      type: error.constructor.name
+    });
+  }
+});
+
 // Endpoint para criar tenant demo se não existir
 app.post('/api/debug/create-demo-tenant', async (req, res) => {
   try {
