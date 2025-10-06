@@ -1257,6 +1257,32 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
       }
     }
 
+    // Notificar n8n (não bloqueante)
+    try {
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://hndll.app.n8n.cloud/webhook/onboarding';
+      const payload = {
+        type: 'document_upload',
+        documentId,
+        tenantId: tenant.id,
+        title,
+        category,
+        department: department || null,
+        description: description || null,
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        createdAt
+      };
+      // Em ambientes sem fetch global, você pode trocar por node-fetch
+      await fetch(n8nWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      console.log('Webhook n8n enviado com sucesso');
+    } catch (webhookError) {
+      console.error('Falha ao enviar webhook para n8n (ignorado):', webhookError.message);
+    }
+
     // Invalidar cache
     dataCache.documents.delete(tenant.id);
     dataCache.lastUpdate.delete(`${tenant.id}-documents`);
