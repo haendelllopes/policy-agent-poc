@@ -752,7 +752,9 @@
         function openAddUserModal() {
             document.getElementById('modalTitle').textContent = 'Adicionar Funcionário';
             document.getElementById('submitBtn').textContent = 'Adicionar Funcionário';
-            document.getElementById('addUserForm').reset();
+            const formEl = document.getElementById('addUserForm');
+            formEl.reset();
+            delete formEl.dataset.editingUserId;
             document.getElementById('userStartDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('userStatus').value = 'active';
             
@@ -851,10 +853,14 @@
             }
 
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const formEl = document.getElementById('addUserForm');
+            const editingId = formEl.dataset.editingUserId;
             
             try {
-                const response = await fetch(`/api/users?tenant=${tenant}`, {
-                    method: 'POST',
+                const url = editingId ? `/api/users/${editingId}?tenant=${tenant}` : `/api/users?tenant=${tenant}`;
+                const method = editingId ? 'PUT' : 'POST';
+                const response = await fetch(url, {
+                    method,
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -863,6 +869,9 @@
 
                 if (response.ok) {
                     closeAddUserModal();
+                    delete formEl.dataset.editingUserId;
+                    document.getElementById('submitBtn').textContent = 'Adicionar Funcionário';
+                    document.getElementById('modalTitle').textContent = 'Adicionar Funcionário';
                     loadUsers();
                 } else {
                     let errorText = 'Erro desconhecido';
