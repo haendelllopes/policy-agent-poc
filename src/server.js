@@ -3104,7 +3104,25 @@ app.post('/api/communication-type', async (req, res) => {
 // Endpoint unificado para geração de links de comunicação (WhatsApp/Telegram/Slack)
 app.post('/api/communication/generate-link', async (req, res) => {
   try {
-    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    console.log('POST /api/communication/generate-link - Tenant subdomain:', req.tenantSubdomain);
+    console.log('Request body:', req.body);
+    
+    let tenant = null;
+    
+    // Tentar buscar tenant, mas não falhar se PostgreSQL não estiver disponível
+    try {
+      tenant = await getTenantBySubdomain(req.tenantSubdomain);
+      console.log('Tenant encontrado via banco:', tenant ? tenant.name : 'não encontrado');
+    } catch (tenantError) {
+      console.log('Aviso: não foi possível buscar tenant, usando dados do request:', tenantError.message);
+      // Se não conseguir buscar tenant, usar dados do request diretamente
+      tenant = {
+        id: req.body.tenantId || 'demo-tenant',
+        name: req.body.tenantName || 'Demo Tenant'
+      };
+      console.log('Usando tenant fallback:', tenant);
+    }
+    
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
