@@ -387,9 +387,9 @@ async function getTenantBySubdomain(subdomain) {
   // Sempre tentar PostgreSQL primeiro
   if (await usePostgres()) {
     try {
-      const tenant = await getTenantBySubdomainPG(subdomain);
-      if (tenant) {
-        return tenant;
+      const result = await query('SELECT * FROM tenants WHERE subdomain = $1', [subdomain]);
+      if (result.rows.length > 0) {
+        return result.rows[0];
       }
     } catch (error) {
       console.error('Erro ao buscar tenant no PostgreSQL:', error);
@@ -3037,21 +3037,28 @@ app.get('/api/categories/:id', async (req, res) => {
 // Communication Type API
 app.get('/api/communication-type', async (req, res) => {
   try {
+    console.log('GET /api/communication-type - Tenant subdomain:', req.tenantSubdomain);
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    console.log('Tenant encontrado:', tenant ? tenant.name : 'não encontrado');
+    
     if (!tenant) {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
     if (await usePostgres()) {
       const result = await query('SELECT * FROM tenant_settings WHERE tenant_id = $1 AND setting_key = $2', [tenant.id, 'communication_type']);
+      console.log('Resultado da query:', result.rows);
       
       if (result.rows.length > 0) {
+        console.log('Tipo de comunicação encontrado:', result.rows[0].setting_value);
         res.json({ type: result.rows[0].setting_value });
       } else {
+        console.log('Nenhum tipo de comunicação configurado');
         res.json({ type: null });
       }
     } else {
       // Demo data fallback - return null for demo tenant
+      console.log('PostgreSQL não disponível, retornando null');
       res.json({ type: null });
     }
   } catch (error) {
