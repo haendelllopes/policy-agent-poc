@@ -449,21 +449,21 @@
             </div>
             
             <div class="nav">
-                <a href="#" class="nav-item active" onclick="showSection('dashboard')">
+                <a href="#inicio" class="nav-item active" onclick="navigateToSection('dashboard')">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
                     </svg>
                     Início
                 </a>
                 
-                <a href="#" class="nav-item" onclick="showSection('users')">
+                <a href="#funcionarios" class="nav-item" onclick="navigateToSection('users')">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                     </svg>
                     Funcionários
                 </a>
                 
-                <a href="#" class="nav-item" onclick="showSection('documents')">
+                <a href="#documentos" class="nav-item" onclick="navigateToSection('documents')">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
@@ -875,11 +875,8 @@
                 targetSection.style.display = 'block';
             }
             
-            // Adicionar active ao nav-item
-            const activeNavItem = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
-            if (activeNavItem) {
-                activeNavItem.classList.add('active');
-            }
+            // Atualizar item ativo do menu
+            updateActiveMenuItem(sectionName);
 
             // Atualizar dados específicos da seção
             if (sectionName === 'dashboard') {
@@ -1259,57 +1256,87 @@
                 }
             }
             
-            // Adicionar active ao nav-item
-            const activeNavItem = document.querySelector(`[onclick="showSection('${sectionName}')"]`);
+            // Atualizar item ativo do menu
+            updateActiveMenuItem(sectionName);
+        }
+
+        // Função para detectar seção ativa e definir header correto
+
+        // Carregar dados quando a página carregar
+        // Função para navegar para uma seção com hash routing
+        function navigateToSection(sectionName) {
+            // Obter tenant ID da URL atual ou usar 'demo' como padrão
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenantId = urlParams.get('tenant') || 'demo';
+            
+            // Mapear seções para hashes
+            const sectionHashes = {
+                'dashboard': 'inicio',
+                'users': 'funcionarios',
+                'documents': 'documentos'
+            };
+            
+            const hash = sectionHashes[sectionName] || sectionName;
+            
+            // Atualizar URL com hash
+            const newUrl = `${window.location.pathname}?tenant=${tenantId}#${hash}`;
+            window.history.pushState({section: sectionName}, '', newUrl);
+            
+            // Chamar função showSection existente
+            showSection(sectionName);
+        }
+
+        // Função para detectar hash na URL e navegar para a seção correspondente
+        function handleHashChange() {
+            const hash = window.location.hash.substring(1); // Remove o #
+            const urlParams = new URLSearchParams(window.location.search);
+            const tenantId = urlParams.get('tenant') || 'demo';
+            
+            // Mapear hashes para seções
+            const hashToSection = {
+                'inicio': 'dashboard',
+                'funcionarios': 'users',
+                'documentos': 'documents'
+            };
+            
+            const sectionName = hashToSection[hash] || 'dashboard';
+            
+            // Navegar para a seção correspondente
+            showSection(sectionName);
+            
+            // Atualizar estado ativo do menu
+            updateActiveMenuItem(sectionName);
+        }
+
+        // Função para atualizar o item ativo do menu
+        function updateActiveMenuItem(sectionName) {
+            // Remover active de todos os nav-items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Adicionar active ao nav-item correspondente
+            const sectionHashes = {
+                'dashboard': 'inicio',
+                'users': 'funcionarios',
+                'documents': 'documentos'
+            };
+            
+            const hash = sectionHashes[sectionName];
+            const activeNavItem = document.querySelector(`a[href="#${hash}"]`);
             if (activeNavItem) {
                 activeNavItem.classList.add('active');
             }
         }
 
-        // Função para detectar seção ativa e definir header correto
-        function initializeActiveSection() {
-            // Verificar qual seção está visível
-            const dashboardSection = document.getElementById('dashboard-section');
-            const usersSection = document.getElementById('users-section');
-            const documentsSection = document.getElementById('documents-section');
-            
-            if (usersSection && usersSection.style.display !== 'none') {
-                // Seção de funcionários ativa
-                console.log(' Inicializando seção de funcionários...');
-                const userActions = `
-                    <button class="btn-secondary" onclick="refreshUsers()" title="Atualizar funcionários">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        Atualizar
-                    </button>
-                    <button class="btn-primary" onclick="openAddUserModal()" title="Adicionar funcionário">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Adicionar Funcionário
-                    </button>
-                `;
-                updateHeader('Funcionários', 'Gerencie os funcionários da empresa', userActions);
-                loadUsers();
-            } else if (documentsSection && documentsSection.style.display !== 'none') {
-                // Seção de documentos ativa
-                console.log(' Inicializando seção de documentos...');
-                updateHeader('Documentos', 'Gerencie os documentos da empresa');
-            } else {
-                // Dashboard ativo (padrão)
-                console.log(' Inicializando dashboard...');
-                updateHeader('Início', 'Visão geral do sistema Flowly');
-                updateDashboard(true);
-            }
-        }
-
-        // Carregar dados quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             console.log(' DOM carregado, iniciando dashboard...');
             
-            // Detectar e inicializar seção ativa
-            initializeActiveSection();
+            // Detectar e inicializar seção ativa baseada no hash
+            handleHashChange();
+            
+            // Adicionar listener para mudanças de hash
+            window.addEventListener('hashchange', handleHashChange);
             
             // Iniciar intervalo de atualização automática (5 minutos)
             startUpdateInterval();
