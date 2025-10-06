@@ -1181,185 +1181,94 @@ app.get('/api/users', async (req, res) => {
 });
 
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
-  const schema = z.object({ 
-    tenantId: z.string().uuid(), 
-    title: z.string().min(1), 
-    category: z.string().optional(),
-    tags: z.string().optional()
-  });
-  const body = schema.safeParse(req.body);
-  if (!body.success) return res.status(400).json({ error: body.error.flatten() });
-  if (!req.file) return res.status(400).json({ error: 'Arquivo ausente' });
-
-  // Extrair texto do arquivo
-  let text;
   try {
-    if (req.file.mimetype === 'text/plain') {
-      text = req.file.buffer.toString('utf8');
-    } else if (req.file.mimetype === 'application/pdf' || req.file.originalname.endsWith('.pdf')) {
-      // PDF parsing desabilitado no Vercel (requer @napi-rs/canvas)
-      text = '[PDF não suportado no ambiente Vercel - use Render.com para processamento de PDF]';
-      console.log('PDF não processado - ambiente Vercel');
-    } else if (req.file.mimetype.includes('word') || req.file.mimetype.includes('document') || 
-               req.file.originalname.endsWith('.docx') || req.file.originalname.endsWith('.doc')) {
-      // Para DOC/DOCX usando mammoth
-      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
-      text = result.value;
-      
-      // Log de avisos se houver
-      if (result.messages && result.messages.length > 0) {
-        console.log('Avisos ao processar Word:', result.messages);
-      }
-    } else {
-      return res.status(400).json({ error: 'Tipo de arquivo não suportado. Use TXT, PDF ou Word (DOC/DOCX).' });
-    }
-  } catch (error) {
-    console.error('Erro ao processar arquivo:', error);
-    return res.status(400).json({ error: 'Erro ao processar arquivo: ' + error.message });
-  }
-
-  // Verificar se o texto não está vazio
-  if (!text || text.trim().length === 0) {
-    return res.status(400).json({ error: 'O arquivo parece estar vazio ou não contém texto válido.' });
-  }
-
-  const chunks = simpleChunk(text);
-  const embeddings = await Promise.all(chunks.map(embed));
-
-  const documentId = uuidv4();
-  const createdAt = new Date().toISOString();
-  
-  // Use PostgreSQL if available, otherwise SQLite
-  if (await usePostgres()) {
-    // Parse tags
-    const tags = body.data.tags ? JSON.parse(body.data.tags) : [];
+    const { title, category, department, description } = req.body;
     
-    // PostgreSQL
-    await query('INSERT INTO documents (id, tenant_id, title, category, status, created_at) VALUES ($1, $2, $3, $4, $5, $6)', [
-      documentId,
-      body.data.tenantId,
-      body.data.title,
-      body.data.category ?? null,
-      'published',
-      createdAt,
-    ]);
-    
-    // Insert document tags
-    for (const tagName of tags) {
-      if (tagName && tagName.trim()) {
-        await query('INSERT INTO document_tags (id, document_id, tag_name, created_at) VALUES ($1, $2, $3, $4)', [
-          uuidv4(),
-          documentId,
-          tagName.trim(),
-          createdAt
-        ]);
-      }
+    if (!title || title.trim() === '') {
+      return res.status(400).json({ error: 'Título é obrigatório' });
     }
     
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkId = uuidv4();
-      await query('INSERT INTO chunks (id, document_id, section, content, embedding) VALUES ($1, $2, $3, $4, $5)', [
-        chunkId,
+    if (!category || category.trim() === '') {
+      return res.status(400).json({ error: 'Categoria é obrigatória' });
+    }
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'Arquivo é obrigatório' });
+    }
+
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    // Validar tipo de arquivo
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+    const fileExtension = req.file.originalname.toLowerCase().substring(req.file.originalname.lastIndexOf('.'));
+    
+    if (!allowedTypes.includes(req.file.mimetype) && !allowedExtensions.includes(fileExtension)) {
+      return res.status(400).json({ error: 'Tipo de arquivo não suportado. Use PDF, DOCX, DOC ou TXT.' });
+    }
+    
+    if (req.file.size > 5 * 1024 * 1024) { // 5MB
+      return res.status(400).json({ error: 'Arquivo muito grande. Tamanho máximo: 5MB' });
+    }
+
+    const documentId = uuidv4();
+    const createdAt = new Date().toISOString();
+    const fileData = req.file.buffer.toString('base64');
+    
+    // Use PostgreSQL if available, otherwise SQLite
+    if (await usePostgres()) {
+      // PostgreSQL
+      await query('INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)', [
         documentId,
-        `section-${i + 1}`,
-        chunks[i],
-        JSON.stringify(embeddings[i]),
-      ]);
-    }
-    
-    // Enviar documento para n8n para categorização
-    try {
-      const webhookData = {
-        type: 'document_upload',
-        documentId: documentId,
-        tenantId: body.data.tenantId,
-        title: body.data.title,
-        content: text,
-        category: body.data.category,
-        created_at: createdAt
-      };
-      
-      console.log('Enviando documento para n8n para categorização:', webhookData);
-      
-      await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookData)
-      });
-      
-      console.log('Documento enviado para n8n com sucesso');
-    } catch (webhookError) {
-      console.error('Erro ao enviar documento para n8n:', webhookError);
-      // Não falhar o upload por causa do webhook
-    }
-
-    res.status(201).json({ 
-      documentId, 
-      title: body.data.title,
-      category: body.data.category,
-      chunks: chunks.length 
-    });
-  } else {
-    // SQLite fallback
-    const { db, SQL } = await openDatabase();
-    try {
-      runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, status, created_at) VALUES (?, ?, ?, ?, ?, ?)', [
-        documentId,
-        body.data.tenantId,
-        body.data.title,
-        body.data.category ?? null,
+        tenant.id,
+        title,
+        category,
+        department || null,
+        description || null,
+        req.file.originalname,
+        fileData,
+        req.file.size,
         'published',
         createdAt,
       ]);
-      
-      for (let i = 0; i < chunks.length; i++) {
-        const chunkId = uuidv4();
-        runExec(db, 'INSERT INTO chunks (id, document_id, section, content, embedding) VALUES (?, ?, ?, ?, ?)', [
-          chunkId,
-          documentId,
-          `section-${i + 1}`,
-          chunks[i],
-          JSON.stringify(embeddings[i]),
-        ]);
-      }
-      
-      persistDatabase(SQL, db);
-      
-      // Enviar documento para n8n para categorização
+    } else {
+      // SQLite fallback
+      const db = await openDatabase();
       try {
-        const webhookData = {
-          type: 'document_upload',
-          documentId: documentId,
-          tenantId: body.data.tenantId,
-          title: body.data.title,
-          content: text,
-          category: body.data.category,
-          created_at: createdAt
-        };
-        
-        console.log('Enviando documento para n8n para categorização:', webhookData);
-        
-        await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(webhookData)
-        });
-        
-        console.log('Documento enviado para n8n com sucesso');
-      } catch (webhookError) {
-        console.error('Erro ao enviar documento para n8n:', webhookError);
-        // Não falhar o upload por causa do webhook
+        await runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+          documentId,
+          tenant.id,
+          title,
+          category,
+          department || null,
+          description || null,
+          req.file.originalname,
+          fileData,
+          req.file.size,
+          'published',
+          createdAt,
+        ]);
+        await persistDatabase(db);
+      } finally {
+        db.close();
       }
-
-      res.status(201).json({ 
-        documentId, 
-        title: body.data.title,
-        category: body.data.category,
-        chunks: chunks.length 
-      });
-    } finally {
-      db.close();
     }
+
+    // Invalidar cache
+    dataCache.documents.delete(tenant.id);
+    dataCache.lastUpdate.delete(`${tenant.id}-documents`);
+
+    res.json({ 
+      success: true, 
+      documentId,
+      message: 'Documento enviado com sucesso' 
+    });
+  } catch (error) {
+    console.error('Erro ao fazer upload do documento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 
@@ -1375,7 +1284,7 @@ app.get('/api/documents', async (req, res) => {
     const documents = await getCachedData(tenant.id, 'documents', async () => {
         if (await usePostgres()) {
           const result = await query(
-            'SELECT id, title, category, status FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
+            'SELECT id, title, category, status, file_name, file_size, description FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
             [tenant.id]
           );
           return result.rows;
@@ -1391,10 +1300,162 @@ app.get('/api/documents', async (req, res) => {
   }
 });
 
+// Endpoint para buscar documento específico
+app.get('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'SELECT id, title, category, status, file_name, file_size, description, department FROM documents WHERE id = $1 AND tenant_id = $2',
+        [id, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Documento não encontrado' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      const demoData = getDemoData();
+      const document = demoData.documents.find(doc => doc.id === id && doc.tenant_id === tenant.id);
+      
+      if (!document) {
+        return res.status(404).json({ error: 'Documento não encontrado' });
+      }
+      
+      res.json(document);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar documento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Endpoint para download de documento
+app.get('/api/documents/:id/download', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'SELECT file_name, file_data FROM documents WHERE id = $1 AND tenant_id = $2',
+        [id, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Documento não encontrado' });
+      }
+      
+      const document = result.rows[0];
+      const buffer = Buffer.from(document.file_data, 'base64');
+      
+      // Definir Content-Type baseado na extensão
+      const ext = document.file_name.split('.').pop().toLowerCase();
+      const mimeTypes = {
+        'pdf': 'application/pdf',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc': 'application/msword',
+        'txt': 'text/plain'
+      };
+      
+      res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.file_name}"`);
+      res.send(buffer);
+    } else {
+      res.status(404).json({ error: 'Download não disponível em modo demo' });
+    }
+  } catch (error) {
+    console.error('Erro ao fazer download do documento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Endpoint para atualizar documento
+app.put('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, category, department, description } = req.body;
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'UPDATE documents SET title = $1, category = $2, department = $3, description = $4, updated_at = $5 WHERE id = $6 AND tenant_id = $7 RETURNING *',
+        [title, category, department, description, new Date().toISOString(), id, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Documento não encontrado' });
+      }
+      
+      // Invalidar cache
+      dataCache.documents.delete(tenant.id);
+      dataCache.lastUpdate.delete(`${tenant.id}-documents`);
+      
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Edição não disponível em modo demo' });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar documento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Endpoint para excluir documento
 app.delete('/api/documents/:id', async (req, res) => {
   try {
     const documentId = req.params.id;
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'DELETE FROM documents WHERE id = $1 AND tenant_id = $2 RETURNING id',
+        [documentId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Documento não encontrado' });
+      }
+      
+      // Invalidar cache
+      dataCache.documents.delete(tenant.id);
+      dataCache.lastUpdate.delete(`${tenant.id}-documents`);
+      
+      res.json({ success: true, message: 'Documento excluído com sucesso' });
+    } else {
+      const db = await openDatabase();
+      try {
+        const result = await runQuery(db, 'DELETE FROM documents WHERE id = ? AND tenant_id = ?', [documentId, tenant.id]);
+        
+        if (result.changes === 0) {
+          return res.status(404).json({ error: 'Documento não encontrado' });
+        }
+        
+        await persistDatabase(db);
+        res.json({ success: true, message: 'Documento excluído com sucesso' });
+      } finally {
+        db.close();
+      }
+    }
     console.log('DELETE /documents - documentId:', documentId);
     console.log('DELETE /documents - tenantSubdomain:', req.tenantSubdomain);
 

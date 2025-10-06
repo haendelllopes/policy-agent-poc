@@ -179,6 +179,135 @@
             margin: 16px 0;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .modal-buttons button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            min-width: 120px;
+        }
+
+        /* File Upload Styles */
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .file-upload-content p {
+            margin: 8px 0;
+            color: #64748b;
+        }
+
+        .file-types {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .file-selected {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+        }
+
+        .file-selected span {
+            flex: 1;
+            font-weight: 500;
+            color: #166534;
+        }
+
         .coming-soon {
             text-align: center;
             padding: 64px 32px;
@@ -321,6 +450,109 @@
         </main>
     </div>
 
+    <!-- Upload Document Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <h2>Upload de Documento</h2>
+            
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="documentTitle">Título do Documento *</label>
+                    <input type="text" id="documentTitle" name="title" required placeholder="Ex: Manual do Colaborador">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="documentCategory">Categoria *</label>
+                        <select id="documentCategory" name="category" required>
+                            <option value="">Selecione uma categoria</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="documentDepartment">Departamento</label>
+                        <select id="documentDepartment" name="department">
+                            <option value="">Selecione um departamento</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="documentFile">Arquivo *</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input type="file" id="documentFile" name="file" accept=".pdf,.docx,.doc,.txt" required style="display: none;">
+                        <div class="file-upload-content">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #94a3b8;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p>Clique para selecionar ou arraste arquivos aqui</p>
+                            <p class="file-types">Formatos aceitos: PDF, DOCX, DOC, TXT</p>
+                        </div>
+                        <div class="file-selected" id="fileSelected" style="display: none;">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #10b981;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="fileName"></span>
+                            <button type="button" onclick="clearFileSelection()" style="background: none; border: none; color: #ef4444; cursor: pointer;">✕</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="documentDescription">Descrição</label>
+                    <textarea id="documentDescription" name="description" rows="3" placeholder="Descrição opcional do documento"></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeUploadModal()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" id="uploadBtn" class="btn-primary">Upload Documento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Document Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h2>Editar Documento</h2>
+            
+            <form id="editForm">
+                <input type="hidden" id="editDocumentId" name="id">
+                
+                <div class="form-group">
+                    <label for="editDocumentTitle">Título do Documento *</label>
+                    <input type="text" id="editDocumentTitle" name="title" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editDocumentCategory">Categoria *</label>
+                        <select id="editDocumentCategory" name="category" required>
+                            <option value="">Selecione uma categoria</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editDocumentDepartment">Departamento</label>
+                        <select id="editDocumentDepartment" name="department">
+                            <option value="">Selecione um departamento</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editDocumentDescription">Descrição</label>
+                    <textarea id="editDocumentDescription" name="description" rows="3"></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeEditModal()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" id="editBtn" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Utility function for API calls
         async function fetchData(url, options = {}) {
@@ -358,7 +590,26 @@
         }
 
         function refreshDocuments() { loadDocuments(); }
-        function uploadDocument() { alert('Funcionalidade de upload será implementada em breve.'); }
+        
+        // Upload Document Functions
+        function uploadDocument() {
+            populateCategoryDropdown();
+            populateDepartmentDropdown();
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+        
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            document.getElementById('uploadForm').reset();
+            clearFileSelection();
+        }
+        
+        function clearFileSelection() {
+            document.getElementById('documentFile').value = '';
+            document.getElementById('fileUploadArea').classList.remove('dragover');
+            document.querySelector('.file-upload-content').style.display = 'block';
+            document.getElementById('fileSelected').style.display = 'none';
+        }
 
         function populateCategoryFilter(categories) {
             const select = document.getElementById('categoryFilter');
@@ -499,10 +750,114 @@
             }
         }
 
-        // Actions (placeholders)
-        function viewDocument(id) { alert('Visualização em breve. ID: ' + id); }
-        function editDocument(id) { alert('Edição em breve. ID: ' + id); }
-        async function deleteDocument(id) { alert('Exclusão em breve. ID: ' + id); }
+        // Populate dropdowns for upload/edit modals
+        async function populateCategoryDropdown(selectedValue = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const select = document.getElementById('documentCategory');
+            const editSelect = document.getElementById('editDocumentCategory');
+            
+            const selects = [select, editSelect].filter(s => s);
+            selects.forEach(sel => {
+                sel.innerHTML = '<option value="">Selecione uma categoria</option>';
+            });
+            
+            try {
+                const categories = await fetchData(`/api/categories?tenant=${tenant}`);
+                categories.forEach(cat => {
+                    selects.forEach(sel => {
+                        const option = document.createElement('option');
+                        option.value = cat.name || cat.id;
+                        option.textContent = cat.name;
+                        sel.appendChild(option);
+                    });
+                });
+                
+                if (selectedValue) {
+                    selects.forEach(sel => sel.value = selectedValue);
+                }
+            } catch (e) {
+                console.error('Erro ao carregar categorias:', e);
+            }
+        }
+        
+        async function populateDepartmentDropdown(selectedValue = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const select = document.getElementById('documentDepartment');
+            const editSelect = document.getElementById('editDocumentDepartment');
+            
+            const selects = [select, editSelect].filter(s => s);
+            selects.forEach(sel => {
+                sel.innerHTML = '<option value="">Selecione um departamento</option>';
+            });
+            
+            try {
+                const departments = await fetchData(`/api/departments?tenant=${tenant}`);
+                departments.forEach(dept => {
+                    selects.forEach(sel => {
+                        const option = document.createElement('option');
+                        option.value = dept.name || dept.id;
+                        option.textContent = dept.name;
+                        sel.appendChild(option);
+                    });
+                });
+                
+                if (selectedValue) {
+                    selects.forEach(sel => sel.value = selectedValue);
+                }
+            } catch (e) {
+                console.error('Erro ao carregar departamentos:', e);
+            }
+        }
+
+        // Actions
+        function viewDocument(id) {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            window.open(`/api/documents/${id}/download?tenant=${tenant}`, '_blank');
+        }
+        
+        async function editDocument(id) {
+            try {
+                const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+                const response = await fetchData(`/api/documents/${id}?tenant=${tenant}`);
+                
+                // Preencher formulário de edição
+                document.getElementById('editDocumentId').value = response.id;
+                document.getElementById('editDocumentTitle').value = response.title || '';
+                document.getElementById('editDocumentDescription').value = response.description || '';
+                
+                await populateCategoryDropdown(response.category || '');
+                await populateDepartmentDropdown(response.department || '');
+                
+                document.getElementById('editModal').style.display = 'flex';
+            } catch (error) {
+                console.error('Erro ao carregar documento:', error);
+                alert('Erro ao carregar dados do documento. Tente novamente.');
+            }
+        }
+        
+        async function deleteDocument(id) {
+            if (!confirm('Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            
+            try {
+                const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+                const response = await fetch(`/api/documents/${id}?tenant=${tenant}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('Documento excluído com sucesso!');
+                    loadDocuments();
+                } else {
+                    const error = await response.json();
+                    alert('Erro ao excluir documento: ' + (error.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error('Erro ao excluir documento:', error);
+                alert('Erro ao excluir documento. Tente novamente.');
+            }
+        }
 
         // Events
         document.addEventListener('input', (e) => {
@@ -516,11 +871,152 @@
             }
         });
 
-        // Load data when page loads
+        // File upload handlers
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de documentos carregada');
             loadDocuments();
+            
+            // File upload area handlers
+            const fileUploadArea = document.getElementById('fileUploadArea');
+            const fileInput = document.getElementById('documentFile');
+            
+            if (fileUploadArea && fileInput) {
+                fileUploadArea.addEventListener('click', () => fileInput.click());
+                
+                fileUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    fileUploadArea.classList.add('dragover');
+                });
+                
+                fileUploadArea.addEventListener('dragleave', () => {
+                    fileUploadArea.classList.remove('dragover');
+                });
+                
+                fileUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileUploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        handleFileSelection(files[0]);
+                    }
+                });
+                
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        handleFileSelection(e.target.files[0]);
+                    }
+                });
+            }
+            
+            // Form handlers
+            const uploadForm = document.getElementById('uploadForm');
+            const editForm = document.getElementById('editForm');
+            
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', handleUploadSubmit);
+            }
+            
+            if (editForm) {
+                editForm.addEventListener('submit', handleEditSubmit);
+            }
         });
+        
+        function handleFileSelection(file) {
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+            const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            
+            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+                alert('Tipo de arquivo não suportado. Use PDF, DOCX, DOC ou TXT.');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                alert('Arquivo muito grande. Tamanho máximo: 5MB');
+                return;
+            }
+            
+            document.querySelector('.file-upload-content').style.display = 'none';
+            document.getElementById('fileSelected').style.display = 'flex';
+            document.getElementById('fileName').textContent = file.name;
+        }
+        
+        async function handleUploadSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const uploadBtn = document.getElementById('uploadBtn');
+            const originalText = uploadBtn.textContent;
+            
+            try {
+                uploadBtn.textContent = 'Enviando...';
+                uploadBtn.disabled = true;
+                
+                const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+                const response = await fetch(`/api/documents/upload?tenant=${tenant}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    alert('Documento enviado com sucesso!');
+                    closeUploadModal();
+                    loadDocuments();
+                } else {
+                    const error = await response.json();
+                    alert('Erro ao enviar documento: ' + (error.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error('Erro ao enviar documento:', error);
+                alert('Erro ao enviar documento. Tente novamente.');
+            } finally {
+                uploadBtn.textContent = originalText;
+                uploadBtn.disabled = false;
+            }
+        }
+        
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                title: formData.get('title'),
+                category: formData.get('category'),
+                department: formData.get('department'),
+                description: formData.get('description')
+            };
+            
+            try {
+                const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+                const documentId = formData.get('id');
+                
+                const response = await fetch(`/api/documents/${documentId}?tenant=${tenant}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    alert('Documento atualizado com sucesso!');
+                    closeEditModal();
+                    loadDocuments();
+                } else {
+                    const error = await response.json();
+                    alert('Erro ao atualizar documento: ' + (error.error || 'Erro desconhecido'));
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar documento:', error);
+                alert('Erro ao atualizar documento. Tente novamente.');
+            }
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editForm').reset();
+        }
     </script>
     <script>
         // Preservar tenant nos links de navegação e marcar ativo corretamente
