@@ -145,6 +145,34 @@ app.get('/configurador', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/configurador.html'));
 });
 
+// Páginas de configuração
+app.get('/configurador-categorias', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/configurador-categorias.html'));
+});
+
+app.get('/configurador-cargos', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/configurador-cargos.html'));
+});
+
+app.get('/configurador-departamentos', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/configurador-departamentos.html'));
+});
+
 // Nova landing page melhorada
 app.get('/landing-new', (req, res) => {
   res.set({
@@ -2755,6 +2783,172 @@ app.post('/api/communication-type', async (req, res) => {
     }
   } catch (error) {
     console.error('Erro ao atualizar tipo de comunicação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+// Positions APIs
+app.get('/api/positions', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    if (await usePostgres()) {
+      const result = await query('SELECT * FROM positions WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      res.json(result.rows);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const positions = demoData.positions.filter(p => p.tenant_id === tenant.id);
+      res.json(positions);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar cargos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.post('/api/positions', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'INSERT INTO positions (id, tenant_id, name, description, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+        [uuidv4(), tenant.id, name, description || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      const position = {
+        id: uuidv4(),
+        tenant_id: tenant.id,
+        name,
+        description: description || null,
+        created_at: new Date().toISOString()
+      };
+      res.status(201).json(position);
+    }
+  } catch (error) {
+    console.error('Erro ao criar cargo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.put('/api/positions/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { name, description } = req.body;
+    const positionId = req.params.id;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'UPDATE positions SET name = $1, description = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+        [name, description || null, positionId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Cargo não encontrado' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      res.json({
+        id: positionId,
+        tenant_id: tenant.id,
+        name,
+        description: description || null
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar cargo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.delete('/api/positions/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const positionId = req.params.id;
+
+    if (await usePostgres()) {
+      const result = await query(
+        'DELETE FROM positions WHERE id = $1 AND tenant_id = $2 RETURNING *',
+        [positionId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Cargo não encontrado' });
+      }
+      
+      res.json({ message: 'Cargo excluído com sucesso' });
+    } else {
+      // Demo data fallback
+      res.json({ message: 'Cargo excluído com sucesso' });
+    }
+  } catch (error) {
+    console.error('Erro ao excluir cargo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.get('/api/positions/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const positionId = req.params.id;
+
+    if (await usePostgres()) {
+      const result = await query(
+        'SELECT * FROM positions WHERE id = $1 AND tenant_id = $2',
+        [positionId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Cargo não encontrado' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const position = demoData.positions.find(p => p.id === positionId && p.tenant_id === tenant.id);
+      
+      if (!position) {
+        return res.status(404).json({ error: 'Cargo não encontrado' });
+      }
+      
+      res.json(position);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar cargo:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
