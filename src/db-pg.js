@@ -232,8 +232,8 @@ async function query(text, params = [], retries = 1) {
   }
 }
 
-// Função para executar queries com conexão direta (sem pool) - para Vercel
-async function queryWithDirectConnection(text, params = [], retries = 1) {
+// Função para executar queries com conexão direta otimizada - para Vercel
+async function queryWithDirectConnection(text, params = [], retries = 3) {
   const { Client } = require('pg');
   
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -241,22 +241,37 @@ async function queryWithDirectConnection(text, params = [], retries = 1) {
     try {
       const start = Date.now();
       
-      // Criar conexão direta
+      // Criar conexão direta com configurações ultra-conservadoras
       const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
       
       client = new Client({
         connectionString: sessionPoolerUrl,
         ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 10000,
-        statement_timeout: 20000,
-        query_timeout: 20000,
-        application_name: `navigator-app-${Date.now()}`
+        connectionTimeoutMillis: 5000, // 5 segundos - muito conservador
+        statement_timeout: 10000, // 10 segundos
+        query_timeout: 10000, // 10 segundos
+        application_name: `navigator-app-${Date.now()}-${attempt}`,
+        // Configurações adicionais para estabilidade
+        keepAlive: false,
+        keepAliveInitialDelayMillis: 0
       });
       
-      await client.connect();
+      // Timeout manual para conexão
+      const connectionPromise = client.connect();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+      );
+      
+      await Promise.race([connectionPromise, timeoutPromise]);
       console.log(`Conexão direta estabelecida (tentativa ${attempt}/${retries})`);
       
-      const res = await client.query(text, params);
+      // Timeout manual para query
+      const queryPromise = client.query(text, params);
+      const queryTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), 8000)
+      );
+      
+      const res = await Promise.race([queryPromise, queryTimeoutPromise]);
       const duration = Date.now() - start;
       console.log(`Query executada em ${duration}ms`);
       
@@ -268,8 +283,11 @@ async function queryWithDirectConnection(text, params = [], retries = 1) {
         throw error;
       }
       
-      // Delay entre tentativas
-      const delay = 5000 + Math.random() * 5000; // 5-10 segundos
+      // Delay exponencial com jitter
+      const baseDelay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+      const jitter = Math.random() * 1000; // 0-1s de jitter
+      const delay = baseDelay + jitter;
+      
       console.log(`Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     } finally {

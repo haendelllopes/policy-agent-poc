@@ -8,7 +8,48 @@ const mammoth = require('mammoth');
 // const pdfParse = require('pdf-parse');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
+
+// Cache simples para dados quando PostgreSQL está instável
+const dataCache = {
+  users: new Map(),
+  documents: new Map(),
+  departments: new Map(),
+  lastUpdate: new Map()
+};
+
+const CACHE_DURATION = 60000; // 1 minuto
 const { z } = require('zod');
+
+// Função para verificar se o cache é válido
+function isCacheValid(tenantId, dataType) {
+  const lastUpdate = dataCache.lastUpdate.get(`${tenantId}-${dataType}`);
+  if (!lastUpdate) return false;
+  return (Date.now() - lastUpdate) < CACHE_DURATION;
+}
+
+// Função para obter dados do cache ou buscar novos
+async function getCachedData(tenantId, dataType, fetchFunction) {
+  if (isCacheValid(tenantId, dataType)) {
+    console.log(`Usando cache para ${dataType} do tenant ${tenantId}`);
+    return dataCache[dataType].get(tenantId);
+  }
+  
+  try {
+    console.log(`Buscando dados frescos para ${dataType} do tenant ${tenantId}`);
+    const data = await fetchFunction();
+    dataCache[dataType].set(tenantId, data);
+    dataCache.lastUpdate.set(`${tenantId}-${dataType}`, Date.now());
+    return data;
+  } catch (error) {
+    console.log(`Erro ao buscar ${dataType}, usando cache se disponível:`, error.message);
+    const cachedData = dataCache[dataType].get(tenantId);
+    if (cachedData) {
+      console.log(`Usando dados em cache para ${dataType} do tenant ${tenantId}`);
+      return cachedData;
+    }
+    throw error;
+  }
+}
 
 const app = express();
 app.use(express.json({ limit: '2mb' }));
@@ -197,7 +238,15 @@ async function usePostgres() {
     if (!getPool()) {
       await initializePool();
     }
-    return Boolean(getPool());
+    
+    // Testar conexão com uma query simples
+    try {
+      await query('SELECT 1 as test');
+      return true;
+    } catch (testError) {
+      console.log('Teste de conexão PostgreSQL falhou:', testError.message);
+      return false;
+    }
   } catch (_e) {
     console.log('PostgreSQL não disponível, usando dados demo');
     return false;
@@ -934,12 +983,23 @@ app.get('/api/users', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise demo data
-    if (await usePostgres()) {
-      // PostgreSQL
-      const users = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
-      res.json(users.rows);
-    } else {
-      // Demo data fallback
+    // Use PostgreSQL with cache fallback
+    try {
+      const users = await getCachedData(tenant.id, 'users', async () => {
+        if (await usePostgres()) {
+          // PostgreSQL
+          const result = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+          return result.rows;
+        } else {
+          // Demo data fallback
+          const demoData = getDemoData();
+          return demoData.users.filter(user => user.tenant_id === tenant.id);
+        }
+      });
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error);
+      // Fallback para dados demo em caso de erro
       const demoData = getDemoData();
       const users = demoData.users.filter(user => user.tenant_id === tenant.id);
       res.json(users);
