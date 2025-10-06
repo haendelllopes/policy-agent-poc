@@ -2,14 +2,15 @@ const { Pool } = require('pg');
 
 // Configuração do pool de conexões PostgreSQL
 let pool;
+let isConnecting = false;
+let connectionQueue = [];
 
-function initializePool() {
+async function initializePool() {
   // No Vercel, sempre usar Session Pooler se variáveis PG* estiverem disponíveis
   if (process.env.VERCEL && process.env.PGUSER && process.env.PGPASSWORD) {
+    // Se já temos um pool válido, reutilizar
     if (pool) {
-      // Verificar se o pool ainda está válido antes de reutilizar
       try {
-        // Testar se o pool ainda está funcionando e não atingiu limite
         if (pool.totalCount >= 0 && pool.idleCount >= 0 && pool.totalCount < 1) {
           console.log('Reutilizando pool PostgreSQL existente no Vercel');
           return pool;
@@ -23,10 +24,37 @@ function initializePool() {
       }
     }
     
-    console.log('Vercel detectado - usando Session Pooler do Supabase');
-    const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
-    console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
-    return createPool(sessionPoolerUrl);
+    // Se já estamos conectando, aguardar na fila
+    if (isConnecting) {
+      console.log('Aguardando na fila de conexão...');
+      return new Promise((resolve) => {
+        connectionQueue.push(resolve);
+      });
+    }
+    
+    // Marcar como conectando
+    isConnecting = true;
+    
+    try {
+      // Adicionar delay aleatório para evitar conexões simultâneas
+      const randomDelay = Math.random() * 5000; // 0-5 segundos
+      console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
+      await new Promise(resolve => setTimeout(resolve, randomDelay));
+      
+      console.log('Vercel detectado - usando Session Pooler do Supabase');
+      const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
+      console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
+      
+      pool = createPool(sessionPoolerUrl);
+      
+      // Resolver todas as promessas na fila
+      connectionQueue.forEach(resolve => resolve(pool));
+      connectionQueue = [];
+      
+      return pool;
+    } finally {
+      isConnecting = false;
+    }
   }
   
   if (pool) return pool;
@@ -112,7 +140,7 @@ function createPool(connStr) {
 
 // Função para executar queries com retry otimizado para Supabase Pro
 async function query(text, params = [], retries = 2) {
-  let pgPool = initializePool();
+  let pgPool = await initializePool();
   
   if (!pgPool) {
     throw new Error('Pool PostgreSQL não inicializado');
@@ -132,7 +160,7 @@ async function query(text, params = [], retries = 2) {
       if (error.message.includes('Cannot use a pool after calling end')) {
         console.log('Pool finalizado, recriando...');
         pool = null;
-        pgPool = initializePool();
+        pgPool = await initializePool();
         if (!pgPool) {
           throw new Error('Não foi possível recriar o pool PostgreSQL');
         }
@@ -171,7 +199,7 @@ async function query(text, params = [], retries = 2) {
 
 // Função para executar transações
 async function transaction(callback) {
-  const pgPool = initializePool();
+  const pgPool = await initializePool();
   
   if (!pgPool) {
     throw new Error('Pool PostgreSQL não inicializado');

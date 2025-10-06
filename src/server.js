@@ -171,7 +171,7 @@ app.get('/dashboard', (_req, res) => {
 // Função auxiliar para buscar tenant por subdomain
 async function getTenantBySubdomain(subdomain) {
   // Sempre tentar PostgreSQL primeiro
-  if (usePostgres()) {
+  if (await usePostgres()) {
     try {
       const tenant = await getTenantBySubdomainPG(subdomain);
       if (tenant) {
@@ -191,11 +191,11 @@ async function getTenantBySubdomain(subdomain) {
 }
 
 // Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
-function usePostgres() {
+async function usePostgres() {
   // Sempre tentar PostgreSQL primeiro, com fallback apenas em caso de erro
   try {
     if (!getPool()) {
-      initializePool();
+      await initializePool();
     }
     return Boolean(getPool());
   } catch (_e) {
@@ -306,12 +306,12 @@ function getDemoData() {
 app.get('/api/tenants', async (_req, res) => {
   try {
     // Tentar PostgreSQL primeiro
-    if (usePostgres()) {
+    if (await usePostgres()) {
       try {
         // Garantir que o pool está inicializado
         if (!getPool()) {
           console.log('Inicializando pool PostgreSQL...');
-          initializePool();
+          await initializePool();
         }
         
         const result = await query('SELECT id, name, subdomain FROM public.tenants ORDER BY name');
@@ -348,7 +348,7 @@ app.post('/api/tenants', async (req, res) => {
   
   try {
     // Use PostgreSQL if available, otherwise SQLite
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL
       const existing = await query('SELECT id FROM public.tenants WHERE subdomain = $1', [parse.data.subdomain]);
       if (existing.rows.length > 0) {
@@ -410,7 +410,7 @@ app.get('/api/tenants/:subdomain', async (req, res) => {
     const { subdomain } = req.params;
     
     // Tentar PostgreSQL primeiro
-    if (usePostgres()) {
+    if (await usePostgres()) {
       try {
         const result = await query('SELECT id, name, subdomain FROM tenants WHERE subdomain = $1', [subdomain]);
         if (result.rows.length === 0) {
@@ -511,7 +511,7 @@ app.post('/api/users', async (req, res) => {
 
     // Use PostgreSQL if available, otherwise SQLite
     let userId;
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL
       const existing = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2', [tenant.id, parse.data.email]);
       if (existing.rows.length > 0) {
@@ -589,7 +589,7 @@ app.get('/api/debug/test-pg-connection', async (req, res) => {
   try {
     console.log('Testando conectividade PostgreSQL...');
     
-    if (!usePostgres()) {
+    if (!(await usePostgres())) {
       return res.status(500).json({ error: 'PostgreSQL não disponível' });
     }
     
@@ -618,7 +618,7 @@ app.post('/api/debug/create-demo-tenant', async (req, res) => {
   try {
     console.log('Criando tenant demo no PostgreSQL...');
     
-    if (!usePostgres()) {
+    if (!(await usePostgres())) {
       return res.status(500).json({ error: 'PostgreSQL não disponível' });
     }
     
@@ -675,7 +675,7 @@ app.get('/api/users/:id', async (req, res) => {
 
     // Use PostgreSQL if available, otherwise SQLite
     let user;
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL
       const result = await query('SELECT * FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
       if (result.rows.length === 0) {
@@ -744,7 +744,7 @@ app.put('/api/users/:id', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL - Verificar se usuário existe
       const existing = await query('SELECT id FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
       if (existing.rows.length === 0) {
@@ -816,7 +816,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
       console.log('DELETE /users - Using PostgreSQL with single connection');
       
@@ -896,7 +896,7 @@ app.get('/test-consistency/:userId', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    if (usePostgres()) {
+    if (await usePostgres()) {
       const pool = getPool();
       const client = await pool.connect();
       
@@ -934,7 +934,7 @@ app.get('/api/users', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise demo data
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL
       const users = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
       res.json(users.rows);
@@ -1000,7 +1000,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   const createdAt = new Date().toISOString();
   
   // Use PostgreSQL if available, otherwise SQLite
-  if (usePostgres()) {
+  if (await usePostgres()) {
     // Parse tags
     const tags = body.data.tags ? JSON.parse(body.data.tags) : [];
     
@@ -1142,7 +1142,7 @@ app.get('/api/documents', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise demo data
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL
       const result = await query(
         'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
@@ -1177,7 +1177,7 @@ app.delete('/api/documents/:id', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL - usar uma única conexão para evitar problemas de conectividade
       console.log('DELETE /documents - Using PostgreSQL with single connection');
 
@@ -1263,7 +1263,7 @@ app.get('/documents/:id/download', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL
       const docResult = await query(
         'SELECT id, title, category, status FROM documents WHERE id = $1 AND tenant_id = $2',
@@ -1341,7 +1341,7 @@ app.post('/documents/categorization-result', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise SQLite
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // PostgreSQL - Atualizar documento com categorização
       const result = await query(
         'UPDATE documents SET category = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3',
@@ -1430,7 +1430,7 @@ app.post('/search/policy', async (req, res) => {
   const qEmbed = await embed(query);
   
   // Use PostgreSQL if available, otherwise SQLite
-  if (usePostgres()) {
+  if (await usePostgres()) {
     // PostgreSQL
     const result = await query(
       `SELECT c.id, c.content, c.embedding, c.section, d.title, d.version
@@ -1494,7 +1494,7 @@ app.get('/api/departments', async (req, res) => {
     }
 
     // Use PostgreSQL if available, otherwise demo data
-    if (usePostgres()) {
+    if (await usePostgres()) {
       const result = await query('SELECT * FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
       res.json(result.rows);
     } else {
@@ -1867,7 +1867,7 @@ async function initializeDatabase() {
     // Tentar inicializar PostgreSQL primeiro (via DATABASE_URL ou PG*)
     try {
       console.log('Inicializando PostgreSQL...');
-      initializePool();
+      await initializePool();
       if (getPool()) {
         // Testar conexão com uma query simples
         await query('SELECT 1 as test');
@@ -1952,7 +1952,7 @@ app.get('/api/health', async (req, res) => {
     const health = {
       ok: true,
       env: process.env.VERCEL ? 'vercel' : (process.env.NODE_ENV || 'development'),
-      postgres: usePostgres() ? 'available' : 'unavailable',
+      postgres: (await usePostgres()) ? 'available' : 'unavailable',
       time: new Date().toISOString(),
       database: {
         status: 'unknown',
@@ -1962,7 +1962,7 @@ app.get('/api/health', async (req, res) => {
     };
 
     // Testar conexão com o banco se PostgreSQL estiver disponível
-    if (usePostgres()) {
+    if (await usePostgres()) {
       try {
         const start = Date.now();
         const result = await query('SELECT 1 as test, NOW() as current_time');
@@ -2035,7 +2035,7 @@ app.get('/api/debug/tenants', async (req, res) => {
       // Garantir que o pool está inicializado
       if (!getPool()) {
         console.log('Inicializando pool PostgreSQL...');
-        initializePool();
+        await initializePool();
       }
       
       // Verificar estrutura da tabela
@@ -2075,7 +2075,7 @@ app.post('/api/auth/validate', async (req, res) => {
 
     // Tentar PostgreSQL primeiro, com fallback para SQLite
     try {
-      if (usePostgres()) {
+      if (await usePostgres()) {
         // Buscar tenant pelo nome da empresa
         const tenantResult = await query(
           'SELECT * FROM public.tenants WHERE name = $1', 
@@ -2171,7 +2171,7 @@ app.post('/api/auth/validate', async (req, res) => {
 // Endpoint para popular dados demo no Supabase Pro
 app.post('/api/demo/populate', async (req, res) => {
   try {
-    if (!usePostgres()) {
+    if (!(await usePostgres())) {
       return res.status(400).json({ error: 'PostgreSQL não disponível' });
     }
 
@@ -2259,11 +2259,11 @@ app.post('/api/demo/populate', async (req, res) => {
 
 app.post('/api/tenants/demo', async (req, res) => {
   try {
-    if (usePostgres()) {
+    if (await usePostgres()) {
       // Garantir que o pool está inicializado
       if (!getPool()) {
         console.log('Inicializando pool PostgreSQL...');
-        initializePool();
+        await initializePool();
       }
       
       // Verificar se já existe
@@ -2345,7 +2345,7 @@ app.post('/api/debug/test-connection', async (req, res) => {
 // Endpoint para forçar migração
 app.post('/api/debug/migrate', async (req, res) => {
   try {
-    if (usePostgres()) {
+    if (await usePostgres()) {
       console.log('Forçando migração PostgreSQL...');
       await migratePG();
       res.json({ message: 'Migração executada com sucesso' });
@@ -2361,7 +2361,7 @@ app.post('/api/debug/migrate', async (req, res) => {
 // Endpoint para configurar RLS no Supabase
 app.post('/api/debug/setup-rls', async (req, res) => {
   try {
-    if (!usePostgres()) {
+    if (!(await usePostgres())) {
       return res.status(500).json({ error: 'PostgreSQL não configurado' });
     }
 
@@ -2412,7 +2412,7 @@ app.get('/api/debug/connection-details', async (req, res) => {
     };
 
     // Tentar uma conexão simples
-    if (usePostgres()) {
+    if (await usePostgres()) {
       try {
         const startTime = Date.now();
         const result = await query('SELECT 1 as test, NOW() as current_time');
