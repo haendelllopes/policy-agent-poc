@@ -10,6 +10,7 @@ const mammoth = require('mammoth');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
 const { analyzeDocument } = require('./document-analyzer');
+const TelegramBot = require('./telegram-bot');
 
 // Cache simples para dados quando PostgreSQL está instável
 const dataCache = {
