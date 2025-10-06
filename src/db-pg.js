@@ -7,13 +7,17 @@ function initializePool() {
   // No Vercel, sempre usar Session Pooler se variáveis PG* estiverem disponíveis
   if (process.env.VERCEL && process.env.PGUSER && process.env.PGPASSWORD) {
     if (pool) {
-      // Fechar pool existente se houver
+      // Verificar se o pool ainda está válido antes de reutilizar
       try {
-        pool.end();
+        // Testar se o pool ainda está funcionando
+        if (pool.totalCount >= 0 && pool.idleCount >= 0) {
+          console.log('Reutilizando pool PostgreSQL existente no Vercel');
+          return pool;
+        }
       } catch (e) {
-        // Ignorar erros ao fechar
+        console.log('Pool inválido, criando novo');
+        pool = null;
       }
-      pool = null;
     }
     
     console.log('Vercel detectado - usando Session Pooler do Supabase');
@@ -102,7 +106,7 @@ function createPool(connStr) {
 
 // Função para executar queries com retry otimizado para Supabase Pro
 async function query(text, params = [], retries = 2) {
-  const pgPool = initializePool();
+  let pgPool = initializePool();
   
   if (!pgPool) {
     throw new Error('Pool PostgreSQL não inicializado');
@@ -118,6 +122,16 @@ async function query(text, params = [], retries = 2) {
     } catch (error) {
       console.error(`Erro na query (tentativa ${attempt}/${retries}):`, error.message);
       
+      // Se o pool foi finalizado, tentar recriar
+      if (error.message.includes('Cannot use a pool after calling end')) {
+        console.log('Pool finalizado, recriando...');
+        pool = null;
+        pgPool = initializePool();
+        if (!pgPool) {
+          throw new Error('Não foi possível recriar o pool PostgreSQL');
+        }
+      }
+      
       // Verificar se é um erro recuperável
       const isRetryableError = (
         error.message.includes('connection terminated') ||
@@ -128,6 +142,7 @@ async function query(text, params = [], retries = 2) {
         error.message.includes('ETIMEDOUT') ||
         error.message.includes('Connection terminated due to connection timeout') ||
         error.message.includes('MaxClientsInSessionMode') ||
+        error.message.includes('Cannot use a pool after calling end') ||
         error.code === 'XX000' // Erro fatal do PostgreSQL
       );
       
