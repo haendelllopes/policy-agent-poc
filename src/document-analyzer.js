@@ -1,5 +1,6 @@
 const { OpenAI } = require('openai');
-const pdfParse = require('pdf-parse');
+// pdf-parse não funciona no Vercel (requer @napi-rs/canvas)
+// const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
 
 // Inicializar OpenAI
@@ -16,8 +17,15 @@ async function extractText(fileBuffer, fileName, mimeType) {
       return fileBuffer.toString('utf8');
     } 
     else if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) {
-      const pdfData = await pdfParse(fileBuffer);
-      return pdfData.text;
+      // pdf-parse não funciona no Vercel
+      if (process.env.VERCEL) {
+        console.warn('PDF parsing não suportado no Vercel. Use Render.com para processamento completo de PDF.');
+        return '[Conteúdo PDF - processamento completo disponível apenas em ambientes com suporte a canvas]';
+      }
+      // Para outros ambientes, você pode descomentar e usar pdf-parse
+      // const pdfData = await pdfParse(fileBuffer);
+      // return pdfData.text;
+      throw new Error('PDF parsing não configurado para este ambiente');
     } 
     else if (mimeType.includes('word') || mimeType.includes('document') || 
              fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
