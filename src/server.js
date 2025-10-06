@@ -3022,8 +3022,8 @@ app.post('/api/communication-type', async (req, res) => {
   }
 });
 
-// Geração de deep link e QR do Telegram para n8n
-app.post('/api/telegram/generate-link', async (req, res) => {
+// Endpoint unificado para geração de links de comunicação (WhatsApp/Telegram/Slack)
+app.post('/api/communication/generate-link', async (req, res) => {
   try {
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
@@ -3031,9 +3031,11 @@ app.post('/api/telegram/generate-link', async (req, res) => {
     }
 
     const schema = z.object({
+      type: z.enum(['whatsapp', 'telegram', 'slack']),
       email: z.string().email().optional(),
       userId: z.string().uuid().optional(),
-      name: z.string().optional()
+      name: z.string().optional(),
+      phone: z.string().optional()
     }).refine((v) => Boolean(v.email || v.userId), { message: 'Informe email ou userId' });
 
     const parsed = schema.safeParse(req.body || {});
@@ -3041,46 +3043,103 @@ app.post('/api/telegram/generate-link', async (req, res) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    const { email, userId } = parsed.data;
+    const { type, email, userId, name, phone } = parsed.data;
 
-    // Garantir que temos o username do bot para montar o deep link
-    const botUsername = process.env.TELEGRAM_BOT_USERNAME;
-    if (!botUsername) {
-      return res.status(500).json({ error: 'TELEGRAM_BOT_USERNAME não configurado no ambiente' });
-    }
-
-    // Opcional: confirmar usuário no banco quando possível
+    // Buscar usuário no banco quando possível
     let finalUserId = userId || null;
-    if (!finalUserId && email && (await usePostgres())) {
+    let finalName = name || '';
+    let finalPhone = phone || '';
+    
+    if ((!finalUserId || !finalName) && email && (await usePostgres())) {
       try {
-        const result = await query('SELECT id FROM users WHERE tenant_id = $1 AND email = $2 LIMIT 1', [tenant.id, email]);
+        const result = await query('SELECT id, name, phone FROM users WHERE tenant_id = $1 AND email = $2 LIMIT 1', [tenant.id, email]);
         if (result.rows.length > 0) {
-          finalUserId = result.rows[0].id;
+          const user = result.rows[0];
+          finalUserId = finalUserId || user.id;
+          finalName = finalName || user.name;
+          finalPhone = finalPhone || user.phone;
         }
       } catch (dbErr) {
-        console.log('Aviso: falha ao consultar usuário por email para deep link Telegram:', dbErr.message);
+        console.log('Aviso: falha ao consultar usuário por email:', dbErr.message);
       }
     }
 
-    // Telegram limita o parâmetro `start` a 64 chars. Usar base64url curta.
+    // Gerar identificador único para o usuário
     const baseStr = `${tenant.id}:${finalUserId || ''}:${email || ''}`;
-    let startParam = Buffer.from(baseStr).toString('base64url');
-    if (startParam.length > 64) {
+    let identifier = Buffer.from(baseStr).toString('base64url');
+    if (identifier.length > 64) {
       const crypto = require('crypto');
-      startParam = crypto.createHash('sha256').update(baseStr).digest('base64url').slice(0, 64);
+      identifier = crypto.createHash('sha256').update(baseStr).digest('base64url').slice(0, 64);
     }
 
-    const deepLink = `https://t.me/${botUsername}?start=${startParam}`;
-    const qrDataUrl = await QRCode.toDataURL(deepLink, { width: 320, margin: 1 });
-
-    return res.json({
+    let result = {
       tenantId: tenant.id,
-      start_param: startParam,
-      deep_link: deepLink,
-      qr_data_url: qrDataUrl
-    });
+      type,
+      identifier,
+      user: {
+        id: finalUserId,
+        name: finalName,
+        email: email || '',
+        phone: finalPhone
+      }
+    };
+
+    // Gerar links específicos por tipo de comunicação
+    switch (type) {
+      case 'telegram':
+        const botUsername = process.env.TELEGRAM_BOT_USERNAME;
+        if (!botUsername) {
+          return res.status(500).json({ error: 'TELEGRAM_BOT_USERNAME não configurado no ambiente' });
+        }
+        
+        const telegramDeepLink = `https://t.me/${botUsername}?start=${identifier}`;
+        const qrDataUrl = await QRCode.toDataURL(telegramDeepLink, { width: 320, margin: 1 });
+        
+        result.deep_link = telegramDeepLink;
+        result.qr_data_url = qrDataUrl;
+        break;
+
+      case 'slack':
+        const slackTeamId = process.env.SLACK_TEAM_ID;
+        const slackBotId = process.env.SLACK_BOT_ID;
+        
+        if (!slackTeamId) {
+          return res.status(500).json({ error: 'SLACK_TEAM_ID não configurado no ambiente' });
+        }
+
+        // Deep link para abrir o Slack e iniciar conversa com o bot
+        const slackDeepLink = `https://app.slack.com/client/${slackTeamId}`;
+        const slackBotLink = slackBotId ? `${slackDeepLink}/D${slackBotId}` : slackDeepLink;
+        
+        // Link web alternativo (caso o deep link não funcione)
+        const slackWebLink = `https://${process.env.SLACK_WORKSPACE_DOMAIN || 'workspace'}.slack.com/app_redirect?app=${slackBotId || 'BOT_ID'}`;
+        
+        result.deep_link = slackBotLink;
+        result.web_link = slackWebLink;
+        result.team_id = slackTeamId;
+        break;
+
+      case 'whatsapp':
+        // Para WhatsApp, usar o número de telefone diretamente
+        if (!finalPhone) {
+          return res.status(400).json({ error: 'Telefone é obrigatório para WhatsApp' });
+        }
+        
+        const whatsappLink = `https://wa.me/${finalPhone.replace(/\D/g, '')}`;
+        const whatsappQr = await QRCode.toDataURL(whatsappLink, { width: 320, margin: 1 });
+        
+        result.deep_link = whatsappLink;
+        result.qr_data_url = whatsappQr;
+        result.phone = finalPhone;
+        break;
+
+      default:
+        return res.status(400).json({ error: 'Tipo de comunicação não suportado' });
+    }
+
+    return res.json(result);
   } catch (error) {
-    console.error('Erro ao gerar link/QR do Telegram:', error);
+    console.error('Erro ao gerar link de comunicação:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
