@@ -62,7 +62,7 @@ async function initializePool() {
       
       try {
         // Adicionar delay aleatório para evitar conexões simultâneas
-        const randomDelay = Math.random() * 3000 + 2000; // 2-5 segundos
+        const randomDelay = Math.random() * 10000 + 10000; // 10-20 segundos
         console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
         await new Promise(resolve => setTimeout(resolve, randomDelay));
         
@@ -125,25 +125,25 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações ultra-conservadoras para Supabase Session Pooler
+    // Configurações extremamente conservadoras para Supabase Session Pooler
     max: 1, // Apenas 1 conexão
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 10000, // 10 segundos para conexões idle (liberar rapidamente)
-    connectionTimeoutMillis: 20000, // 20 segundos para conexão inicial
-    acquireTimeoutMillis: 20000, // 20 segundos para adquirir conexão
-    // Configurações de retry conservadoras
-    retryDelayMs: 10000, // 10 segundos entre tentativas (mais tempo)
-    retryAttempts: 2, // Apenas 2 tentativas para evitar sobrecarga
+    idleTimeoutMillis: 5000, // 5 segundos para conexões idle (liberar muito rapidamente)
+    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
+    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
+    // Configurações de retry muito conservadoras
+    retryDelayMs: 15000, // 15 segundos entre tentativas (muito tempo)
+    retryAttempts: 1, // Apenas 1 tentativa para evitar sobrecarga
     // Forçar IPv4
     family: 4,
-    // Configurações para liberar recursos rapidamente
+    // Configurações para liberar recursos muito rapidamente
     keepAlive: false, // Desabilitar keepAlive para liberar recursos
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 30000, // 30 segundos para queries
-    query_timeout: 30000, // 30 segundos para queries
+    statement_timeout: 20000, // 20 segundos para queries
+    query_timeout: 20000, // 20 segundos para queries
     // Configurações específicas para Lambda/Vercel
     allowExitOnIdle: true, // Permitir saída quando idle
-    maxUses: 1000, // Limite baixo de usos por conexão
+    maxUses: 100, // Limite muito baixo de usos por conexão
     application_name: 'navigator-app',
     // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
@@ -168,7 +168,7 @@ function createPool(connStr) {
 }
 
 // Função para executar queries com retry otimizado para Supabase Pro
-async function query(text, params = [], retries = 2) {
+async function query(text, params = [], retries = 1) {
   let pgPool = await initializePool();
   
   if (!pgPool) {
