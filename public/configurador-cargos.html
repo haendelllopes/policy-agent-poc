@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargos de Funcionários - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: white; 
+            border-right: 1px solid #e2e8f0; 
+            padding: 24px 0; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto; 
+        }
+        
+        .logo { 
+            padding: 0 24px 32px; 
+            border-bottom: 1px solid #e2e8f0; 
+            margin-bottom: 24px; 
+        }
+        
+        .logo h1 { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #3b82f6; 
+        }
+        
+        .nav { padding: 0 24px; }
+        
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            margin-bottom: 4px; 
+            border-radius: 8px; 
+            color: #64748b; 
+            text-decoration: none; 
+            transition: all 0.2s; 
+            cursor: pointer;
+        }
+        
+        .nav-item:hover { 
+            background: #f1f5f9; 
+            color: #3b82f6; 
+        }
+        
+        .nav-item.active { 
+            background: #eff6ff; 
+            color: #3b82f6; 
+            font-weight: 500; 
+        }
+        
+        .nav-item svg { 
+            width: 20px; 
+            height: 20px; 
+            margin-right: 12px; 
+        }
+        
+        /* Main Content */
+        .main { 
+            flex: 1; 
+            margin-left: 280px; 
+            padding: 32px; 
+        }
+        
+        .header { 
+            margin-bottom: 32px; 
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header h1 { 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 8px; 
+        }
+        
+        .header p { 
+            color: #64748b; 
+            font-size: 16px; 
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        /* Positions Section */
+        .section {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+
+        /* Positions Table */
+        .positions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .positions-table th,
+        .positions-table td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .positions-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .positions-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .btn-edit {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .btn-edit:hover {
+            background: #bfdbfe;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-delete:hover {
+            background: #fecaca;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .loading {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            padding: 32px;
+        }
+
+        .error {
+            color: #dc2626;
+            text-align: center;
+            padding: 16px;
+            background: #fee2e2;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+            }
+            
+            .main {
+                margin-left: 0;
+                padding: 16px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Flowly</h1>
+            </div>
+            
+            <div class="nav">
+                <a href="inicio.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    </svg>
+                    Início
+                </a>
+                
+                <a href="funcionarios.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Funcionários
+                </a>
+                
+                <a href="documentos.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Documentos
+                </a>
+
+                <a href="configurador.html" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Configurador
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <div>
+                        <h1>Cargos de Funcionários</h1>
+                        <p>Gerencie os cargos e posições da empresa</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn-secondary" onclick="loadPositions()" title="Atualizar cargos">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Atualizar
+                        </button>
+                        <button class="btn-primary" onclick="openAddModal()" title="Adicionar cargo">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Adicionar Cargo
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Positions Section -->
+            <div class="section">
+                <div class="card">
+                    <h2>Lista de Cargos</h2>
+                    
+                    <!-- Positions Table -->
+                    <div id="positionsTableContainer">
+                        <div class="loading">Carregando cargos...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="positionModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Adicionar Cargo</h2>
+            
+            <form id="positionForm">
+                <div class="form-group">
+                    <label for="positionName">Nome *</label>
+                    <input type="text" id="positionName" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="positionDescription">Descrição</label>
+                    <textarea id="positionDescription" name="description" placeholder="Descrição do cargo (opcional)"></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeModal()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" id="submitBtn" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentEditingId = null;
+
+        // Utility function for API calls
+        async function fetchData(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        // Load positions
+        async function loadPositions() {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            console.log('Carregando cargos para tenant:', tenant);
+            
+            try {
+                const response = await fetchData(`/api/positions?tenant=${tenant}`);
+                renderPositions(response);
+            } catch (error) {
+                console.error('Erro ao carregar cargos:', error);
+                showError('Erro ao carregar cargos. Tente novamente.');
+            }
+        }
+
+        // Render positions table
+        function renderPositions(positions) {
+            const container = document.getElementById('positionsTableContainer');
+            
+            if (!positions || positions.length === 0) {
+                container.innerHTML = '<div class="loading">Nenhum cargo encontrado.</div>';
+                return;
+            }
+
+            let tableHTML = `
+                <table class="positions-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Data de Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            positions.forEach(position => {
+                const createdDate = new Date(position.created_at).toLocaleDateString('pt-BR');
+                
+                tableHTML += `
+                    <tr>
+                        <td><strong>${position.name}</strong></td>
+                        <td>${position.description || '-'}</td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <button class="action-btn btn-edit" onclick="editPosition('${position.id}')">Editar</button>
+                            <button class="action-btn btn-delete" onclick="deletePosition('${position.id}')">Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // Show error message
+        function showError(message) {
+            const container = document.getElementById('positionsTableContainer');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // Modal functions
+        function openAddModal() {
+            currentEditingId = null;
+            document.getElementById('modalTitle').textContent = 'Adicionar Cargo';
+            document.getElementById('submitBtn').textContent = 'Adicionar';
+            document.getElementById('positionForm').reset();
+            document.getElementById('positionModal').style.display = 'flex';
+            document.getElementById('positionName').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('positionModal').style.display = 'none';
+        }
+
+        // Edit position
+        async function editPosition(positionId) {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            currentEditingId = positionId;
+            
+            try {
+                const response = await fetchData(`/api/positions/${positionId}?tenant=${tenant}`);
+                
+                // Fill form
+                document.getElementById('positionName').value = response.name || '';
+                document.getElementById('positionDescription').value = response.description || '';
+                
+                // Update modal
+                document.getElementById('modalTitle').textContent = 'Editar Cargo';
+                document.getElementById('submitBtn').textContent = 'Salvar Alterações';
+                document.getElementById('positionModal').style.display = 'flex';
+                document.getElementById('positionName').focus();
+                
+            } catch (error) {
+                console.error('Erro ao carregar cargo para edição:', error);
+                alert('Erro ao carregar dados do cargo. Tente novamente.');
+            }
+        }
+
+        // Delete position
+        async function deletePosition(positionId) {
+            if (!confirm('Tem certeza que deseja excluir este cargo?')) {
+                return;
+            }
+
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            
+            try {
+                const response = await fetch(`/api/positions/${positionId}?tenant=${tenant}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadPositions();
+                } else {
+                    const result = await response.json();
+                    console.error('Erro ao excluir cargo:', result);
+                    alert('Erro ao excluir cargo: ' + (result.error || 'Erro desconhecido'));
+                }
+                
+            } catch (error) {
+                console.error('Erro ao excluir cargo:', error);
+                alert('Erro ao excluir cargo. Tente novamente.');
+            }
+        }
+
+        // Form submission
+        document.getElementById('positionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description')
+            };
+
+            // Basic validation
+            if (!data.name) {
+                alert('Por favor, preencha o nome do cargo.');
+                return;
+            }
+
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            
+            try {
+                const url = currentEditingId 
+                    ? `/api/positions/${currentEditingId}?tenant=${tenant}`
+                    : `/api/positions?tenant=${tenant}`;
+                
+                const method = currentEditingId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    loadPositions();
+                } else {
+                    const result = await response.json();
+                    console.error('Erro ao salvar cargo:', result);
+                    alert('Erro ao salvar cargo: ' + (result.error || 'Erro desconhecido'));
+                }
+                
+            } catch (error) {
+                console.error('Erro ao processar cargo:', error);
+                alert('Erro ao processar cargo. Tente novamente.');
+            }
+        });
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de cargos carregada');
+            loadPositions();
+        });
+    </script>
+</body>
+</html>

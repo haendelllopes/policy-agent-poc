@@ -2953,3 +2953,169 @@ app.get('/api/positions/:id', async (req, res) => {
   }
 });
 
+// Departments APIs
+app.get('/api/departments', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    if (await usePostgres()) {
+      const result = await query('SELECT * FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      res.json(result.rows);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const departments = demoData.departments.filter(d => d.tenant_id === tenant.id);
+      res.json(departments);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar departamentos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.post('/api/departments', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'INSERT INTO departments (id, tenant_id, name, description, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+        [uuidv4(), tenant.id, name, description || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      const department = {
+        id: uuidv4(),
+        tenant_id: tenant.id,
+        name,
+        description: description || null,
+        created_at: new Date().toISOString()
+      };
+      res.status(201).json(department);
+    }
+  } catch (error) {
+    console.error('Erro ao criar departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.put('/api/departments/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { name, description } = req.body;
+    const departmentId = req.params.id;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'UPDATE departments SET name = $1, description = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+        [name, description || null, departmentId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Departamento não encontrado' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      res.json({
+        id: departmentId,
+        tenant_id: tenant.id,
+        name,
+        description: description || null
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.delete('/api/departments/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const departmentId = req.params.id;
+
+    if (await usePostgres()) {
+      const result = await query(
+        'DELETE FROM departments WHERE id = $1 AND tenant_id = $2 RETURNING *',
+        [departmentId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Departamento não encontrado' });
+      }
+      
+      res.json({ message: 'Departamento excluído com sucesso' });
+    } else {
+      // Demo data fallback
+      res.json({ message: 'Departamento excluído com sucesso' });
+    }
+  } catch (error) {
+    console.error('Erro ao excluir departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.get('/api/departments/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const departmentId = req.params.id;
+
+    if (await usePostgres()) {
+      const result = await query(
+        'SELECT * FROM departments WHERE id = $1 AND tenant_id = $2',
+        [departmentId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Departamento não encontrado' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const department = demoData.departments.find(d => d.id === departmentId && d.tenant_id === tenant.id);
+      
+      if (!department) {
+        return res.status(404).json({ error: 'Departamento não encontrado' });
+      }
+      
+      res.json(department);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar departamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
