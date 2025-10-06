@@ -126,15 +126,15 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações extremamente conservadoras para Supabase Session Pooler
-    max: 1, // Apenas 1 conexão
-    min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 5000, // 5 segundos para conexões idle (liberar muito rapidamente)
-    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
-    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
-    // Configurações de retry muito conservadoras
-    retryDelayMs: 15000, // 15 segundos entre tentativas (muito tempo)
-    retryAttempts: 1, // Apenas 1 tentativa para evitar sobrecarga
+    // Configurações otimizadas para Supabase Session Pooler
+    max: 2, // 2 conexões para melhor throughput
+    min: 1, // Manter 1 conexão ativa
+    idleTimeoutMillis: 10000, // 10 segundos para conexões idle
+    connectionTimeoutMillis: 5000, // 5 segundos para conexão inicial
+    acquireTimeoutMillis: 5000, // 5 segundos para adquirir conexão
+    // Configurações de retry otimizadas
+    retryDelayMs: 5000, // 5 segundos entre tentativas
+    retryAttempts: 2, // 2 tentativas para melhor resiliência
     // Forçar IPv4
     family: 4,
     // Configurações para liberar recursos muito rapidamente
@@ -247,9 +247,9 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       client = new Client({
         connectionString: sessionPoolerUrl,
         ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 5000, // 5 segundos - muito conservador
-        statement_timeout: 10000, // 10 segundos
-        query_timeout: 10000, // 10 segundos
+        connectionTimeoutMillis: 3000, // 3 segundos - mais agressivo
+        statement_timeout: 5000, // 5 segundos
+        query_timeout: 5000, // 5 segundos
         application_name: `navigator-app-${Date.now()}-${attempt}`,
         // Configurações adicionais para estabilidade
         keepAlive: false,
@@ -259,7 +259,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para conexão
       const connectionPromise = client.connect();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+        setTimeout(() => reject(new Error('Connection timeout')), 3000)
       );
       
       await Promise.race([connectionPromise, timeoutPromise]);
@@ -268,7 +268,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para query
       const queryPromise = client.query(text, params);
       const queryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 8000)
+        setTimeout(() => reject(new Error('Query timeout')), 5000)
       );
       
       const res = await Promise.race([queryPromise, queryTimeoutPromise]);
@@ -440,10 +440,17 @@ async function migrate() {
       )
     `);
     
-    // Criar índices
+    // Criar índices otimizados para performance
     await query(`CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_users_tenant ON users(tenant_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_departments_tenant ON departments(tenant_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_categories_tenant ON categories(tenant_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_positions_tenant ON positions(tenant_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_tags_tenant ON tags(tenant_id)`);
+    // Índices compostos para queries mais específicas
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_tenant_status ON users(tenant_id, status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant_status ON documents(tenant_id, status)`);
     
     // Criar tenant demo se não existir
     await createDemoTenant();

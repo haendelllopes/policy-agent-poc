@@ -52,6 +52,42 @@ async function getCachedData(tenantId, dataType, fetchFunction) {
   }
 }
 
+// Função para gerar ETag baseado no conteúdo dos dados
+function generateETag(data) {
+  const crypto = require('crypto');
+  const content = JSON.stringify(data);
+  return `"${crypto.createHash('md5').update(content).digest('hex')}"`;
+}
+
+// Middleware para cache HTTP com ETag
+function httpCacheMiddleware(req, res, next) {
+  const originalJson = res.json;
+  
+  res.json = function(data) {
+    // Gerar ETag baseado nos dados
+    const etag = generateETag(data);
+    
+    // Verificar se o cliente já tem a versão mais recente
+    const clientETag = req.headers['if-none-match'];
+    if (clientETag === etag) {
+      res.status(304).end();
+      return;
+    }
+    
+    // Definir headers de cache
+    res.set({
+      'ETag': etag,
+      'Cache-Control': 'public, max-age=60', // Cache por 60 segundos
+      'Last-Modified': new Date().toUTCString()
+    });
+    
+    // Enviar dados
+    originalJson.call(this, data);
+  };
+  
+  next();
+}
+
 const app = express();
 // Compressão gzip para respostas menores
 app.use(compression({ threshold: 512 }));
@@ -217,6 +253,15 @@ app.use('/api', (req, res, next) => {
   // 3) Caso contrário, usar subdomínio do host
   req.tenantSubdomain = subdomain;
   next();
+});
+
+// Aplicar cache HTTP para rotas GET da API
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET') {
+    httpCacheMiddleware(req, res, next);
+  } else {
+    next();
+  }
 });
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -1058,8 +1103,8 @@ app.get('/api/users', async (req, res) => {
     try {
       const users = await getCachedData(tenant.id, 'users', async () => {
         if (await usePostgres()) {
-          // PostgreSQL
-          const result = await query('SELECT id, name, email, phone, position, department, start_date, status, created_at FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+          // PostgreSQL - apenas campos essenciais
+          const result = await query('SELECT id, name, email, phone, position, department, status FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
           return result.rows;
         } else {
           // Demo data fallback
@@ -1274,12 +1319,12 @@ app.get('/api/documents', async (req, res) => {
 
     // Cache por tenant para documentos
     const documents = await getCachedData(tenant.id, 'documents', async () => {
-      if (await usePostgres()) {
-        const result = await query(
-          'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
-          [tenant.id]
-        );
-        return result.rows;
+        if (await usePostgres()) {
+          const result = await query(
+            'SELECT id, title, category, status FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
+            [tenant.id]
+          );
+          return result.rows;
       } else {
         const demoData = getDemoData();
         return demoData.documents.filter(doc => doc.tenant_id === tenant.id);
