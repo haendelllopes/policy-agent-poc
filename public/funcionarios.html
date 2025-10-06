@@ -541,7 +541,9 @@
                     
                     <div class="form-group">
                         <label for="userPosition">Cargo *</label>
-                        <input type="text" id="userPosition" name="position" required>
+                        <select id="userPosition" name="position" required>
+                            <option value="">Selecione um cargo</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -755,6 +757,7 @@
             document.getElementById('userStatus').value = 'active';
             
             populateDepartmentDropdown();
+            populatePositionDropdown();
             document.getElementById('addUserModal').style.display = 'flex';
             document.getElementById('userName').focus();
         }
@@ -775,6 +778,25 @@
                 option.textContent = dept;
                 select.appendChild(option);
             });
+        }
+
+        async function populatePositionDropdown(selectedValue = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const select = document.getElementById('userPosition');
+            select.innerHTML = '<option value="">Selecione um cargo</option>';
+            try {
+                const positions = await (await fetch(`/api/positions?tenant=${tenant}`)).json();
+                positions.forEach(pos => {
+                    const option = document.createElement('option');
+                    const value = pos.name || pos.id;
+                    option.value = value;
+                    option.textContent = pos.name;
+                    select.appendChild(option);
+                });
+                if (selectedValue) select.value = selectedValue;
+            } catch (e) {
+                console.error('Erro ao carregar cargos:', e);
+            }
         }
 
         // Phone mask
@@ -877,7 +899,7 @@
                 // Preencher formulário
                 document.getElementById('userName').value = user.name || '';
                 document.getElementById('userEmail').value = user.email || '';
-                document.getElementById('userPosition').value = user.position || '';
+                await populatePositionDropdown(user.position || '');
                 document.getElementById('userDepartment').value = user.department || '';
                 document.getElementById('userStartDate').value = user.start_date || '';
                 document.getElementById('userPhone').value = user.phone ? user.phone.replace(/^55/, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '';
