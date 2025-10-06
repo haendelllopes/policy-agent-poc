@@ -996,5 +996,34 @@
             loadUsers();
         });
     </script>
+    <script>
+        // Preservar tenant nos links de navegação e marcar ativo corretamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const url = new URL(window.location.href);
+            const tenant = url.searchParams.get('tenant');
+            const currentPage = window.location.pathname.split('/').pop();
+
+            const navLinks = document.querySelectorAll('.nav .nav-item');
+            navLinks.forEach(link => {
+                try {
+                    const href = link.getAttribute('href') || '';
+                    if (!href) return;
+
+                    // Construir URL mantendo o caminho
+                    const linkUrl = new URL(href, window.location.origin);
+                    if (tenant) {
+                        linkUrl.searchParams.set('tenant', tenant);
+                    }
+                    link.setAttribute('href', linkUrl.pathname + linkUrl.search);
+
+                    // Marcar ativo baseado no arquivo atual
+                    const linkPage = linkUrl.pathname.split('/').pop();
+                    link.classList.toggle('active', linkPage === currentPage);
+                } catch (_) {
+                    // Ignorar erros de construção de URL
+                }
+            });
+        });
+    </script>
 </body>
 </html>
