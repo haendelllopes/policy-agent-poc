@@ -737,20 +737,20 @@ app.post('/api/debug/create-demo-tenant', async (req, res) => {
     
     // Criar tenant demo
     const tenantId = uuidv4();
-    await query('INSERT INTO tenants (id, name, subdomain, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())', 
+    await query('INSERT INTO tenants (id, name, subdomain, created_at) VALUES ($1, $2, $3, NOW())', 
       [tenantId, 'Empresa Demo', 'demo']);
     
     // Criar usuário demo
     const userId = uuidv4();
-    await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())', 
+    await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())', 
       [userId, tenantId, 'Haendell', 'haend@demo.com', '+5562912345678', 'Desenvolvedor', 'TI', '2024-01-01', 'active']);
     
     // Criar departamentos demo
     const dept1Id = uuidv4();
     const dept2Id = uuidv4();
-    await query('INSERT INTO departments (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())', 
+    await query('INSERT INTO departments (id, tenant_id, name, created_at) VALUES ($1, $2, $3, NOW())', 
       [dept1Id, tenantId, 'TI']);
-    await query('INSERT INTO departments (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())', 
+    await query('INSERT INTO departments (id, tenant_id, name, created_at) VALUES ($1, $2, $3, NOW())', 
       [dept2Id, tenantId, 'RH']);
     
     res.json({ 
@@ -864,7 +864,7 @@ app.put('/api/users/:id', async (req, res) => {
         return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
       }
 
-      await query('UPDATE users SET name = $1, email = $2, phone = $3, position = $4, department = $5, start_date = $6, status = $7, updated_at = NOW() WHERE id = $8 AND tenant_id = $9', 
+      await query('UPDATE users SET name = $1, email = $2, phone = $3, position = $4, department = $5, start_date = $6, status = $7 WHERE id = $8 AND tenant_id = $9', 
         [parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active', userId, tenant.id]);
     } else {
       // SQLite fallback
@@ -1462,7 +1462,7 @@ app.post('/documents/categorization-result', async (req, res) => {
     if (await usePostgres()) {
       // PostgreSQL - Atualizar documento com categorização
       const result = await query(
-        'UPDATE documents SET category = $1, updated_at = NOW() WHERE id = $2 AND tenant_id = $3',
+        'UPDATE documents SET category = $1 WHERE id = $2 AND tenant_id = $3',
         [suggestedCategory, documentId, tenantId]
       );
 
