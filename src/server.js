@@ -599,6 +599,33 @@ app.post('/api/tenants', async (req, res) => {
       
       await query('COMMIT');
 
+      // Disparar webhook para n8n (admin criado)
+      try {
+        const webhookData = {
+          type: 'user_created',
+          tenantId: tenantId,
+          tenantName: parse.data.name,
+          userId: userId,
+          name: parse.data.userName,
+          email: parse.data.userEmail,
+          phone: 'Não informado',
+          position: 'Administrador',
+          department: 'Administração',
+          start_date: new Date().toISOString().split('T')[0],
+          communication_type: null, // Admin recém-criado, ainda não configurou
+          created_at: new Date().toISOString()
+        };
+          
+        await fetch('https://hndll.app.n8n.cloud/webhook/onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(webhookData)
+        });
+      } catch (webhookError) {
+        console.error('Erro ao enviar webhook para admin:', webhookError);
+        // Não falhar a criação do tenant por causa do webhook
+      }
+
       res.status(201).json({ 
         tenant: { id: tenantId, name: parse.data.name, subdomain: parse.data.subdomain },
         user: { id: userId, name: parse.data.userName, email: parse.data.userEmail }
@@ -765,6 +792,19 @@ app.post('/api/users', async (req, res) => {
 
     // Disparar webhook para n8n
     try {
+      // Buscar tipo de comunicação do tenant
+      let communicationType = null;
+      if (await usePostgres()) {
+        try {
+          const commResult = await query('SELECT setting_value FROM tenant_settings WHERE tenant_id = $1 AND setting_key = $2', [tenant.id, 'communication_type']);
+          if (commResult.rows.length > 0) {
+            communicationType = commResult.rows[0].setting_value;
+          }
+        } catch (commError) {
+          console.log('Aviso: não foi possível buscar tipo de comunicação:', commError.message);
+        }
+      }
+
       const webhookData = {
         type: 'user_created',
         tenantId: tenant.id,
@@ -776,6 +816,7 @@ app.post('/api/users', async (req, res) => {
         position: parse.data.position,
         department: parse.data.department,
         start_date: parse.data.start_date,
+        communication_type: communicationType, // Adicionar tipo de comunicação
         created_at: new Date().toISOString()
       };
         
