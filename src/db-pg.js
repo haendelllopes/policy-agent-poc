@@ -62,8 +62,8 @@ async function initializePool() {
       isConnecting = true;
       
       try {
-        // Adicionar delay aleatório para evitar conexões simultâneas
-        const randomDelay = Math.random() * 10000 + 10000; // 10-20 segundos
+        // Reduzir delay para acelerar primeira conexão em produção
+        const randomDelay = Math.random() * 1500 + 500; // 0.5-2.0 segundos
         console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
         await new Promise(resolve => setTimeout(resolve, randomDelay));
         

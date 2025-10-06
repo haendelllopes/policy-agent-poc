@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression');
 const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -52,6 +53,18 @@ async function getCachedData(tenantId, dataType, fetchFunction) {
 }
 
 const app = express();
+// Compressão gzip para respostas menores
+app.use(compression({ threshold: 512 }));
+// Medir tempo de resposta
+app.use((req, res, next) => {
+  const start = process.hrtime.bigint();
+  res.on('finish', () => {
+    const end = process.hrtime.bigint();
+    const durationMs = Number(end - start) / 1e6;
+    res.setHeader('X-Response-Time', `${durationMs.toFixed(1)}ms`);
+  });
+  next();
+});
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static('public'));
 
@@ -1259,20 +1272,20 @@ app.get('/api/documents', async (req, res) => {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
-    // Use PostgreSQL if available, otherwise demo data
-    if (await usePostgres()) {
-      // PostgreSQL
-      const result = await query(
-        'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
-        [tenant.id]
-      );
-      res.json(result.rows);
-    } else {
-      // Demo data fallback
-      const demoData = getDemoData();
-      const documents = demoData.documents.filter(doc => doc.tenant_id === tenant.id);
-      res.json(documents);
-    }
+    // Cache por tenant para documentos
+    const documents = await getCachedData(tenant.id, 'documents', async () => {
+      if (await usePostgres()) {
+        const result = await query(
+          'SELECT id, title, category, status, created_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
+          [tenant.id]
+        );
+        return result.rows;
+      } else {
+        const demoData = getDemoData();
+        return demoData.documents.filter(doc => doc.tenant_id === tenant.id);
+      }
+    });
+    res.json(documents);
   } catch (error) {
     console.error('Erro ao buscar documentos:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
@@ -1611,16 +1624,17 @@ app.get('/api/departments', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    // Use PostgreSQL if available, otherwise demo data
-    if (await usePostgres()) {
-      const result = await query('SELECT * FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
-      res.json(result.rows);
-    } else {
-      // Demo data fallback
-      const demoData = getDemoData();
-      const departments = demoData.departments.filter(dept => dept.tenant_id === tenant.id);
-      res.json(departments);
-    }
+    // Cache por tenant para departamentos
+    const departments = await getCachedData(tenant.id, 'departments', async () => {
+      if (await usePostgres()) {
+        const result = await query('SELECT id, name, created_at FROM departments WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+        return result.rows;
+      } else {
+        const demoData = getDemoData();
+        return demoData.departments.filter(dept => dept.tenant_id === tenant.id);
+      }
+    });
+    res.json(departments);
   } catch (error) {
     console.error('Erro ao obter departamentos:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -1711,8 +1725,12 @@ app.get('/api/categories', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
     
-    const result = await query('SELECT * FROM categories WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
-    res.json(result.rows);
+    // Cache por tenant para categorias
+    const categories = await getCachedData(tenant.id, 'categories', async () => {
+      const result = await query('SELECT id, name, created_at FROM categories WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      return result.rows;
+    });
+    res.json(categories);
   } catch (error) {
     console.error('Erro ao obter categorias:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -1803,8 +1821,12 @@ app.get('/api/positions', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
     
-    const result = await query('SELECT * FROM positions WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
-    res.json(result.rows);
+    // Cache por tenant para cargos
+    const positions = await getCachedData(tenant.id, 'positions', async () => {
+      const result = await query('SELECT id, name, created_at FROM positions WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      return result.rows;
+    });
+    res.json(positions);
   } catch (error) {
     console.error('Erro ao obter cargos:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
