@@ -1266,12 +1266,50 @@
             }
         }
 
+        // Função para detectar seção ativa e definir header correto
+        function initializeActiveSection() {
+            // Verificar qual seção está visível
+            const dashboardSection = document.getElementById('dashboard-section');
+            const usersSection = document.getElementById('users-section');
+            const documentsSection = document.getElementById('documents-section');
+            
+            if (usersSection && usersSection.style.display !== 'none') {
+                // Seção de funcionários ativa
+                console.log(' Inicializando seção de funcionários...');
+                const userActions = `
+                    <button class="btn-secondary" onclick="refreshUsers()" title="Atualizar funcionários">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Atualizar
+                    </button>
+                    <button class="btn-primary" onclick="openAddUserModal()" title="Adicionar funcionário">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar Funcionário
+                    </button>
+                `;
+                updateHeader('Funcionários', 'Gerencie os funcionários da empresa', userActions);
+                loadUsers();
+            } else if (documentsSection && documentsSection.style.display !== 'none') {
+                // Seção de documentos ativa
+                console.log(' Inicializando seção de documentos...');
+                updateHeader('Documentos', 'Gerencie os documentos da empresa');
+            } else {
+                // Dashboard ativo (padrão)
+                console.log(' Inicializando dashboard...');
+                updateHeader('Início', 'Visão geral do sistema Flowly');
+                updateDashboard(true);
+            }
+        }
+
         // Carregar dados quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
             console.log(' DOM carregado, iniciando dashboard...');
             
-            // Atualizar dashboard na inicialização
-            updateDashboard(true);
+            // Detectar e inicializar seção ativa
+            initializeActiveSection();
             
             // Iniciar intervalo de atualização automática (5 minutos)
             startUpdateInterval();
