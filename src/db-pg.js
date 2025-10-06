@@ -5,6 +5,7 @@ let pool;
 let isConnecting = false;
 let connectionQueue = [];
 let globalMutex = null;
+let connectionCount = 0;
 
 async function initializePool() {
   // No Vercel, sempre usar Session Pooler se variáveis PG* estiverem disponíveis
@@ -169,6 +170,11 @@ function createPool(connStr) {
 
 // Função para executar queries com retry otimizado para Supabase Pro
 async function query(text, params = [], retries = 1) {
+  // No Vercel, usar conexão direta para evitar problemas de pool
+  if (process.env.VERCEL && process.env.PGUSER && process.env.PGPASSWORD) {
+    return await queryWithDirectConnection(text, params, retries);
+  }
+  
   let pgPool = await initializePool();
   
   if (!pgPool) {
@@ -222,6 +228,59 @@ async function query(text, params = [], retries = 1) {
       }
       
       throw error;
+    }
+  }
+}
+
+// Função para executar queries com conexão direta (sem pool) - para Vercel
+async function queryWithDirectConnection(text, params = [], retries = 1) {
+  const { Client } = require('pg');
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    let client = null;
+    try {
+      const start = Date.now();
+      
+      // Criar conexão direta
+      const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
+      
+      client = new Client({
+        connectionString: sessionPoolerUrl,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 10000,
+        statement_timeout: 20000,
+        query_timeout: 20000,
+        application_name: `navigator-app-${Date.now()}`
+      });
+      
+      await client.connect();
+      console.log(`Conexão direta estabelecida (tentativa ${attempt}/${retries})`);
+      
+      const res = await client.query(text, params);
+      const duration = Date.now() - start;
+      console.log(`Query executada em ${duration}ms`);
+      
+      return res;
+    } catch (error) {
+      console.error(`Erro na query direta (tentativa ${attempt}/${retries}):`, error.message);
+      
+      if (attempt === retries) {
+        throw error;
+      }
+      
+      // Delay entre tentativas
+      const delay = 5000 + Math.random() * 5000; // 5-10 segundos
+      console.log(`Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    } finally {
+      if (client) {
+        try {
+          await client.end();
+          console.log('Conexão direta fechada');
+        } catch (e) {
+          console.log('Erro ao fechar conexão direta:', e.message);
+        }
+      }
     }
   }
 }
