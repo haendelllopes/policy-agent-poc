@@ -61,22 +61,22 @@ function createPool(connStr) {
   pool = new Pool({
     connectionString: connStr,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Configurações otimizadas para Session Pooler do Supabase
-    max: 1, // Apenas 1 conexão para evitar sobrecarga
+    // Configurações equilibradas para Session Pooler do Supabase
+    max: 2, // Máximo 2 conexões
     min: 0, // Sem conexões mínimas
-    idleTimeoutMillis: 10000, // 10 segundos
-    connectionTimeoutMillis: 8000, // 8 segundos para conexão inicial
-    acquireTimeoutMillis: 8000, // 8 segundos para adquirir conexão
+    idleTimeoutMillis: 30000, // 30 segundos para conexões idle
+    connectionTimeoutMillis: 20000, // 20 segundos para conexão inicial
+    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
     // Configurações de retry
-    retryDelayMs: 500, // 500ms entre tentativas
-    retryAttempts: 1, // 1 tentativa apenas
+    retryDelayMs: 1000, // 1 segundo entre tentativas
+    retryAttempts: 2, // 2 tentativas
     // Forçar IPv4
     family: 4,
     // Configurações adicionais para estabilidade
-    keepAlive: false, // Desabilitar keepAlive
-    keepAliveInitialDelayMillis: 0,
-    statement_timeout: 10000, // 10 segundos para queries
-    query_timeout: 10000, // 10 segundos para queries
+    keepAlive: true, // Habilitar keepAlive para manter conexões
+    keepAliveInitialDelayMillis: 10000,
+    statement_timeout: 30000, // 30 segundos para queries
+    query_timeout: 25000, // 25 segundos para queries
     application_name: 'navigator-app',
     // Configurações específicas para Supabase Session Pooler
     options: '-c default_transaction_isolation=read_committed'
@@ -101,7 +101,7 @@ function createPool(connStr) {
 }
 
 // Função para executar queries com retry otimizado para Supabase Pro
-async function query(text, params = [], retries = 1) {
+async function query(text, params = [], retries = 2) {
   const pgPool = initializePool();
   
   if (!pgPool) {
