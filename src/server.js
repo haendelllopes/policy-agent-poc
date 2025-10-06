@@ -170,34 +170,24 @@ app.get('/dashboard', (_req, res) => {
 
 // Função auxiliar para buscar tenant por subdomain
 async function getTenantBySubdomain(subdomain) {
-  // Priorizar PostgreSQL (via pool detectado)
+  // Sempre tentar PostgreSQL primeiro
   if (usePostgres()) {
     try {
-      return await getTenantBySubdomainPG(subdomain);
+      const tenant = await getTenantBySubdomainPG(subdomain);
+      if (tenant) {
+        return tenant;
+      }
     } catch (error) {
       console.error('Erro ao buscar tenant no PostgreSQL:', error);
-      // Não cair automaticamente para SQLite no Vercel
-      if (process.env.VERCEL) {
-        console.log('Vercel detectado, usando dados demo para tenant:', subdomain);
-        return getTenantFromDemoData(subdomain);
+      // Se erro de conexão, não usar dados demo
+      if (error.message.includes('Connection terminated') || error.message.includes('timeout')) {
+        throw error; // Re-throw para que o endpoint retorne erro 500
       }
     }
   }
   
-  // Usar dados demo no Vercel
-  if (process.env.VERCEL) {
-    console.log('Vercel detectado, usando dados demo para tenant:', subdomain);
-    return getTenantFromDemoData(subdomain);
-  }
-  
-  // Fallback para SQLite apenas fora do Vercel
-  const { db } = await openDatabase();
-  try {
-    const tenants = runQuery(db, 'SELECT * FROM tenants WHERE subdomain = ?', [subdomain]);
-    return tenants[0] || null;
-  } finally {
-    db.close();
-  }
+  // Se chegou aqui, PostgreSQL não está disponível ou não encontrou tenant
+  throw new Error('PostgreSQL não disponível');
 }
 
 // Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
@@ -591,6 +581,51 @@ app.post('/api/users', async (req, res) => {
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
+  }
+});
+
+// Endpoint para criar tenant demo se não existir
+app.post('/api/debug/create-demo-tenant', async (req, res) => {
+  try {
+    console.log('Criando tenant demo no PostgreSQL...');
+    
+    if (!usePostgres()) {
+      return res.status(500).json({ error: 'PostgreSQL não disponível' });
+    }
+    
+    // Verificar se tenant demo já existe
+    const existing = await query('SELECT id FROM tenants WHERE subdomain = $1', ['demo']);
+    if (existing.rows.length > 0) {
+      return res.json({ message: 'Tenant demo já existe', tenant_id: existing.rows[0].id });
+    }
+    
+    // Criar tenant demo
+    const tenantId = uuidv4();
+    await query('INSERT INTO tenants (id, name, subdomain, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())', 
+      [tenantId, 'Empresa Demo', 'demo']);
+    
+    // Criar usuário demo
+    const userId = uuidv4();
+    await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())', 
+      [userId, tenantId, 'Haendell', 'haend@demo.com', '+5562912345678', 'Desenvolvedor', 'TI', '2024-01-01', 'active']);
+    
+    // Criar departamentos demo
+    const dept1Id = uuidv4();
+    const dept2Id = uuidv4();
+    await query('INSERT INTO departments (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())', 
+      [dept1Id, tenantId, 'TI']);
+    await query('INSERT INTO departments (id, tenant_id, name, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())', 
+      [dept2Id, tenantId, 'RH']);
+    
+    res.json({ 
+      message: 'Tenant demo criado com sucesso',
+      tenant_id: tenantId,
+      user_id: userId,
+      departments: [dept1Id, dept2Id]
+    });
+  } catch (error) {
+    console.error('Erro ao criar tenant demo:', error);
+    res.status(500).json({ error: 'Erro ao criar tenant demo: ' + error.message });
   }
 });
 
