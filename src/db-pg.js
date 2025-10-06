@@ -4,6 +4,7 @@ const { Pool } = require('pg');
 let pool;
 let isConnecting = false;
 let connectionQueue = [];
+let globalMutex = null;
 
 async function initializePool() {
   // No Vercel, sempre usar Session Pooler se variáveis PG* estiverem disponíveis
@@ -15,7 +16,16 @@ async function initializePool() {
           console.log('Reutilizando pool PostgreSQL existente no Vercel');
           return pool;
         } else if (pool.totalCount >= 1) {
-          console.log('Pool atingiu limite máximo, forçando recriação...');
+          console.log('Pool atingiu limite máximo, aguardando liberação...');
+          // Aguardar até 10 segundos para uma conexão se liberar
+          for (let i = 0; i < 50; i++) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            if (pool.idleCount > 0) {
+              console.log('Conexão liberada, reutilizando pool');
+              return pool;
+            }
+          }
+          console.log('Nenhuma conexão liberada, forçando recriação...');
           pool = null;
         }
       } catch (e) {
@@ -24,36 +34,55 @@ async function initializePool() {
       }
     }
     
-    // Se já estamos conectando, aguardar na fila
-    if (isConnecting) {
-      console.log('Aguardando na fila de conexão...');
-      return new Promise((resolve) => {
-        connectionQueue.push(resolve);
-      });
+    // Criar mutex global se não existir
+    if (!globalMutex) {
+      globalMutex = new Promise(resolve => resolve());
     }
     
-    // Marcar como conectando
-    isConnecting = true;
+    // Aguardar mutex global
+    await globalMutex;
+    
+    // Criar novo mutex para próxima operação
+    let resolveMutex;
+    globalMutex = new Promise(resolve => {
+      resolveMutex = resolve;
+    });
     
     try {
-      // Adicionar delay aleatório para evitar conexões simultâneas
-      const randomDelay = Math.random() * 5000; // 0-5 segundos
-      console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
-      await new Promise(resolve => setTimeout(resolve, randomDelay));
+      // Se já estamos conectando, aguardar na fila
+      if (isConnecting) {
+        console.log('Aguardando na fila de conexão...');
+        return new Promise((resolve) => {
+          connectionQueue.push(resolve);
+        });
+      }
       
-      console.log('Vercel detectado - usando Session Pooler do Supabase');
-      const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
-      console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
+      // Marcar como conectando
+      isConnecting = true;
       
-      pool = createPool(sessionPoolerUrl);
-      
-      // Resolver todas as promessas na fila
-      connectionQueue.forEach(resolve => resolve(pool));
-      connectionQueue = [];
-      
-      return pool;
+      try {
+        // Adicionar delay aleatório para evitar conexões simultâneas
+        const randomDelay = Math.random() * 3000 + 2000; // 2-5 segundos
+        console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
+        await new Promise(resolve => setTimeout(resolve, randomDelay));
+        
+        console.log('Vercel detectado - usando Session Pooler do Supabase');
+        const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
+        console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
+        
+        pool = createPool(sessionPoolerUrl);
+        
+        // Resolver todas as promessas na fila
+        connectionQueue.forEach(resolve => resolve(pool));
+        connectionQueue = [];
+        
+        return pool;
+      } finally {
+        isConnecting = false;
+      }
     } finally {
-      isConnecting = false;
+      // Liberar mutex
+      resolveMutex();
     }
   }
   
