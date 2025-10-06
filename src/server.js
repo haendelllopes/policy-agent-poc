@@ -9,6 +9,7 @@ const mammoth = require('mammoth');
 // const pdfParse = require('pdf-parse');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
 const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTenantBySubdomainPG, getUsersByTenant, getDocumentsByTenant, getChunksByDocument, closePool, getPool } = require('./db-pg');
+const { analyzeDocument } = require('./document-analyzer');
 
 // Cache simples para dados quando PostgreSQL está instável
 const dataCache = {
@@ -1214,35 +1215,67 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'Arquivo muito grande. Tamanho máximo: 5MB' });
     }
 
-  const documentId = uuidv4();
-  const createdAt = new Date().toISOString();
+    const documentId = uuidv4();
+    const createdAt = new Date().toISOString();
     const fileData = req.file.buffer.toString('base64');
-  
-  // Use PostgreSQL if available, otherwise SQLite
-  if (await usePostgres()) {
-    // PostgreSQL
-      await query('INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)', [
-      documentId,
+    
+    // Análise do documento com IA (assíncrono)
+    let analysis = null;
+    try {
+      console.log('Iniciando análise de IA do documento...');
+      analysis = await analyzeDocument(req.file.buffer, req.file.originalname, req.file.mimetype, title);
+      console.log('Análise de IA concluída:', analysis.classification);
+    } catch (analysisError) {
+      console.error('Erro na análise de IA (continuando upload):', analysisError.message);
+      // Continua o upload mesmo se a análise falhar
+    }
+    
+    // Use PostgreSQL if available, otherwise SQLite
+    if (await usePostgres()) {
+      // PostgreSQL
+      await query('INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at, extracted_text, ai_classification, sentiment_score, ai_summary, ai_tags, word_count, language, analysis_status, analyzed_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)', [
+        documentId,
         tenant.id,
         title,
-        category,
+        analysis ? analysis.classification : category, // Usar classificação da IA se disponível
         department || null,
         description || null,
         req.file.originalname,
         fileData,
         req.file.size,
-      'published',
-      createdAt,
-    ]);
+        'published',
+        createdAt,
+        analysis ? analysis.extractedText : null,
+        analysis ? analysis.classification : null,
+        analysis ? analysis.sentiment : null,
+        analysis ? analysis.summary : null,
+        analysis ? JSON.stringify(analysis.tags) : null,
+        analysis ? analysis.wordCount : null,
+        analysis ? analysis.language : null,
+        analysis ? 'completed' : 'failed',
+        analysis ? new Date().toISOString() : null,
+      ]);
+      
+      // Se análise foi bem-sucedida, salvar embedding
+      if (analysis && analysis.embedding) {
+        try {
+          await query('UPDATE documents SET embedding = $1 WHERE id = $2', [
+            JSON.stringify(analysis.embedding),
+            documentId
+          ]);
+        } catch (embeddingError) {
+          console.error('Erro ao salvar embedding:', embeddingError.message);
+        }
+      }
     } else {
-      // SQLite fallback
+      // SQLite fallback (sem embeddings)
       const db = await openDatabase();
       try {
-        await runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
+        await runExec(db, 'INSERT INTO documents (id, tenant_id, title, category, department, description, file_name, file_data, file_size, status, created_at, extracted_text, ai_classification, sentiment_score, ai_summary, ai_tags, word_count, language, analysis_status, analyzed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [
           documentId,
           tenant.id,
           title,
-          category,
+          analysis ? analysis.classification : category,
           department || null,
           description || null,
           req.file.originalname,
@@ -1250,6 +1283,15 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
           req.file.size,
           'published',
           createdAt,
+          analysis ? analysis.extractedText : null,
+          analysis ? analysis.classification : null,
+          analysis ? analysis.sentiment : null,
+          analysis ? analysis.summary : null,
+          analysis ? JSON.stringify(analysis.tags) : null,
+          analysis ? analysis.wordCount : null,
+          analysis ? analysis.language : null,
+          analysis ? 'completed' : 'failed',
+          analysis ? new Date().toISOString() : null,
         ]);
         await persistDatabase(db);
       } finally {
@@ -1265,12 +1307,24 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
         documentId,
         tenantId: tenant.id,
         title,
-        category,
+        category: analysis ? analysis.classification : category,
         department: department || null,
         description: description || null,
         fileName: req.file.originalname,
         fileSize: req.file.size,
-        createdAt
+        createdAt,
+        // Dados de análise de IA
+        aiAnalysis: analysis ? {
+          classification: analysis.classification,
+          sentiment: analysis.sentiment,
+          summary: analysis.summary,
+          tags: analysis.tags,
+          wordCount: analysis.wordCount,
+          language: analysis.language,
+          status: 'completed'
+        } : {
+          status: 'failed'
+        }
       };
       // Em ambientes sem fetch global, você pode trocar por node-fetch
       await fetch(n8nWebhookUrl, {
@@ -1310,7 +1364,7 @@ app.get('/api/documents', async (req, res) => {
     const documents = await getCachedData(tenant.id, 'documents', async () => {
         if (await usePostgres()) {
           const result = await query(
-            'SELECT id, title, category, status, file_name, file_size, description FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
+            'SELECT id, title, category, status, file_name, file_size, description, ai_classification, sentiment_score, ai_summary, ai_tags, word_count, analysis_status, analyzed_at FROM documents WHERE tenant_id = $1 ORDER BY created_at DESC',
             [tenant.id]
           );
           return result.rows;
@@ -1439,6 +1493,55 @@ app.put('/api/documents/:id', async (req, res) => {
   } catch (error) {
     console.error('Erro ao atualizar documento:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Endpoint para busca semântica de documentos
+app.post('/api/documents/semantic-search', async (req, res) => {
+  try {
+    const { query: searchQuery, limit = 10 } = req.body;
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    if (!searchQuery || searchQuery.trim().length === 0) {
+      return res.status(400).json({ error: 'Query de busca é obrigatória' });
+    }
+
+    if (await usePostgres()) {
+      // Gerar embedding da query de busca
+      const { generateEmbedding } = require('./document-analyzer');
+      const queryEmbedding = await generateEmbedding(searchQuery);
+      
+      // Busca semântica usando embeddings
+      const result = await query(`
+        SELECT 
+          id, title, category, ai_classification, ai_summary, sentiment_score, 
+          word_count, analysis_status, created_at,
+          (embedding <=> $2) as similarity_distance
+        FROM documents 
+        WHERE tenant_id = $1 
+          AND embedding IS NOT NULL 
+          AND analysis_status = 'completed'
+        ORDER BY embedding <=> $2
+        LIMIT $3
+      `, [tenant.id, JSON.stringify(queryEmbedding), limit]);
+      
+      // Converter distância para score de similaridade (0-1, onde 1 é mais similar)
+      const documents = result.rows.map(doc => ({
+        ...doc,
+        similarity_score: 1 - doc.similarity_distance
+      }));
+      
+      res.json(documents);
+    } else {
+      res.status(404).json({ error: 'Busca semântica não disponível em modo demo' });
+    }
+  } catch (error) {
+    console.error('Erro na busca semântica:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 

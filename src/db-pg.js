@@ -379,6 +379,18 @@ async function migrate() {
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_data TEXT`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_size INTEGER`);
     
+    // Colunas para análise de IA
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS extracted_text TEXT`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding VECTOR(1536)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_classification VARCHAR(100)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS sentiment_score DECIMAL(3,2)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_summary TEXT`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_tags JSONB`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS word_count INTEGER`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS language VARCHAR(10)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS analysis_status VARCHAR(50) DEFAULT 'pending'`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS analyzed_at TIMESTAMP WITH TIME ZONE`);
+    
     // Criar tabela chunks
     await query(`
       CREATE TABLE IF NOT EXISTS chunks (
