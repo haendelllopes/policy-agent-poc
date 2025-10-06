@@ -135,6 +135,16 @@ app.get('/documentos', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/documentos.html'));
 });
 
+// Página de configurador
+app.get('/configurador', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/configurador.html'));
+});
+
 // Nova landing page melhorada
 app.get('/landing-new', (req, res) => {
   res.set({
@@ -2518,6 +2528,174 @@ app.get('/api/debug/connection-details', async (req, res) => {
       error: 'Erro no diagnóstico', 
       details: error.message 
     });
+  }
+});
+
+// ===== CONFIGURADOR APIs =====
+
+// Categories APIs
+app.get('/api/categories', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    if (await usePostgres()) {
+      const result = await query('SELECT * FROM categories WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+      res.json(result.rows);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const categories = demoData.categories.filter(c => c.tenant_id === tenant.id);
+      res.json(categories);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar categorias:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.post('/api/categories', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { name, description } = req.body;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'INSERT INTO categories (id, tenant_id, name, description, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING *',
+        [uuidv4(), tenant.id, name, description || null]
+      );
+      res.status(201).json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      const category = {
+        id: uuidv4(),
+        tenant_id: tenant.id,
+        name,
+        description: description || null,
+        created_at: new Date().toISOString()
+      };
+      res.status(201).json(category);
+    }
+  } catch (error) {
+    console.error('Erro ao criar categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const { name, description } = req.body;
+    const categoryId = req.params.id;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (await usePostgres()) {
+      const result = await query(
+        'UPDATE categories SET name = $1, description = $2 WHERE id = $3 AND tenant_id = $4 RETURNING *',
+        [name, description || null, categoryId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Categoria não encontrada' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      res.json({
+        id: categoryId,
+        tenant_id: tenant.id,
+        name,
+        description: description || null
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const categoryId = req.params.id;
+
+    if (await usePostgres()) {
+      const result = await query(
+        'DELETE FROM categories WHERE id = $1 AND tenant_id = $2 RETURNING *',
+        [categoryId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Categoria não encontrada' });
+      }
+      
+      res.json({ message: 'Categoria excluída com sucesso' });
+    } else {
+      // Demo data fallback
+      res.json({ message: 'Categoria excluída com sucesso' });
+    }
+  } catch (error) {
+    console.error('Erro ao excluir categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+app.get('/api/categories/:id', async (req, res) => {
+  try {
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
+    }
+
+    const categoryId = req.params.id;
+
+    if (await usePostgres()) {
+      const result = await query(
+        'SELECT * FROM categories WHERE id = $1 AND tenant_id = $2',
+        [categoryId, tenant.id]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Categoria não encontrada' });
+      }
+      
+      res.json(result.rows[0]);
+    } else {
+      // Demo data fallback
+      const demoData = getDemoData();
+      const category = demoData.categories.find(c => c.id === categoryId && c.tenant_id === tenant.id);
+      
+      if (!category) {
+        return res.status(404).json({ error: 'Categoria não encontrada' });
+      }
+      
+      res.json(category);
+    }
+  } catch (error) {
+    console.error('Erro ao buscar categoria:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 

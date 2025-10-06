@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurador - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: white; 
+            border-right: 1px solid #e2e8f0; 
+            padding: 24px 0; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto; 
+        }
+        
+        .logo { 
+            padding: 0 24px 32px; 
+            border-bottom: 1px solid #e2e8f0; 
+            margin-bottom: 24px; 
+        }
+        
+        .logo h1 { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #3b82f6; 
+        }
+        
+        .nav { padding: 0 24px; }
+        
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            margin-bottom: 4px; 
+            border-radius: 8px; 
+            color: #64748b; 
+            text-decoration: none; 
+            transition: all 0.2s; 
+            cursor: pointer;
+        }
+        
+        .nav-item:hover { 
+            background: #f1f5f9; 
+            color: #3b82f6; 
+        }
+        
+        .nav-item.active { 
+            background: #eff6ff; 
+            color: #3b82f6; 
+            font-weight: 500; 
+        }
+        
+        .nav-item svg { 
+            width: 20px; 
+            height: 20px; 
+            margin-right: 12px; 
+        }
+        
+        /* Main Content */
+        .main { 
+            flex: 1; 
+            margin-left: 280px; 
+            padding: 32px; 
+        }
+        
+        .header { 
+            margin-bottom: 32px; 
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .header h1 { 
+            font-size: 32px; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 8px; 
+        }
+        
+        .header p { 
+            color: #64748b; 
+            font-size: 16px; 
+        }
+
+        /* Configuration Sections */
+        .config-sections {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .config-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-section h3 svg {
+            width: 20px;
+            height: 20px;
+            color: #3b82f6;
+        }
+
+        /* Lists */
+        .config-list {
+            list-style: none;
+            margin-bottom: 16px;
+        }
+
+        .config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+        }
+
+        .config-item:hover {
+            background: #f1f5f9;
+        }
+
+        .config-item-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .config-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-edit {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-edit:hover {
+            background: #bfdbfe;
+        }
+
+        .btn-delete {
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-delete:hover {
+            background: #fecaca;
+        }
+
+        /* Add Button */
+        .btn-add {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-add:hover {
+            background: #2563eb;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .loading {
+            text-align: center;
+            color: #64748b;
+            font-style: italic;
+            padding: 16px;
+        }
+
+        .error {
+            color: #dc2626;
+            text-align: center;
+            padding: 16px;
+            background: #fee2e2;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: #64748b;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            color: #d1d5db;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: static;
+                height: auto;
+            }
+            
+            .main {
+                margin-left: 0;
+                padding: 16px;
+            }
+
+            .config-sections {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="logo">
+                <h1>Flowly</h1>
+            </div>
+            
+            <div class="nav">
+                <a href="inicio.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    </svg>
+                    Início
+                </a>
+                
+                <a href="funcionarios.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Funcionários
+                </a>
+                
+                <a href="documentos.html" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Documentos
+                </a>
+
+                <a href="configurador.html" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Configurador
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-content">
+                    <div>
+                        <h1>Configurador</h1>
+                        <p>Gerencie as configurações da empresa</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Configuration Sections -->
+            <div class="config-sections">
+                <!-- Document Categories -->
+                <div class="config-section">
+                    <h3>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                        Categorias de Documentos
+                    </h3>
+                    
+                    <ul class="config-list" id="categoriesList">
+                        <li class="loading">Carregando categorias...</li>
+                    </ul>
+                    
+                    <button class="btn-add" onclick="openAddModal('category')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar Categoria
+                    </button>
+                </div>
+
+                <!-- Employee Positions -->
+                <div class="config-section">
+                    <h3>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6"></path>
+                        </svg>
+                        Cargos de Funcionários
+                    </h3>
+                    
+                    <ul class="config-list" id="positionsList">
+                        <li class="loading">Carregando cargos...</li>
+                    </ul>
+                    
+                    <button class="btn-add" onclick="openAddModal('position')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar Cargo
+                    </button>
+                </div>
+
+                <!-- Departments -->
+                <div class="config-section">
+                    <h3>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                        Departamentos da Empresa
+                    </h3>
+                    
+                    <ul class="config-list" id="departmentsList">
+                        <li class="loading">Carregando departamentos...</li>
+                    </ul>
+                    
+                    <button class="btn-add" onclick="openAddModal('department')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar Departamento
+                    </button>
+                </div>
+
+                <!-- Communication Types -->
+                <div class="config-section">
+                    <h3>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        Tipos de Comunicação
+                    </h3>
+                    
+                    <ul class="config-list" id="communicationTypesList">
+                        <li class="loading">Carregando tipos de comunicação...</li>
+                    </ul>
+                    
+                    <button class="btn-add" onclick="openAddModal('communication')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar Tipo
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Adicionar Item</h2>
+            
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="configName">Nome *</label>
+                    <input type="text" id="configName" name="name" required>
+                </div>
+                
+                <div class="form-group" id="communicationTypeGroup" style="display: none;">
+                    <label for="communicationType">Tipo *</label>
+                    <select id="communicationType" name="type">
+                        <option value="">Selecione um tipo</option>
+                        <option value="whatsapp">WhatsApp</option>
+                        <option value="telegram">Telegram</option>
+                        <option value="slack">Slack</option>
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="configDescription">Descrição</label>
+                    <input type="text" id="configDescription" name="description" placeholder="Descrição opcional">
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeModal()" class="btn-secondary">Cancelar</button>
+                    <button type="submit" id="submitBtn" class="btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentEditingId = null;
+        let currentType = null;
+
+        // Utility function for API calls
+        async function fetchData(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        // Load all configuration data
+        async function loadConfigData() {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            
+            try {
+                // Load categories
+                await loadCategories(tenant);
+                
+                // Load positions
+                await loadPositions(tenant);
+                
+                // Load departments
+                await loadDepartments(tenant);
+                
+                // Load communication types
+                await loadCommunicationTypes(tenant);
+                
+            } catch (error) {
+                console.error('Erro ao carregar configurações:', error);
+            }
+        }
+
+        // Load categories
+        async function loadCategories(tenant) {
+            try {
+                const response = await fetchData(`/api/categories?tenant=${tenant}`);
+                renderConfigList('categoriesList', response, 'category');
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+                document.getElementById('categoriesList').innerHTML = '<li class="error">Erro ao carregar categorias</li>';
+            }
+        }
+
+        // Load positions
+        async function loadPositions(tenant) {
+            try {
+                const response = await fetchData(`/api/positions?tenant=${tenant}`);
+                renderConfigList('positionsList', response, 'position');
+            } catch (error) {
+                console.error('Erro ao carregar cargos:', error);
+                document.getElementById('positionsList').innerHTML = '<li class="error">Erro ao carregar cargos</li>';
+            }
+        }
+
+        // Load departments
+        async function loadDepartments(tenant) {
+            try {
+                const response = await fetchData(`/api/departments?tenant=${tenant}`);
+                renderConfigList('departmentsList', response, 'department');
+            } catch (error) {
+                console.error('Erro ao carregar departamentos:', error);
+                document.getElementById('departmentsList').innerHTML = '<li class="error">Erro ao carregar departamentos</li>';
+            }
+        }
+
+        // Load communication types
+        async function loadCommunicationTypes(tenant) {
+            try {
+                const response = await fetchData(`/api/communication-types?tenant=${tenant}`);
+                renderConfigList('communicationTypesList', response, 'communication');
+            } catch (error) {
+                console.error('Erro ao carregar tipos de comunicação:', error);
+                document.getElementById('communicationTypesList').innerHTML = '<li class="error">Erro ao carregar tipos de comunicação</li>';
+            }
+        }
+
+        // Render configuration list
+        function renderConfigList(listId, items, type) {
+            const list = document.getElementById(listId);
+            
+            if (!items || items.length === 0) {
+                list.innerHTML = `
+                    <li class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-4 4m0 0l-4-4m4 4V3"></path>
+                        </svg>
+                        Nenhum item encontrado
+                    </li>
+                `;
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                const displayName = item.type ? `${item.name} (${item.type})` : item.name;
+                html += `
+                    <li class="config-item">
+                        <span class="config-item-name">${displayName}</span>
+                        <div class="config-item-actions">
+                            <button class="btn-edit" onclick="editItem('${item.id}', '${type}')">Editar</button>
+                            <button class="btn-delete" onclick="deleteItem('${item.id}', '${type}')">Excluir</button>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            list.innerHTML = html;
+        }
+
+        // Open add modal
+        function openAddModal(type) {
+            currentType = type;
+            currentEditingId = null;
+            
+            const modal = document.getElementById('configModal');
+            const title = document.getElementById('modalTitle');
+            const submitBtn = document.getElementById('submitBtn');
+            const form = document.getElementById('configForm');
+            const communicationGroup = document.getElementById('communicationTypeGroup');
+            
+            // Reset form
+            form.reset();
+            
+            // Set title and button text
+            const typeNames = {
+                'category': 'Categoria de Documento',
+                'position': 'Cargo de Funcionário',
+                'department': 'Departamento',
+                'communication': 'Tipo de Comunicação'
+            };
+            
+            title.textContent = `Adicionar ${typeNames[type]}`;
+            submitBtn.textContent = 'Adicionar';
+            
+            // Show/hide communication type field
+            if (type === 'communication') {
+                communicationGroup.style.display = 'block';
+                document.getElementById('communicationType').required = true;
+            } else {
+                communicationGroup.style.display = 'none';
+                document.getElementById('communicationType').required = false;
+            }
+            
+            modal.style.display = 'flex';
+            document.getElementById('configName').focus();
+        }
+
+        // Edit item
+        async function editItem(id, type) {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            currentType = type;
+            currentEditingId = id;
+            
+            try {
+                const endpoint = getEndpoint(type);
+                const response = await fetchData(`/api/${endpoint}/${id}?tenant=${tenant}`);
+                
+                const modal = document.getElementById('configModal');
+                const title = document.getElementById('modalTitle');
+                const submitBtn = document.getElementById('submitBtn');
+                const form = document.getElementById('configForm');
+                const communicationGroup = document.getElementById('communicationTypeGroup');
+                
+                // Fill form
+                document.getElementById('configName').value = response.name || '';
+                document.getElementById('configDescription').value = response.description || '';
+                
+                if (type === 'communication') {
+                    communicationGroup.style.display = 'block';
+                    document.getElementById('communicationType').value = response.type || '';
+                    document.getElementById('communicationType').required = true;
+                } else {
+                    communicationGroup.style.display = 'none';
+                    document.getElementById('communicationType').required = false;
+                }
+                
+                // Set title and button text
+                const typeNames = {
+                    'category': 'Categoria de Documento',
+                    'position': 'Cargo de Funcionário',
+                    'department': 'Departamento',
+                    'communication': 'Tipo de Comunicação'
+                };
+                
+                title.textContent = `Editar ${typeNames[type]}`;
+                submitBtn.textContent = 'Salvar Alterações';
+                
+                modal.style.display = 'flex';
+                document.getElementById('configName').focus();
+                
+            } catch (error) {
+                console.error('Erro ao carregar item para edição:', error);
+                alert('Erro ao carregar dados do item. Tente novamente.');
+            }
+        }
+
+        // Delete item
+        async function deleteItem(id, type) {
+            if (!confirm('Tem certeza que deseja excluir este item?')) {
+                return;
+            }
+
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            
+            try {
+                const endpoint = getEndpoint(type);
+                const response = await fetch(`/api/${endpoint}/${id}?tenant=${tenant}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadConfigData(); // Reload all data
+                } else {
+                    const result = await response.json();
+                    console.error('Erro ao excluir item:', result);
+                    alert('Erro ao excluir item: ' + (result.error || 'Erro desconhecido'));
+                }
+                
+            } catch (error) {
+                console.error('Erro ao excluir item:', error);
+                alert('Erro ao excluir item. Tente novamente.');
+            }
+        }
+
+        // Get endpoint for API calls
+        function getEndpoint(type) {
+            const endpoints = {
+                'category': 'categories',
+                'position': 'positions',
+                'department': 'departments',
+                'communication': 'communication-types'
+            };
+            return endpoints[type];
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('configModal').style.display = 'none';
+        }
+
+        // Form submission
+        document.getElementById('configForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                name: formData.get('name'),
+                description: formData.get('description')
+            };
+
+            // Add type for communication
+            if (currentType === 'communication') {
+                data.type = formData.get('type');
+            }
+
+            // Basic validation
+            if (!data.name) {
+                alert('Por favor, preencha o nome.');
+                return;
+            }
+
+            if (currentType === 'communication' && !data.type) {
+                alert('Por favor, selecione um tipo de comunicação.');
+                return;
+            }
+
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const endpoint = getEndpoint(currentType);
+            
+            try {
+                const url = currentEditingId 
+                    ? `/api/${endpoint}/${currentEditingId}?tenant=${tenant}`
+                    : `/api/${endpoint}?tenant=${tenant}`;
+                
+                const method = currentEditingId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal();
+                    loadConfigData(); // Reload all data
+                } else {
+                    const result = await response.json();
+                    console.error('Erro ao salvar item:', result);
+                    alert('Erro ao salvar item: ' + (result.error || 'Erro desconhecido'));
+                }
+                
+            } catch (error) {
+                console.error('Erro ao processar item:', error);
+                alert('Erro ao processar item. Tente novamente.');
+            }
+        });
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de configurador carregada');
+            loadConfigData();
+        });
+    </script>
+</body>
+</html>
