@@ -1259,7 +1259,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 
     // Notificar n8n (não bloqueante)
     try {
-      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://hndll.app.n8n.cloud/webhook/onboarding';
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || 'https://navigator-gules.vercel.app/api/documents/categorization-result';
       const payload = {
         type: 'document_upload',
         documentId,
