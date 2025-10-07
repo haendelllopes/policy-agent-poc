@@ -381,8 +381,16 @@ async function migrate() {
     
     // Colunas para análise de IA
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS extracted_text TEXT`);
-    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding VECTOR(1536)`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding TEXT`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_classification VARCHAR(100)`);
+    
+    // Migrar coluna embedding de TEXT para VECTOR se necessário
+    try {
+      await query(`ALTER TABLE documents ALTER COLUMN embedding TYPE VECTOR(1536) USING embedding::VECTOR(1536)`);
+      console.log('Coluna embedding migrada para tipo VECTOR(1536)');
+    } catch (migrationError) {
+      console.log('Migração de embedding ignorada (já é VECTOR ou erro esperado):', migrationError.message);
+    }
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS sentiment_score DECIMAL(3,2)`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_summary TEXT`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_tags JSONB`);

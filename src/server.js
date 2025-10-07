@@ -1568,7 +1568,41 @@ app.post('/api/documents/semantic-search', async (req, res) => {
       const sampleDocs = await query('SELECT id, title, category, analysis_status, ai_classification, ai_summary, description FROM documents WHERE tenant_id = $1 LIMIT 5', [tenant.id]);
       console.log('Sample documents:', sampleDocs.rows);
       
-      // Busca por texto simples (sem embeddings por enquanto)
+      // Primeiro, tentar busca semântica com embeddings
+      try {
+        const { generateEmbedding } = require('./document-analyzer');
+        const queryEmbedding = await generateEmbedding(searchQuery);
+        
+        // Busca semântica usando embeddings
+        const embeddingResult = await query(`
+          SELECT 
+            id, title, category, ai_classification, ai_summary, sentiment_score, 
+            word_count, analysis_status, created_at, description, file_name,
+            (embedding <=> $2) as similarity_distance
+          FROM documents 
+          WHERE tenant_id = $1 
+            AND embedding IS NOT NULL 
+            AND analysis_status = 'completed'
+          ORDER BY embedding <=> $2
+          LIMIT $3
+        `, [tenant.id, JSON.stringify(queryEmbedding), limit]);
+        
+        console.log('Embedding search results:', embeddingResult.rows.length);
+        
+        // Se encontrou resultados com embeddings, retorna
+        if (embeddingResult.rows.length > 0) {
+          const documents = embeddingResult.rows.map(doc => ({
+            ...doc,
+            similarity_score: 1 - doc.similarity_distance
+          }));
+          console.log('Returning embedding results:', documents);
+          return res.json(documents);
+        }
+      } catch (embeddingError) {
+        console.log('Embedding search failed, falling back to text search:', embeddingError.message);
+      }
+      
+      // Fallback: busca por texto simples
       const searchResult = await query(`
         SELECT 
           id, title, category, ai_classification, ai_summary, sentiment_score, 
@@ -1595,7 +1629,7 @@ app.post('/api/documents/semantic-search', async (req, res) => {
         similarity_score: 0.8 // Score fixo para busca por texto
       }));
       
-      console.log('Returning search results:', documents);
+      console.log('Returning text search results:', documents);
       res.json(documents);
     } else {
       res.status(404).json({ error: 'Busca semântica não disponível em modo demo' });
