@@ -164,9 +164,10 @@ function generateSimulatedEmbedding(text) {
   
   // Converter hash em array de números (1536 dimensões)
   const embedding = [];
-  for (let i = 0; i < 1536; i += 4) {
-    const hexSegment = hash.substring(i % hash.length, (i % hash.length) + 4);
-    const value = parseInt(hexSegment, 16) / 65535; // Normalizar para 0-1
+  for (let i = 0; i < 1536; i++) {
+    const hexIndex = i % hash.length;
+    const hexChar = hash.charAt(hexIndex);
+    const value = parseInt(hexChar, 16) / 15; // Normalizar para 0-1
     embedding.push(value);
   }
   
