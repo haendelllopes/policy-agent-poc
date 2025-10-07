@@ -2614,6 +2614,100 @@ app.post('/api/auth/validate', async (req, res) => {
   }
 });
 
+// Endpoint para reprocessar documentos existentes
+app.post('/api/documents/reprocess', async (req, res) => {
+  try {
+    if (!(await usePostgres())) {
+      return res.status(400).json({ error: 'PostgreSQL não disponível' });
+    }
+
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    console.log('Reprocessando documentos existentes para tenant:', tenant.id);
+
+    // Buscar documentos sem embeddings ou com análise incompleta
+    const documentsToReprocess = await query(`
+      SELECT id, title, file_data, file_name, category
+      FROM documents 
+      WHERE tenant_id = $1 
+        AND (embedding IS NULL OR analysis_status != 'completed')
+        AND file_data IS NOT NULL
+    `, [tenant.id]);
+
+    console.log(`Encontrados ${documentsToReprocess.rows.length} documentos para reprocessar`);
+
+    let processed = 0;
+    let errors = 0;
+
+    for (const doc of documentsToReprocess.rows) {
+      try {
+        // Decodificar file_data
+        const fileBuffer = Buffer.from(doc.file_data, 'base64');
+        
+        // Analisar documento
+        const analysis = await analyzeDocument(fileBuffer, doc.file_name, 'application/octet-stream', doc.title);
+        
+        if (analysis) {
+          // Atualizar documento com nova análise
+          await query(`
+            UPDATE documents 
+            SET 
+              extracted_text = $1,
+              ai_classification = $2,
+              sentiment_score = $3,
+              ai_summary = $4,
+              ai_tags = $5,
+              word_count = $6,
+              language = $7,
+              analysis_status = 'completed',
+              analyzed_at = NOW(),
+              embedding = $8
+            WHERE id = $9
+          `, [
+            analysis.extractedText,
+            analysis.classification,
+            analysis.sentiment,
+            analysis.summary,
+            JSON.stringify(analysis.tags),
+            analysis.wordCount,
+            analysis.language,
+            JSON.stringify(analysis.embedding),
+            doc.id
+          ]);
+          
+          processed++;
+          console.log(`Documento ${doc.title} reprocessado com sucesso`);
+        }
+      } catch (error) {
+        console.error(`Erro ao reprocessar documento ${doc.title}:`, error.message);
+        errors++;
+        
+        // Marcar como falha
+        await query(`
+          UPDATE documents 
+          SET analysis_status = 'failed', analyzed_at = NOW()
+          WHERE id = $1
+        `, [doc.id]);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Reprocessamento concluído`,
+      processed,
+      errors,
+      total: documentsToReprocess.rows.length
+    });
+
+  } catch (error) {
+    console.error('Erro no reprocessamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
 // Endpoint para popular dados demo no Supabase Pro
 app.post('/api/demo/populate', async (req, res) => {
   try {
