@@ -1542,8 +1542,14 @@ app.put('/api/documents/:id', async (req, res) => {
 // Endpoint para busca semântica de documentos
 app.post('/api/documents/semantic-search', async (req, res) => {
   try {
+    console.log('=== DEBUG SEMANTIC SEARCH ===');
+    console.log('Request body:', req.body);
+    console.log('Tenant subdomain:', req.tenantSubdomain);
+    
     const { query: searchQuery, limit = 10 } = req.body;
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    
+    console.log('Tenant found:', tenant);
     
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
@@ -1554,30 +1560,42 @@ app.post('/api/documents/semantic-search', async (req, res) => {
     }
 
     if (await usePostgres()) {
-      // Gerar embedding da query de busca
-      const { generateEmbedding } = require('./document-analyzer');
-      const queryEmbedding = await generateEmbedding(searchQuery);
+      // Debug: verificar quantos documentos existem para o tenant
+      const totalDocs = await query('SELECT COUNT(*) as count FROM documents WHERE tenant_id = $1', [tenant.id]);
+      console.log('Total documents for tenant:', totalDocs.rows[0].count);
       
-      // Busca semântica usando embeddings
-      const result = await query(`
+      // Debug: listar alguns documentos
+      const sampleDocs = await query('SELECT id, title, category, analysis_status, ai_classification, ai_summary, description FROM documents WHERE tenant_id = $1 LIMIT 5', [tenant.id]);
+      console.log('Sample documents:', sampleDocs.rows);
+      
+      // Busca por texto simples (sem embeddings por enquanto)
+      const searchResult = await query(`
         SELECT 
           id, title, category, ai_classification, ai_summary, sentiment_score, 
-          word_count, analysis_status, created_at,
-          (embedding <=> $2) as similarity_distance
+          word_count, analysis_status, created_at, description, file_name
         FROM documents 
         WHERE tenant_id = $1 
-          AND embedding IS NOT NULL 
-          AND analysis_status = 'completed'
-        ORDER BY embedding <=> $2
+          AND (
+            LOWER(title) LIKE LOWER($2) OR 
+            LOWER(category) LIKE LOWER($2) OR 
+            LOWER(ai_classification) LIKE LOWER($2) OR
+            LOWER(ai_summary) LIKE LOWER($2) OR
+            LOWER(description) LIKE LOWER($2) OR
+            LOWER(extracted_text) LIKE LOWER($2)
+          )
+        ORDER BY created_at DESC
         LIMIT $3
-      `, [tenant.id, JSON.stringify(queryEmbedding), limit]);
+      `, [tenant.id, `%${searchQuery}%`, limit]);
       
-      // Converter distância para score de similaridade (0-1, onde 1 é mais similar)
-      const documents = result.rows.map(doc => ({
+      console.log('Text search results:', searchResult.rows.length);
+      console.log('Text search results data:', searchResult.rows);
+      
+      const documents = searchResult.rows.map(doc => ({
         ...doc,
-        similarity_score: 1 - doc.similarity_distance
+        similarity_score: 0.8 // Score fixo para busca por texto
       }));
       
+      console.log('Returning search results:', documents);
       res.json(documents);
     } else {
       res.status(404).json({ error: 'Busca semântica não disponível em modo demo' });
@@ -2621,30 +2639,66 @@ app.post('/api/demo/populate', async (req, res) => {
       for (const user of demoUsers) {
         const userId = uuidv4();
         await query(
-          'INSERT INTO public.users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-          [
-            userId,
-            tenantId,
-            user.name,
-            user.email,
-            user.phone,
-            user.position,
-            user.department,
-            new Date().toISOString().split('T')[0],
-            user.status,
-            new Date().toISOString()
-          ]
+          'INSERT INTO public.users (id, tenant_id, name, email, phone, position, department, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)',
+          [userId, tenantId, user.name, user.email, user.phone, user.position, user.department, user.status, new Date().toISOString()]
         );
       }
       console.log('Usuários demo criados');
     }
 
-    res.json({
-      success: true,
-      message: 'Dados demo populados com sucesso no Supabase Pro',
-      tenant: 'demo'
-    });
+    // Criar documentos demo se não existirem
+    const docsCheck = await query('SELECT COUNT(*) as count FROM public.documents WHERE tenant_id = $1', [tenantId]);
+    
+    if (parseInt(docsCheck.rows[0].count) === 0) {
+      const demoDocuments = [
+        { 
+          title: 'Manual do Colaborador', 
+          category: 'Políticas Internas',
+          description: 'Manual completo com todas as políticas internas da empresa, incluindo horários, benefícios e procedimentos.',
+          ai_summary: 'Este manual contém as principais políticas internas da empresa, incluindo horários de trabalho, benefícios oferecidos, procedimentos administrativos e diretrizes de conduta profissional.',
+          ai_classification: 'Políticas Internas'
+        },
+        { 
+          title: 'Política de Férias', 
+          category: 'Políticas Internas',
+          description: 'Política detalhada sobre férias, incluindo direito a férias, período de gozo e procedimentos para solicitação.',
+          ai_summary: 'Esta política define os direitos dos colaboradores em relação às férias, incluindo o período de 30 dias por ano, regras para agendamento e procedimentos administrativos.',
+          ai_classification: 'Políticas Internas'
+        },
+        { 
+          title: 'Código de Conduta', 
+          category: 'Código de Conduta',
+          description: 'Código de conduta ética e profissional que todos os colaboradores devem seguir.',
+          ai_summary: 'Documento que estabelece os valores éticos da empresa, diretrizes de comportamento profissional e procedimentos para relatar violações.',
+          ai_classification: 'Código de Conduta'
+        },
+        { 
+          title: 'Manual de Procedimentos', 
+          category: 'Manuais de Procedimentos',
+          description: 'Manual com todos os procedimentos operacionais da empresa.',
+          ai_summary: 'Manual detalhado com procedimentos operacionais, fluxos de trabalho e diretrizes para execução de tarefas administrativas.',
+          ai_classification: 'Procedimentos'
+        },
+        { 
+          title: 'Benefícios e Remuneração', 
+          category: 'Benefícios e Remuneração',
+          description: 'Documento detalhando todos os benefícios oferecidos pela empresa e estrutura de remuneração.',
+          ai_summary: 'Este documento apresenta a estrutura completa de benefícios da empresa, incluindo plano de saúde, vale-refeição, participação nos lucros e política de remuneração.',
+          ai_classification: 'Benefícios'
+        }
+      ];
 
+      for (const doc of demoDocuments) {
+        const docId = uuidv4();
+        await query(
+          'INSERT INTO public.documents (id, tenant_id, title, category, status, created_at, updated_at, description, ai_summary, ai_classification, analysis_status, analyzed_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)',
+          [docId, tenantId, doc.title, doc.category, 'published', new Date().toISOString(), new Date().toISOString(), doc.description, doc.ai_summary, doc.ai_classification, 'completed', new Date().toISOString()]
+        );
+      }
+      console.log('Documentos demo criados');
+    }
+
+    res.json({ success: true, message: 'Dados demo populados com sucesso!' });
   } catch (error) {
     console.error('Erro ao popular dados demo:', error);
     res.status(500).json({ error: 'Erro interno do servidor', details: error.message });

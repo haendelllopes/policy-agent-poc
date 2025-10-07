@@ -381,7 +381,7 @@ async function migrate() {
     
     // Colunas para análise de IA
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS extracted_text TEXT`);
-    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding TEXT`);
+    await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS embedding VECTOR(1536)`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_classification VARCHAR(100)`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS sentiment_score DECIMAL(3,2)`);
     await query(`ALTER TABLE documents ADD COLUMN IF NOT EXISTS ai_summary TEXT`);
@@ -458,18 +458,6 @@ async function migrate() {
       )
     `);
     
-    // Criar tabela tenant_settings
-    await query(`
-      CREATE TABLE IF NOT EXISTS tenant_settings (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-        setting_key VARCHAR(255) NOT NULL,
-        setting_value TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        UNIQUE(tenant_id, setting_key)
-      )
-    `);
-    
     // Criar índices otimizados para performance
     await query(`CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(document_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant ON documents(tenant_id)`);
@@ -478,7 +466,6 @@ async function migrate() {
     await query(`CREATE INDEX IF NOT EXISTS idx_categories_tenant ON categories(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_positions_tenant ON positions(tenant_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_tags_tenant ON tags(tenant_id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_tenant_settings_tenant ON tenant_settings(tenant_id)`);
     // Índices compostos para queries mais específicas
     await query(`CREATE INDEX IF NOT EXISTS idx_users_tenant_status ON users(tenant_id, status)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_docs_tenant_status ON documents(tenant_id, status)`);
@@ -627,14 +614,62 @@ async function seedDemoData(tenantId) {
     
     // Dados de exemplo para documentos
     const demoDocuments = [
-      { title: 'Manual do Colaborador', category: 'Políticas Internas' },
-      { title: 'Política de Segurança', category: 'Políticas Internas' },
-      { title: 'Código de Conduta', category: 'Código de Conduta' },
-      { title: 'Manual de Procedimentos', category: 'Manuais de Procedimentos' },
-      { title: 'Benefícios e Remuneração', category: 'Benefícios e Remuneração' },
-      { title: 'Treinamento de Segurança', category: 'Treinamentos' },
-      { title: 'Relatório Mensal', category: 'Relatórios' },
-      { title: 'Formulário de Solicitação', category: 'Formulários' }
+      { 
+        title: 'Manual do Colaborador', 
+        category: 'Políticas Internas',
+        description: 'Manual completo com todas as políticas internas da empresa, incluindo horários, benefícios e procedimentos.',
+        ai_summary: 'Este manual contém as principais políticas internas da empresa, incluindo horários de trabalho, benefícios oferecidos, procedimentos administrativos e diretrizes de conduta profissional.',
+        ai_classification: 'Políticas Internas'
+      },
+      { 
+        title: 'Política de Férias', 
+        category: 'Políticas Internas',
+        description: 'Política detalhada sobre férias, incluindo direito a férias, período de gozo e procedimentos para solicitação.',
+        ai_summary: 'Esta política define os direitos dos colaboradores em relação às férias, incluindo o período de 30 dias por ano, regras para agendamento e procedimentos administrativos.',
+        ai_classification: 'Políticas Internas'
+      },
+      { 
+        title: 'Código de Conduta', 
+        category: 'Código de Conduta',
+        description: 'Código de conduta ética e profissional que todos os colaboradores devem seguir.',
+        ai_summary: 'Documento que estabelece os valores éticos da empresa, diretrizes de comportamento profissional e procedimentos para relatar violações.',
+        ai_classification: 'Código de Conduta'
+      },
+      { 
+        title: 'Manual de Procedimentos', 
+        category: 'Manuais de Procedimentos',
+        description: 'Manual com todos os procedimentos operacionais da empresa.',
+        ai_summary: 'Manual detalhado com procedimentos operacionais, fluxos de trabalho e diretrizes para execução de tarefas administrativas.',
+        ai_classification: 'Procedimentos'
+      },
+      { 
+        title: 'Benefícios e Remuneração', 
+        category: 'Benefícios e Remuneração',
+        description: 'Documento detalhando todos os benefícios oferecidos pela empresa e estrutura de remuneração.',
+        ai_summary: 'Este documento apresenta a estrutura completa de benefícios da empresa, incluindo plano de saúde, vale-refeição, participação nos lucros e política de remuneração.',
+        ai_classification: 'Benefícios'
+      },
+      { 
+        title: 'Treinamento de Segurança', 
+        category: 'Treinamentos',
+        description: 'Material de treinamento sobre segurança no trabalho e procedimentos de emergência.',
+        ai_summary: 'Material de treinamento que aborda questões de segurança no ambiente de trabalho, procedimentos de emergência e uso de equipamentos de proteção individual.',
+        ai_classification: 'Treinamento'
+      },
+      { 
+        title: 'Relatório Mensal', 
+        category: 'Relatórios',
+        description: 'Modelo de relatório mensal para acompanhamento de atividades.',
+        ai_summary: 'Modelo padrão para relatórios mensais de atividades, incluindo métricas de performance e indicadores de produtividade.',
+        ai_classification: 'Relatórios'
+      },
+      { 
+        title: 'Formulário de Solicitação', 
+        category: 'Formulários',
+        description: 'Formulário padrão para solicitações internas.',
+        ai_summary: 'Formulário padronizado para solicitações internas, incluindo pedidos de materiais, autorizações e outros procedimentos administrativos.',
+        ai_classification: 'Formulários'
+      }
     ];
     
     // Inserir usuários de exemplo
@@ -659,7 +694,7 @@ async function seedDemoData(tenantId) {
     // Inserir documentos de exemplo
     for (const doc of demoDocuments) {
       await query(
-        'INSERT INTO documents (id, tenant_id, title, category, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+        'INSERT INTO documents (id, tenant_id, title, category, status, created_at, updated_at, description, ai_summary, ai_classification, analysis_status, analyzed_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)',
         [
           require('uuid').v4(),
           tenantId,
@@ -667,6 +702,11 @@ async function seedDemoData(tenantId) {
           doc.category,
           'published',
           new Date().toISOString(),
+          new Date().toISOString(),
+          doc.description,
+          doc.ai_summary,
+          doc.ai_classification,
+          'completed',
           new Date().toISOString()
         ]
       );

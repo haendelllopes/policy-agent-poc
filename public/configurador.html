@@ -569,17 +569,12 @@
         // Load communication type setting
         async function loadCommunicationType() {
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            console.log('Carregando tipo de comunicação para tenant:', tenant);
             
             try {
                 const response = await fetchData(`/api/communication-type?tenant=${tenant}`);
-                console.log('Resposta do servidor:', response);
                 if (response.type) {
                     currentCommunicationType = response.type;
-                    console.log('Tipo de comunicação definido:', currentCommunicationType);
                     updateCommunicationUI();
-                } else {
-                    console.log('Nenhum tipo de comunicação encontrado');
                 }
             } catch (error) {
                 console.error('Erro ao carregar tipo de comunicação:', error);
@@ -617,8 +612,6 @@
 
         // Update communication UI
         function updateCommunicationUI() {
-            console.log('Atualizando UI para tipo:', currentCommunicationType);
-            
             // Remove active class from all buttons
             document.querySelectorAll('.communication-toggle').forEach(btn => {
                 btn.classList.remove('active');
@@ -629,12 +622,7 @@
                 const activeBtn = document.querySelector(`[data-type="${currentCommunicationType}"]`);
                 if (activeBtn) {
                     activeBtn.classList.add('active');
-                    console.log('Botão ativado:', currentCommunicationType);
-                } else {
-                    console.log('Botão não encontrado para tipo:', currentCommunicationType);
                 }
-            } else {
-                console.log('Nenhum tipo selecionado');
             }
 
             // Update status text
@@ -655,20 +643,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de configurador carregada');
             loadCommunicationType();
-        });
-
-        // Recarregar quando a página ganha foco (para manter estado)
-        window.addEventListener('focus', function() {
-            console.log('Página ganhou foco, recarregando tipo de comunicação');
-            loadCommunicationType();
-        });
-
-        // Recarregar quando a página fica visível
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                console.log('Página ficou visível, recarregando tipo de comunicação');
-                loadCommunicationType();
-            }
         });
     </script>
 </body>
