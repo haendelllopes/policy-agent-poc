@@ -1,0 +1,226 @@
+POLÍTICA DE ONBOARDING COM INTELIGÊNCIA ARTIFICIAL
+Sistema de Gestão de Documentos e Comunicação Automatizada
+
+================================================================================
+ÍNDICE
+================================================================================
+
+1. VISÃO GERAL DO SISTEMA
+2. PRIMEIRO ACESSO - LOGIN
+3. FUNCIONALIDADES PRINCIPAIS
+4. UPLOAD DE DOCUMENTOS
+5. COMUNICAÇÃO COM IA (WHATSAPP/TELEGRAM/SLACK)
+6. CONFIGURAÇÕES DO SISTEMA
+7. SUPORTE E CONTATO
+
+================================================================================
+1. VISÃO GERAL DO SISTEMA
+================================================================================
+
+O Sistema de Onboarding com IA é uma plataforma completa que permite:
+• Gerenciar documentos corporativos (PDF, DOCX, DOC, TXT)
+• Comunicar-se com assistente de IA via WhatsApp, Telegram ou Slack
+• Buscar informações em documentos de forma inteligente
+• Automatizar respostas para colaboradores
+
+Tecnologias utilizadas:
+• Backend: Node.js + PostgreSQL (Supabase)
+• Frontend: HTML/CSS/JavaScript
+• IA: OpenAI + Fallback para busca semântica
+• Deploy: Vercel
+• Automação: n8n
+
+================================================================================
+2. PRIMEIRO ACESSO - LOGIN
+================================================================================
+
+URL de Acesso:
+https://navigator-gules.vercel.app
+
+Credenciais Demo:
+Email: joao@empresademo.com
+Senha: (sem senha - login direto)
+
+OU
+
+Email: maria@empresademo.com
+Email: pedro@empresademo.com
+
+Observação: O sistema está configurado para aceitar qualquer email do domínio 
+@empresademo.com para facilitar os testes.
+
+================================================================================
+3. FUNCIONALIDADES PRINCIPAIS
+================================================================================
+
+3.1 DASHBOARD INICIAL
+• Visão geral de funcionários cadastrados
+• Estatísticas de documentos
+• Indicadores de atividade
+
+3.2 GESTÃO DE FUNCIONÁRIOS
+• Cadastro de novos colaboradores
+• Edição de dados pessoais
+• Controle de departamentos e cargos
+
+3.3 GESTÃO DE DOCUMENTOS
+• Upload de documentos (PDF, DOCX, DOC, TXT)
+• Análise automática com IA
+• Classificação automática
+• Busca semântica inteligente
+
+3.4 CONFIGURADOR
+• Definição de departamentos
+• Categorias de documentos
+• Cargos e posições
+• Tipo de comunicação (WhatsApp/Telegram/Slack)
+
+================================================================================
+4. UPLOAD DE DOCUMENTOS
+================================================================================
+
+Como fazer upload:
+1. Acesse a aba "Documentos"
+2. Clique em "Upload de Documento"
+3. Preencha:
+   - Título do documento
+   - Categoria
+   - Departamento
+   - Descrição (opcional)
+4. Selecione o arquivo (PDF, DOCX, DOC, TXT)
+5. Clique em "Enviar"
+
+O sistema automaticamente:
+• Extrai o texto do documento
+• Gera resumo com IA
+• Classifica o conteúdo
+• Cria tags automáticas
+• Gera embeddings para busca semântica
+
+================================================================================
+5. COMUNICAÇÃO COM IA (WHATSAPP/TELEGRAM/SLACK)
+================================================================================
+
+5.1 CONFIGURAÇÃO INICIAL
+1. Acesse "Configurador"
+2. Selecione o tipo de comunicação desejado
+3. Configure as credenciais necessárias
+
+5.2 WHATSAPP
+• Webhook configurado automaticamente
+• Colaboradores enviam mensagens para o número configurado
+• IA responde baseada nos documentos
+
+5.3 TELEGRAM
+• Bot configurado via BotFather
+• Link direto enviado por email aos colaboradores
+• QR Code para facilitar acesso
+
+5.4 SLACK
+• Integração via webhook
+• Bot responde em canais configurados
+
+5.5 EXEMPLO DE USO
+Colaborador pergunta: "Quais são os benefícios da empresa?"
+IA responde baseada nos documentos sobre benefícios encontrados no sistema.
+
+================================================================================
+6. CONFIGURAÇÕES DO SISTEMA
+================================================================================
+
+6.1 TIPOS DE COMUNICAÇÃO
+• WhatsApp: Para comunicação via aplicativo
+• Telegram: Para comunicação via bot
+• Slack: Para comunicação empresarial
+
+6.2 DEPARTAMENTOS PADRÃO
+• Recursos Humanos (RH)
+• Tecnologia
+• Financeiro
+• Vendas
+• Marketing
+
+6.3 CATEGORIAS DE DOCUMENTOS
+• Políticas Internas
+• Manuais de Procedimentos
+• Benefícios e Remuneração
+• Treinamentos
+• Formulários
+
+================================================================================
+7. SUPORTE E CONTATO
+================================================================================
+
+Desenvolvedor: Haendell Lopes
+Sistema: Policy Agent POC
+Versão: 1.0
+
+Em caso de dúvidas ou problemas:
+• Verificar logs no Vercel
+• Testar endpoints da API
+• Validar configurações do n8n
+
+================================================================================
+INSTRUÇÕES TÉCNICAS PARA DESENVOLVEDORES
+================================================================================
+
+7.1 ESTRUTURA DO PROJETO
+• /src/server.js - Backend principal
+• /src/db-pg.js - Configuração PostgreSQL
+• /src/document-analyzer.js - Análise de IA
+• /public/ - Frontend estático
+• /n8n-workflows/ - Automações
+
+7.2 ENDPOINTS PRINCIPAIS
+• POST /api/documents/upload - Upload de documentos
+• POST /api/documents/semantic-search - Busca semântica
+• POST /api/documents/reprocess - Reprocessar documentos
+• POST /api/communication/generate-link - Gerar links de comunicação
+
+7.3 VARIÁVEIS DE AMBIENTE
+• DATABASE_URL - Conexão PostgreSQL
+• OPENAI_API_KEY - Chave OpenAI (opcional)
+• N8N_WEBHOOK_URL - Webhook n8n
+
+7.4 DEPLOY
+• GitHub: https://github.com/haendelllopes/policy-agent-poc
+• Vercel: Deploy automático via GitHub
+• Supabase: Banco de dados PostgreSQL
+
+================================================================================
+CASOS DE USO PRÁTICOS
+================================================================================
+
+1. ONBOARDING DE NOVO FUNCIONÁRIO
+• Cadastrar funcionário no sistema
+• Enviar link de comunicação (WhatsApp/Telegram)
+• Funcionário faz perguntas via chat
+• IA responde baseada nos documentos
+
+2. ATUALIZAÇÃO DE POLÍTICAS
+• Fazer upload do novo documento
+• Sistema analisa e classifica automaticamente
+• Funcionários podem consultar via chat
+
+3. SUPORTE AUTOMATIZADO
+• Funcionários perguntam sobre benefícios
+• IA busca nos documentos relevantes
+• Resposta automática com informações precisas
+
+================================================================================
+OBSERVAÇÕES IMPORTANTES
+================================================================================
+
+• Sistema funciona 100% mesmo sem OpenAI (usa fallback)
+• Embeddings são gerados automaticamente
+• Busca semântica funciona com documentos em português
+• Suporte a múltiplos tenants (empresas)
+• Interface responsiva para mobile
+
+================================================================================
+FIM DO DOCUMENTO
+================================================================================
+
+Documento gerado automaticamente pelo sistema
+Data: 07/10/2025
+Versão: 1.0
