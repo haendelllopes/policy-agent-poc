@@ -241,6 +241,16 @@ app.get('/admin-trilhas', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin-trilhas.html'));
 });
 
+// Página de dashboard onboarding (Admin)
+app.get('/admin-dashboard-onboarding', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/admin-dashboard-onboarding.html'));
+});
+
 // Páginas do Colaborador - Portal de Trilhas
 app.get('/colaborador-trilhas', (req, res) => {
   res.set({
@@ -2508,6 +2518,7 @@ const usersRoutes = require('./routes/users');
 const trilhasRoutes = require('./routes/trilhas');
 const colaboradorRoutes = require('./routes/colaborador');
 const quizRoutes = require('./routes/quiz');
+const adminRoutes = require('./routes/admin');
 
 // Importar helpers
 const { normalizePhone: normalizePhoneHelper, normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper } = require('./utils/helpers');
@@ -2532,8 +2543,9 @@ app.use('/api/trilhas', trilhasRoutes);
 app.use('/api/colaborador', colaboradorRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/gamificacao', quizRoutes); // Quiz routes contém gamificação
+app.use('/api/admin', adminRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin');
 
 // ============================================
 
