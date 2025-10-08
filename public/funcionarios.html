@@ -631,6 +631,16 @@
                     </select>
                 </div>
                 
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="userIsAdmin" name="is_admin" style="width: 20px; height: 20px; cursor: pointer;">
+                        <span style="font-weight: 600;">Este usuário é um administrador (RH)</span>
+                    </label>
+                    <small style="color: #64748b; display: block; margin-top: 4px; margin-left: 28px;">
+                        Administradores têm acesso à gestão de trilhas e dashboard
+                    </small>
+                </div>
+                
                 <div class="modal-buttons">
                     <button type="button" onclick="closeAddUserModal()" class="btn-secondary">Cancelar</button>
                     <button type="submit" id="submitBtn" class="btn-primary">Adicionar Funcionário</button>
@@ -912,12 +922,15 @@
             e.preventDefault();
             
             const formData = new FormData(e.target);
+            const isAdmin = document.getElementById('userIsAdmin').checked;
+            
             const data = {
                 name: formData.get('name'),
                 email: formData.get('email'),
                 phone: formatPhoneForDatabase(formData.get('phone')),
                 position: formData.get('position'),
                 department: formData.get('department'),
+                role: isAdmin ? 'admin' : 'colaborador',
                 start_date: formData.get('start_date'),
                 status: formData.get('status')
             };
