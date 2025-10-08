@@ -737,8 +737,10 @@ app.post('/api/users', async (req, res) => {
       name: z.string().min(1),
       email: z.string().email(),
       phone: z.string().min(1),
-      position: z.string().min(1),
-      department: z.string().optional(),
+      position: z.string().optional(), // DEPRECATED: manter por compatibilidade
+      department: z.string().optional(), // DEPRECATED: manter por compatibilidade
+      position_id: z.string().uuid().optional(), // NOVO: usar FK
+      department_id: z.string().uuid().optional(), // NOVO: usar FK
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -768,8 +770,22 @@ app.post('/api/users', async (req, res) => {
       }
 
       userId = uuidv4();
-      await query('INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', 
-        [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active']);
+      const onboardingInicio = parse.data.start_date || new Date().toISOString().split('T')[0];
+      
+      await query(`
+        INSERT INTO users (
+          id, tenant_id, name, email, phone, 
+          position, department, position_id, department_id,
+          start_date, status, 
+          onboarding_status, onboarding_inicio
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      `, [
+        userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone,
+        parse.data.position || null, parse.data.department || null, 
+        parse.data.position_id || null, parse.data.department_id || null,
+        onboardingInicio, parse.data.status || 'active',
+        'em_andamento', onboardingInicio
+      ]);
     } else {
       // SQLite fallback
       const { db, SQL } = await openDatabase();
@@ -781,8 +797,19 @@ app.post('/api/users', async (req, res) => {
         }
 
         userId = uuidv4();
-        runExec(db, 'INSERT INTO users (id, tenant_id, name, email, phone, position, department, start_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
-          [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active']);
+        const onboardingInicio = parse.data.start_date || new Date().toISOString().split('T')[0];
+        
+        runExec(db, `INSERT INTO users (
+          id, tenant_id, name, email, phone, 
+          position, department, position_id, department_id,
+          start_date, status,
+          onboarding_status, onboarding_inicio
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+          [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, 
+           parse.data.position || null, parse.data.department || null,
+           parse.data.position_id || null, parse.data.department_id || null,
+           onboardingInicio, parse.data.status || 'active',
+           'em_andamento', onboardingInicio]);
         
         persistDatabase(SQL, db);
       } finally {
@@ -837,8 +864,11 @@ app.post('/api/users', async (req, res) => {
       phone: normalizedPhone,
       position: parse.data.position,
       department: parse.data.department,
+      position_id: parse.data.position_id,
+      department_id: parse.data.department_id,
       start_date: parse.data.start_date,
       status: parse.data.status || 'active',
+      onboarding_status: 'em_andamento',
       tenant: tenant.name
     });
   } catch (error) {
@@ -988,8 +1018,10 @@ app.put('/api/users/:id', async (req, res) => {
       name: z.string().min(1),
       email: z.string().email(),
       phone: z.string().min(1),
-      position: z.string().min(1),
-      department: z.string().optional(),
+      position: z.string().optional(), // DEPRECATED
+      department: z.string().optional(), // DEPRECATED
+      position_id: z.string().uuid().optional(), // NOVO
+      department_id: z.string().uuid().optional(), // NOVO
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -1020,8 +1052,21 @@ app.put('/api/users/:id', async (req, res) => {
         return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
       }
 
-      await query('UPDATE users SET name = $1, email = $2, phone = $3, position = $4, department = $5, start_date = $6, status = $7 WHERE id = $8 AND tenant_id = $9', 
-        [parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active', userId, tenant.id]);
+      await query(`
+        UPDATE users SET 
+          name = $1, email = $2, phone = $3, 
+          position = $4, department = $5, 
+          position_id = $6, department_id = $7,
+          start_date = $8, status = $9,
+          updated_at = NOW()
+        WHERE id = $10 AND tenant_id = $11
+      `, [
+        parse.data.name, parse.data.email, normalizedPhone, 
+        parse.data.position || null, parse.data.department || null,
+        parse.data.position_id || null, parse.data.department_id || null,
+        parse.data.start_date || null, parse.data.status || 'active', 
+        userId, tenant.id
+      ]);
     } else {
       // SQLite fallback
       const { db } = await openDatabase();
@@ -1038,8 +1083,18 @@ app.put('/api/users/:id', async (req, res) => {
           return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
         }
 
-        runExec(db, 'UPDATE users SET name = ?, email = ?, phone = ?, position = ?, department = ?, start_date = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?', 
-          [parse.data.name, parse.data.email, normalizedPhone, parse.data.position, parse.data.department || null, parse.data.start_date || null, parse.data.status || 'active', userId, tenant.id]);
+        runExec(db, `UPDATE users SET 
+          name = ?, email = ?, phone = ?, 
+          position = ?, department = ?, 
+          position_id = ?, department_id = ?,
+          start_date = ?, status = ?, 
+          updated_at = CURRENT_TIMESTAMP 
+        WHERE id = ? AND tenant_id = ?`, 
+          [parse.data.name, parse.data.email, normalizedPhone, 
+           parse.data.position || null, parse.data.department || null,
+           parse.data.position_id || null, parse.data.department_id || null,
+           parse.data.start_date || null, parse.data.status || 'active', 
+           userId, tenant.id]);
       } finally {
         closeDatabase(db);
       }
@@ -1053,6 +1108,8 @@ app.put('/api/users/:id', async (req, res) => {
       phone: normalizedPhone,
       position: parse.data.position,
       department: parse.data.department,
+      position_id: parse.data.position_id,
+      department_id: parse.data.department_id,
       start_date: parse.data.start_date,
       status: parse.data.status || 'active',
       tenant: tenant.name
@@ -1201,8 +1258,24 @@ app.get('/api/users', async (req, res) => {
     try {
       const users = await getCachedData(tenant.id, 'users', async () => {
         if (await usePostgres()) {
-          // PostgreSQL - apenas campos essenciais
-          const result = await query('SELECT id, name, email, phone, position, department, status FROM users WHERE tenant_id = $1 ORDER BY name', [tenant.id]);
+          // PostgreSQL com JOIN para pegar nomes de cargo e departamento
+          const result = await query(`
+            SELECT 
+              u.id, u.name, u.email, u.phone, 
+              u.position, u.department, 
+              u.position_id, u.department_id,
+              p.name as position_name,
+              d.name as department_name,
+              u.status, u.start_date,
+              u.onboarding_status, u.onboarding_inicio, u.onboarding_fim,
+              u.pontuacao_total,
+              u.created_at, u.updated_at
+            FROM users u
+            LEFT JOIN positions p ON u.position_id = p.id
+            LEFT JOIN departments d ON u.department_id = d.id
+            WHERE u.tenant_id = $1 
+            ORDER BY u.name
+          `, [tenant.id]);
           return result.rows;
         } else {
           // Demo data fallback
