@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes da Trilha - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        
+        .header p {
+            color: #64748b;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        
+        .progress-section {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: #64748b;
+            text-align: center;
+        }
+        
+        .conteudos-list {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+        }
+        
+        .conteudos-list h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #1e293b;
+        }
+        
+        .conteudo-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .conteudo-item.aceito {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+        
+        .conteudo-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .conteudo-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-right: 16px;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        
+        .conteudo-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .icon-documento { background: #dbeafe; }
+        .icon-video { background: #fce7f3; }
+        .icon-link { background: #d1fae5; }
+        .icon-pdf { background: #fed7aa; }
+        
+        .conteudo-info {
+            flex: 1;
+        }
+        
+        .conteudo-titulo {
+            font-weight: 600;
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .conteudo-descricao {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .conteudo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .conteudo-link:hover {
+            text-decoration: underline;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .quiz-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin-top: 24px;
+        }
+        
+        .quiz-section h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .quiz-section p {
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="window.location.href='/colaborador-trilhas.html?colaborador_id=' + COLABORADOR_ID">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Voltar
+        </button>
+        
+        <div class="header">
+            <h1 id="trilha-nome">Carregando...</h1>
+            <p id="trilha-descricao"></p>
+        </div>
+        
+        <div class="progress-section">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="progress-text">Carregando progresso...</div>
+        </div>
+        
+        <div class="conteudos-list">
+            <h2>📚 Conteúdos da Trilha</h2>
+            <div id="conteudos-container"></div>
+        </div>
+        
+        <div id="quiz-section" class="quiz-section" style="display: none;">
+            <h3>🎉 Parabéns! Você concluiu todos os conteúdos!</h3>
+            <p>Agora é hora de validar seu aprendizado com um quiz de 5 questões.</p>
+            <button class="btn btn-primary" onclick="fazerQuiz()">✍️ Fazer Quiz Agora</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TENANT = 'demo';
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const TRILHA_ID = urlParams.get('trilha_id');
+        const COLABORADOR_ID = urlParams.get('colaborador_id');
+        
+        if (!TRILHA_ID || !COLABORADOR_ID) {
+            alert('Parâmetros faltando na URL');
+            window.location.href = '/colaborador-trilhas.html';
+        }
+
+        let trilhaData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarTrilha();
+        });
+
+        async function carregarTrilha() {
+            try {
+                const response = await fetch(`${API_BASE}/api/colaborador/trilhas/${TRILHA_ID}?tenant=${TENANT}&colaborador_id=${COLABORADOR_ID}`);
+                trilhaData = await response.json();
+                
+                document.getElementById('trilha-nome').textContent = trilhaData.nome;
+                document.getElementById('trilha-descricao').textContent = trilhaData.descricao || '';
+                
+                const conteudos = trilhaData.conteudos || [];
+                const aceitos = conteudos.filter(c => c.aceito).length;
+                const total = conteudos.length;
+                const progresso = total > 0 ? Math.round((aceitos / total) * 100) : 0;
+                
+                document.getElementById('progress-fill').style.width = progresso + '%';
+                document.getElementById('progress-text').textContent = `${aceitos} de ${total} conteúdos concluídos (${progresso}%)`;
+                
+                renderConteudos(conteudos);
+                
+                // Mostrar seção de quiz se todos foram aceitos
+                if (trilhaData.status === 'aguardando_quiz') {
+                    document.getElementById('quiz-section').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar trilha:', error);
+                alert('Erro ao carregar trilha: ' + error.message);
+            }
+        }
+
+        function renderConteudos(conteudos) {
+            const icones = {
+                'documento': '📄',
+                'pdf': '📕',
+                'video': '🎥',
+                'link': '🔗'
+            };
+            
+            const container = document.getElementById('conteudos-container');
+            
+            container.innerHTML = conteudos.map(conteudo => `
+                <div class="conteudo-item ${conteudo.aceito ? 'aceito' : ''}">
+                    <input 
+                        type="checkbox" 
+                        class="conteudo-checkbox" 
+                        ${conteudo.aceito ? 'checked disabled' : ''}
+                        onchange="marcarComoLido('${conteudo.id}', this)"
+                    >
+                    <div class="conteudo-icon icon-${conteudo.tipo}">
+                        ${icones[conteudo.tipo] || '📄'}
+                    </div>
+                    <div class="conteudo-info">
+                        <div class="conteudo-titulo">${conteudo.titulo}</div>
+                        ${conteudo.descricao ? `<div class="conteudo-descricao">${conteudo.descricao}</div>` : ''}
+                        <a href="${conteudo.url}" target="_blank" class="conteudo-link">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            Acessar conteúdo
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function marcarComoLido(conteudoId, checkbox) {
+            try {
+                checkbox.disabled = true;
+                
+                const response = await fetch(`${API_BASE}/api/colaborador/conteudos/${conteudoId}/aceitar?tenant=${TENANT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ colaborador_id: COLABORADOR_ID })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error);
+                }
+                
+                const result = await response.json();
+                
+                // Se todos foram concluídos
+                if (result.status === 'aguardando_quiz') {
+                    alert('🎉 ' + result.message);
+                    document.getElementById('quiz-section').style.display = 'block';
+                }
+                
+                // Recarregar trilha
+                carregarTrilha();
+                
+            } catch (error) {
+                checkbox.checked = false;
+                checkbox.disabled = false;
+                alert('❌ ' + error.message);
+            }
+        }
+
+        function fazerQuiz() {
+            window.location.href = `/colaborador-quiz.html?trilha_id=${TRILHA_ID}&colaborador_id=${COLABORADOR_ID}`;
+        }
+    </script>
+</body>
+</html>
+

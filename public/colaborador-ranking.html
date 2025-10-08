@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .meu-ranking {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .meu-ranking h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #1e293b;
+        }
+        
+        .ranking-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .ranking-card {
+            padding: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+        
+        .ranking-card h3 {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .ranking-posicao {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .ranking-total {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .ranking-geral {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .ranking-geral h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #1e293b;
+        }
+        
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .ranking-table thead {
+            background: #f8fafc;
+        }
+        
+        .ranking-table th {
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .ranking-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .ranking-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .ranking-table tr.destaque {
+            background: #eff6ff;
+            font-weight: 600;
+        }
+        
+        .posicao-medal {
+            font-size: 24px;
+            display: inline-block;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .colaborador-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .colaborador-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .colaborador-detalhes {
+            flex: 1;
+        }
+        
+        .colaborador-nome {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .colaborador-dept {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .pontos {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 48px;
+            background: white;
+            border-radius: 16px;
+        }
+        
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="window.location.href='/colaborador-trilhas.html?colaborador_id=' + COLABORADOR_ID">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Voltar para Trilhas
+        </button>
+        
+        <!-- Meu Ranking -->
+        <div class="meu-ranking">
+            <h2>📊 Meu Ranking</h2>
+            <div class="ranking-cards" id="meu-ranking-cards">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="color: #64748b;">Carregando...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ranking Geral -->
+        <div class="ranking-geral">
+            <h2>🏆 Ranking Geral</h2>
+            <div id="ranking-geral-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="color: #64748b;">Carregando ranking...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TENANT = 'demo';
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const COLABORADOR_ID = urlParams.get('colaborador_id') || localStorage.getItem('colaborador_id');
+        
+        if (!COLABORADOR_ID) {
+            alert('ID do colaborador não fornecido');
+            window.location.href = '/colaborador-trilhas.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarMeuRanking();
+            carregarRankingGeral();
+        });
+
+        async function carregarMeuRanking() {
+            try {
+                const response = await fetch(`${API_BASE}/api/gamificacao/meu-ranking?tenant=${TENANT}&colaborador_id=${COLABORADOR_ID}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('meu-ranking-cards');
+                
+                const rankings = [
+                    { 
+                        titulo: '🌍 Ranking Geral', 
+                        posicao: data.ranking_geral?.ranking || '-',
+                        total: data.ranking_geral?.total || '-'
+                    },
+                    { 
+                        titulo: '🏢 No Departamento', 
+                        posicao: data.ranking_departamento?.ranking || '-',
+                        total: data.ranking_departamento?.total || '-',
+                        label: data.colaborador.department_name || 'N/A'
+                    },
+                    { 
+                        titulo: '💼 No Cargo', 
+                        posicao: data.ranking_cargo?.ranking || '-',
+                        total: data.ranking_cargo?.total || '-',
+                        label: data.colaborador.position_name || 'N/A'
+                    }
+                ];
+                
+                container.innerHTML = rankings.map(r => `
+                    <div class="ranking-card">
+                        <h3>${r.titulo}</h3>
+                        <div class="ranking-posicao">#${r.posicao}</div>
+                        <div class="ranking-total">de ${r.total} ${r.label ? `(${r.label})` : ''}</div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar meu ranking:', error);
+            }
+        }
+
+        async function carregarRankingGeral() {
+            try {
+                const response = await fetch(`${API_BASE}/api/gamificacao/ranking?tenant=${TENANT}`);
+                const ranking = await response.json();
+                
+                const container = document.getElementById('ranking-geral-container');
+                
+                if (ranking.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Nenhum colaborador no ranking ainda</p>';
+                    return;
+                }
+                
+                const getMedalha = (pos) => {
+                    if (pos === 1) return '🥇';
+                    if (pos === 2) return '🥈';
+                    if (pos === 3) return '🥉';
+                    return `${pos}º`;
+                };
+                
+                container.innerHTML = `
+                    <table class="ranking-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">Posição</th>
+                                <th>Colaborador</th>
+                                <th style="width: 150px; text-align: center;">Trilhas</th>
+                                <th style="width: 120px; text-align: right;">Pontos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${ranking.map(item => `
+                                <tr class="${item.id === COLABORADOR_ID ? 'destaque' : ''}">
+                                    <td>
+                                        <span class="posicao-medal">${getMedalha(parseInt(item.ranking))}</span>
+                                    </td>
+                                    <td>
+                                        <div class="colaborador-info">
+                                            <div class="colaborador-avatar">
+                                                ${item.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div class="colaborador-detalhes">
+                                                <div class="colaborador-nome">
+                                                    ${item.name}
+                                                    ${item.id === COLABORADOR_ID ? '(Você)' : ''}
+                                                </div>
+                                                <div class="colaborador-dept">
+                                                    ${item.position_name || '-'} • ${item.department_name || '-'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center; color: #64748b;">
+                                        ${item.trilhas_concluidas || 0} concluídas
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <span class="pontos">${item.pontuacao_total || 0}</span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+            } catch (error) {
+                console.error('Erro ao carregar ranking geral:', error);
+                document.getElementById('ranking-geral-container').innerHTML = `
+                    <p style="text-align: center; color: #ef4444; padding: 40px;">❌ Erro ao carregar ranking</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
+

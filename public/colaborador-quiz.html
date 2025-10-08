@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+        
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .quiz-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        
+        .quiz-header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+        
+        .quiz-info {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        
+        .info-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .questao {
+            margin-bottom: 32px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .questao:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .questao-numero {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .questao-texto {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .alternativas {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .alternativa {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .alternativa:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+        
+        .alternativa input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 16px;
+            cursor: pointer;
+        }
+        
+        .alternativa.selected {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+        
+        .alternativa-label {
+            flex: 1;
+            color: #1e293b;
+            font-weight: 500;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 32px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .resultado {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .resultado-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .resultado h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .resultado-aprovado {
+            color: #10b981;
+        }
+        
+        .resultado-reprovado {
+            color: #ef4444;
+        }
+        
+        .resultado p {
+            color: #64748b;
+            font-size: 18px;
+            margin-bottom: 32px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 48px;
+        }
+        
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card" id="quiz-container">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p style="color: #64748b;">Gerando quiz com IA...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TENANT = 'demo';
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const TRILHA_ID = urlParams.get('trilha_id');
+        const COLABORADOR_ID = urlParams.get('colaborador_id');
+        
+        let tentativaId = null;
+        let questoes = [];
+        let respostas = ['', '', '', '', ''];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            gerarQuiz();
+        });
+
+        async function gerarQuiz() {
+            try {
+                const response = await fetch(`${API_BASE}/api/quiz/gerar?tenant=${TENANT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        trilha_id: TRILHA_ID, 
+                        colaborador_id: COLABORADOR_ID 
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erro ao gerar quiz');
+                }
+                
+                const data = await response.json();
+                tentativaId = data.tentativa_id;
+                questoes = data.questoes;
+                
+                renderQuiz(data);
+                
+            } catch (error) {
+                console.error('Erro ao gerar quiz:', error);
+                document.getElementById('quiz-container').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <p style="color: #ef4444; font-size: 18px; margin-bottom: 20px;">❌ ${error.message}</p>
+                        <button class="btn btn-primary" onclick="window.history.back()">Voltar</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderQuiz(data) {
+            const container = document.getElementById('quiz-container');
+            
+            container.innerHTML = `
+                <div class="quiz-header">
+                    <h1>📝 Quiz de Validação</h1>
+                    <p>Responda as 5 questões abaixo. Você precisa de no mínimo 60% de acerto.</p>
+                </div>
+                
+                <div class="quiz-info">
+                    <div class="info-item">
+                        <div class="info-label">Tentativa</div>
+                        <div class="info-value">#${data.tentativa_numero}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Questões</div>
+                        <div class="info-value">5</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Aprovação</div>
+                        <div class="info-value">60%</div>
+                    </div>
+                </div>
+                
+                <form id="quiz-form" onsubmit="submeterQuiz(event)">
+                    ${questoes.map((q, index) => `
+                        <div class="questao">
+                            <div class="questao-numero">${index + 1}</div>
+                            <div class="questao-texto">${q.pergunta}</div>
+                            <div class="alternativas">
+                                ${Object.entries(q.alternativas).map(([letra, texto]) => `
+                                    <label class="alternativa" onclick="selecionarAlternativa(${index}, '${letra}', this)">
+                                        <input type="radio" name="questao-${index}" value="${letra}" required>
+                                        <span class="alternativa-label"><strong>${letra}.</strong> ${texto}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                    
+                    <button type="submit" class="btn btn-primary">
+                        ✅ Enviar Respostas
+                    </button>
+                </form>
+            `;
+        }
+
+        function selecionarAlternativa(questaoIndex, letra, element) {
+            // Remover seleção de outras alternativas
+            const questao = element.closest('.questao');
+            questao.querySelectorAll('.alternativa').forEach(alt => {
+                alt.classList.remove('selected');
+            });
+            
+            // Marcar esta alternativa
+            element.classList.add('selected');
+            
+            // Salvar resposta
+            respostas[questaoIndex] = letra;
+        }
+
+        async function submeterQuiz(event) {
+            event.preventDefault();
+            
+            // Verificar se todas foram respondidas
+            if (respostas.some(r => !r)) {
+                alert('Por favor, responda todas as questões!');
+                return;
+            }
+            
+            try {
+                const button = event.target.querySelector('button[type="submit"]');
+                button.disabled = true;
+                button.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div> Enviando...';
+                
+                const response = await fetch(`${API_BASE}/api/quiz/submeter?tenant=${TENANT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        tentativa_id: tentativaId,
+                        respostas: respostas
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erro ao submeter quiz');
+                }
+                
+                const resultado = await response.json();
+                mostrarResultado(resultado);
+                
+            } catch (error) {
+                alert('❌ ' + error.message);
+                button.disabled = false;
+                button.innerHTML = '✅ Enviar Respostas';
+            }
+        }
+
+        function mostrarResultado(resultado) {
+            const container = document.getElementById('quiz-container');
+            
+            const aprovado = resultado.aprovado;
+            const icon = aprovado ? '🎉' : '😔';
+            const className = aprovado ? 'resultado-aprovado' : 'resultado-reprovado';
+            
+            container.innerHTML = `
+                <div class="resultado">
+                    <div class="resultado-icon">${icon}</div>
+                    <h2 class="${className}">
+                        ${aprovado ? 'Parabéns! Você foi aprovado!' : 'Você precisa revisar o conteúdo'}
+                    </h2>
+                    <p>
+                        Você acertou <strong>${resultado.acertos} de 5</strong> questões<br>
+                        Sua nota: <strong>${resultado.nota}%</strong>
+                    </p>
+                    
+                    ${aprovado ? `
+                        <div style="background: #dcfce7; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                            <p style="color: #166534; margin: 0;">
+                                ✅ <strong>+${Math.round(resultado.nota)} pontos</strong> adicionados!<br>
+                                Seu certificado será enviado por e-mail em breve.
+                            </p>
+                        </div>
+                        <button class="btn btn-primary" onclick="voltarParaTrilhas()">
+                            🏆 Ver Minhas Trilhas
+                        </button>
+                    ` : `
+                        <div style="background: #fef3c7; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                            <p style="color: #92400e; margin: 0;">
+                                💡 Revise o conteúdo da trilha e tente novamente.<br>
+                                Você pode refazer o quiz quantas vezes precisar!
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-primary" onclick="location.reload()">
+                                🔄 Tentar Novamente
+                            </button>
+                            <button class="btn btn-secondary" onclick="voltarParaDetalhes()">
+                                📚 Revisar Conteúdo
+                            </button>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        function voltarParaTrilhas() {
+            window.location.href = `/colaborador-trilhas.html?colaborador_id=${COLABORADOR_ID}`;
+        }
+
+        function voltarParaDetalhes() {
+            window.location.href = `/colaborador-trilha-detalhes.html?trilha_id=${TRILHA_ID}&colaborador_id=${COLABORADOR_ID}`;
+        }
+    </script>
+    
+    <style>
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+    </style>
+</body>
+</html>
+

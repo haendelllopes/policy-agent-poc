@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Trilhas - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: #f8fafc; 
+            color: #1e293b; 
+        }
+        
+        .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { 
+            width: 280px; 
+            background: white; 
+            border-right: 1px solid #e2e8f0; 
+            padding: 24px 0; 
+            position: fixed; 
+            height: 100vh; 
+            overflow-y: auto;
+        }
+        
+        .logo { 
+            padding: 0 24px 32px; 
+            border-bottom: 1px solid #e2e8f0; 
+            margin-bottom: 24px; 
+        }
+        
+        .logo h1 { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: #3b82f6; 
+        }
+        
+        .nav { padding: 0 24px; }
+        
+        .nav-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            margin-bottom: 4px; 
+            color: #64748b; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            transition: all 0.2s; 
+        }
+        
+        .nav-item:hover { background: #f1f5f9; color: #3b82f6; }
+        .nav-item.active { background: #eff6ff; color: #3b82f6; font-weight: 600; }
+        
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        /* Main content */
+        .main { margin-left: 280px; flex: 1; padding: 32px; }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        
+        .header h2 { font-size: 28px; font-weight: 700; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        /* Cards */
+        .trilhas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .trilha-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        
+        .trilha-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .trilha-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .trilha-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .trilha-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-ativo {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .badge-inativo {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .trilha-description {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        
+        .trilha-meta {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .trilha-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .trilha-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-header h3 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #334155;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        /* Conteúdos da trilha */
+        .conteudos-section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        .conteudos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .conteudos-header h4 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .conteudo-item {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .conteudo-info {
+            flex: 1;
+        }
+        
+        .conteudo-tipo {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .tipo-documento { background: #dbeafe; color: #1e40af; }
+        .tipo-video { background: #fce7f3; color: #9f1239; }
+        .tipo-link { background: #d1fae5; color: #065f46; }
+        .tipo-pdf { background: #fed7aa; color: #92400e; }
+        
+        .conteudo-titulo {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .conteudo-url {
+            font-size: 12px;
+            color: #64748b;
+            word-break: break-all;
+        }
+        
+        .conteudo-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            background: white;
+            border: 1px solid #e2e8f0;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon:hover {
+            background: #f8fafc;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        
+        .btn-icon.delete:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: #94a3b8;
+        }
+        
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 48px;
+            color: #64748b;
+        }
+        
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🚀 Flowly</h1>
+            </div>
+            <nav class="nav">
+                <a href="/inicio" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span>Início</span>
+                </a>
+                <a href="/funcionarios" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <span>Colaboradores</span>
+                </a>
+                <a href="/admin-trilhas.html" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>Trilhas de Onboarding</span>
+                </a>
+                <a href="/documentos" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>Documentos</span>
+                </a>
+                <a href="/configurador" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>Configurações</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <div>
+                    <h2>Trilhas de Onboarding</h2>
+                    <p style="color: #64748b; margin-top: 8px;">Crie e gerencie trilhas de integração para novos colaboradores</p>
+                </div>
+                <button class="btn btn-primary" onclick="abrirModalNovaTrilha()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Nova Trilha
+                </button>
+            </div>
+
+            <div id="trilhas-container" class="trilhas-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando trilhas...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Nova/Editar Trilha -->
+    <div id="modal-trilha" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Nova Trilha</h3>
+                <button class="modal-close" onclick="fecharModalTrilha()">×</button>
+            </div>
+            
+            <div id="alert-container"></div>
+            
+            <form id="form-trilha" onsubmit="salvarTrilha(event)">
+                <input type="hidden" id="trilha-id">
+                
+                <div class="form-group">
+                    <label for="trilha-nome">Nome da Trilha *</label>
+                    <input type="text" id="trilha-nome" required placeholder="Ex: Cultura Organizacional">
+                </div>
+                
+                <div class="form-group">
+                    <label for="trilha-descricao">Descrição</label>
+                    <textarea id="trilha-descricao" placeholder="Descreva o objetivo desta trilha..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="trilha-prazo">Prazo (dias) *</label>
+                        <input type="number" id="trilha-prazo" required min="1" value="7">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trilha-ordem">Ordem</label>
+                        <input type="number" id="trilha-ordem" min="0" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="trilha-ativo" checked>
+                        Trilha ativa
+                    </label>
+                </div>
+                
+                <!-- Seção de Conteúdos (aparece só ao editar) -->
+                <div id="conteudos-section" class="conteudos-section" style="display: none;">
+                    <div class="conteudos-header">
+                        <h4>Conteúdos da Trilha</h4>
+                        <button type="button" class="btn btn-secondary btn-small" onclick="adicionarConteudo()">
+                            + Adicionar Conteúdo
+                        </button>
+                    </div>
+                    <div id="conteudos-list"></div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModalTrilha()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Trilha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Adicionar Conteúdo -->
+    <div id="modal-conteudo" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Conteúdo</h3>
+                <button class="modal-close" onclick="fecharModalConteudo()">×</button>
+            </div>
+            
+            <form id="form-conteudo" onsubmit="salvarConteudo(event)">
+                <input type="hidden" id="conteudo-trilha-id">
+                
+                <div class="form-group">
+                    <label for="conteudo-tipo">Tipo *</label>
+                    <select id="conteudo-tipo" required>
+                        <option value="">Selecione...</option>
+                        <option value="documento">📄 Documento</option>
+                        <option value="pdf">📕 PDF</option>
+                        <option value="video">🎥 Vídeo</option>
+                        <option value="link">🔗 Link Externo</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="conteudo-titulo">Título *</label>
+                    <input type="text" id="conteudo-titulo" required placeholder="Ex: Missão, Visão e Valores">
+                </div>
+                
+                <div class="form-group">
+                    <label for="conteudo-descricao">Descrição</label>
+                    <textarea id="conteudo-descricao" placeholder="Descreva brevemente este conteúdo..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="conteudo-url">URL *</label>
+                    <input type="url" id="conteudo-url" required placeholder="https://...">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="conteudo-ordem">Ordem</label>
+                        <input type="number" id="conteudo-ordem" min="0" value="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="conteudo-obrigatorio" checked>
+                            Conteúdo obrigatório
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModalConteudo()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Adicionar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TENANT = 'demo'; // Ou pegar de URL/localStorage
+        let trilhaAtual = null;
+
+        // Carregar trilhas ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarTrilhas();
+        });
+
+        async function carregarTrilhas() {
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas?tenant=${TENANT}`);
+                const trilhas = await response.json();
+                
+                const container = document.getElementById('trilhas-container');
+                
+                if (trilhas.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1/-1;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <h3>Nenhuma trilha cadastrada</h3>
+                            <p>Clique em "Nova Trilha" para começar</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = trilhas.map(trilha => `
+                    <div class="trilha-card">
+                        <div class="trilha-header">
+                            <div>
+                                <div class="trilha-title">${trilha.nome}</div>
+                            </div>
+                            <span class="trilha-badge ${trilha.ativo ? 'badge-ativo' : 'badge-inativo'}">
+                                ${trilha.ativo ? 'Ativa' : 'Inativa'}
+                            </span>
+                        </div>
+                        
+                        <div class="trilha-description">
+                            ${trilha.descricao || 'Sem descrição'}
+                        </div>
+                        
+                        <div class="trilha-meta">
+                            <div class="trilha-meta-item">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                ${trilha.prazo_dias} dias
+                            </div>
+                            <div class="trilha-meta-item">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                ${trilha.total_conteudos || 0} conteúdos
+                            </div>
+                        </div>
+                        
+                        <div class="trilha-actions">
+                            <button class="btn btn-secondary btn-small" onclick="editarTrilha('${trilha.id}')">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Editar
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="deletarTrilha('${trilha.id}', '${trilha.nome}')">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Deletar
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar trilhas:', error);
+                document.getElementById('trilhas-container').innerHTML = `
+                    <div class="alert alert-error" style="grid-column: 1/-1;">
+                        Erro ao carregar trilhas: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function abrirModalNovaTrilha() {
+            document.getElementById('modal-title').textContent = 'Nova Trilha';
+            document.getElementById('form-trilha').reset();
+            document.getElementById('trilha-id').value = '';
+            document.getElementById('conteudos-section').style.display = 'none';
+            document.getElementById('alert-container').innerHTML = '';
+            trilhaAtual = null;
+            document.getElementById('modal-trilha').classList.add('active');
+        }
+
+        async function editarTrilha(trilhaId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}?tenant=${TENANT}`);
+                const trilha = await response.json();
+                
+                trilhaAtual = trilha;
+                
+                document.getElementById('modal-title').textContent = 'Editar Trilha';
+                document.getElementById('trilha-id').value = trilha.id;
+                document.getElementById('trilha-nome').value = trilha.nome;
+                document.getElementById('trilha-descricao').value = trilha.descricao || '';
+                document.getElementById('trilha-prazo').value = trilha.prazo_dias;
+                document.getElementById('trilha-ordem').value = trilha.ordem || 0;
+                document.getElementById('trilha-ativo').checked = trilha.ativo;
+                document.getElementById('alert-container').innerHTML = '';
+                
+                // Mostrar seção de conteúdos
+                document.getElementById('conteudos-section').style.display = 'block';
+                carregarConteudos(trilha.conteudos || []);
+                
+                document.getElementById('modal-trilha').classList.add('active');
+            } catch (error) {
+                alert('Erro ao carregar trilha: ' + error.message);
+            }
+        }
+
+        function carregarConteudos(conteudos) {
+            const container = document.getElementById('conteudos-list');
+            
+            if (conteudos.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8; text-align: center; padding: 24px;">Nenhum conteúdo adicionado ainda</p>';
+                return;
+            }
+            
+            container.innerHTML = conteudos.map(conteudo => `
+                <div class="conteudo-item">
+                    <div class="conteudo-info">
+                        <span class="conteudo-tipo tipo-${conteudo.tipo}">${conteudo.tipo}</span>
+                        <div class="conteudo-titulo">${conteudo.titulo}</div>
+                        <div class="conteudo-url">${conteudo.url}</div>
+                    </div>
+                    <div class="conteudo-actions">
+                        <button type="button" class="btn-icon delete" onclick="deletarConteudo('${conteudo.id}')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function fecharModalTrilha() {
+            document.getElementById('modal-trilha').classList.remove('active');
+            trilhaAtual = null;
+        }
+
+        async function salvarTrilha(event) {
+            event.preventDefault();
+            
+            const trilhaId = document.getElementById('trilha-id').value;
+            const isEditing = !!trilhaId;
+            
+            const data = {
+                nome: document.getElementById('trilha-nome').value,
+                descricao: document.getElementById('trilha-descricao').value,
+                prazo_dias: parseInt(document.getElementById('trilha-prazo').value),
+                ordem: parseInt(document.getElementById('trilha-ordem').value),
+                ativo: document.getElementById('trilha-ativo').checked
+            };
+            
+            try {
+                const url = isEditing 
+                    ? `${API_BASE}/api/trilhas/${trilhaId}?tenant=${TENANT}`
+                    : `${API_BASE}/api/trilhas?tenant=${TENANT}`;
+                
+                const response = await fetch(url, {
+                    method: isEditing ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erro ao salvar trilha');
+                }
+                
+                const result = await response.json();
+                
+                // Mostrar mensagem de sucesso
+                document.getElementById('alert-container').innerHTML = `
+                    <div class="alert alert-success">
+                        ✅ Trilha ${isEditing ? 'atualizada' : 'criada'} com sucesso!
+                    </div>
+                `;
+                
+                // Recarregar lista
+                setTimeout(() => {
+                    fecharModalTrilha();
+                    carregarTrilhas();
+                }, 1500);
+                
+            } catch (error) {
+                document.getElementById('alert-container').innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function deletarTrilha(trilhaId, nome) {
+            if (!confirm(`Tem certeza que deseja deletar a trilha "${nome}"?\n\nIsso vai remover todos os conteúdos e progresso dos colaboradores!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}?tenant=${TENANT}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao deletar trilha');
+                }
+                
+                carregarTrilhas();
+            } catch (error) {
+                alert('Erro ao deletar: ' + error.message);
+            }
+        }
+
+        // Gerenciar conteúdos
+        function adicionarConteudo() {
+            if (!trilhaAtual || !trilhaAtual.id) {
+                alert('Salve a trilha antes de adicionar conteúdos');
+                return;
+            }
+            
+            document.getElementById('conteudo-trilha-id').value = trilhaAtual.id;
+            document.getElementById('form-conteudo').reset();
+            document.getElementById('modal-conteudo').classList.add('active');
+        }
+
+        function fecharModalConteudo() {
+            document.getElementById('modal-conteudo').classList.remove('active');
+        }
+
+        async function salvarConteudo(event) {
+            event.preventDefault();
+            
+            const trilhaId = document.getElementById('conteudo-trilha-id').value;
+            
+            const data = {
+                tipo: document.getElementById('conteudo-tipo').value,
+                titulo: document.getElementById('conteudo-titulo').value,
+                descricao: document.getElementById('conteudo-descricao').value,
+                url: document.getElementById('conteudo-url').value,
+                ordem: parseInt(document.getElementById('conteudo-ordem').value),
+                obrigatorio: document.getElementById('conteudo-obrigatorio').checked
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/conteudos?tenant=${TENANT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Erro ao adicionar conteúdo');
+                }
+                
+                // Recarregar trilha
+                fecharModalConteudo();
+                editarTrilha(trilhaId);
+                
+            } catch (error) {
+                alert('Erro: ' + error.message);
+            }
+        }
+
+        async function deletarConteudo(conteudoId) {
+            if (!confirm('Tem certeza que deseja remover este conteúdo?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/conteudos/${conteudoId}?tenant=${TENANT}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao deletar conteúdo');
+                }
+                
+                // Recarregar trilha
+                if (trilhaAtual && trilhaAtual.id) {
+                    editarTrilha(trilhaAtual.id);
+                }
+                
+            } catch (error) {
+                alert('Erro ao deletar: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -231,6 +231,53 @@ app.get('/funcionarios', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/funcionarios.html'));
 });
 
+// Página de trilhas (Admin)
+app.get('/admin-trilhas', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/admin-trilhas.html'));
+});
+
+// Páginas do Colaborador - Portal de Trilhas
+app.get('/colaborador-trilhas', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/colaborador-trilhas.html'));
+});
+
+app.get('/colaborador-trilha-detalhes', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/colaborador-trilha-detalhes.html'));
+});
+
+app.get('/colaborador-quiz', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/colaborador-quiz.html'));
+});
+
+app.get('/colaborador-ranking', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile(path.join(__dirname, '../public/colaborador-ranking.html'));
+});
+
 // Página de documentos
 app.get('/documentos', (req, res) => {
   res.set({

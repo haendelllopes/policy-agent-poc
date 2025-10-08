@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Trilhas - Flowly</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .pontuacao {
+            text-align: right;
+        }
+        
+        .pontuacao-label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .pontuacao-valor {
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .stat-card {
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .trilhas-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .trilha-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+        }
+        
+        .trilha-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+        
+        .trilha-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .trilha-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .trilha-description {
+            color: #64748b;
+            line-height: 1.6;
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .status-nao-iniciada {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .status-em-andamento {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-aguardando-quiz {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-concluida {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-atrasada {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .trilha-meta {
+            display: flex;
+            gap: 24px;
+            margin: 20px 0;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: #64748b;
+            text-align: center;
+        }
+        
+        .conteudos-list {
+            margin-top: 20px;
+        }
+        
+        .conteudo-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        
+        .conteudo-item.aceito {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+        }
+        
+        .conteudo-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-right: 16px;
+            cursor: pointer;
+        }
+        
+        .conteudo-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 20px;
+        }
+        
+        .icon-documento { background: #dbeafe; }
+        .icon-video { background: #fce7f3; }
+        .icon-link { background: #d1fae5; }
+        .icon-pdf { background: #fed7aa; }
+        
+        .conteudo-info {
+            flex: 1;
+        }
+        
+        .conteudo-titulo {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .conteudo-link {
+            font-size: 13px;
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .conteudo-link:hover {
+            text-decoration: underline;
+        }
+        
+        .trilha-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            background: white;
+            border-radius: 16px;
+            color: #94a3b8;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 48px;
+            background: white;
+            border-radius: 16px;
+        }
+        
+        .spinner {
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header com pontuação -->
+        <div class="header">
+            <div class="header-top">
+                <div>
+                    <h1>Olá, <span id="colaborador-nome">Colaborador</span>! 👋</h1>
+                    <p style="color: #64748b; margin-top: 8px;">Acompanhe seu progresso no onboarding</p>
+                </div>
+                <div class="pontuacao">
+                    <div class="pontuacao-label">Pontuação Total</div>
+                    <div class="pontuacao-valor" id="pontuacao-total">0</div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">📚 Total de Trilhas</div>
+                    <div class="stat-value" id="stat-total">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">✅ Concluídas</div>
+                    <div class="stat-value" id="stat-concluidas" style="color: #10b981;">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">⏳ Em Andamento</div>
+                    <div class="stat-value" id="stat-andamento" style="color: #3b82f6;">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">⚠️ Atrasadas</div>
+                    <div class="stat-value" id="stat-atrasadas" style="color: #ef4444;">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Trilhas -->
+        <div id="trilhas-container" class="trilhas-list">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p style="color: #64748b;">Carregando suas trilhas...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const TENANT = 'demo';
+        
+        // Pegar colaborador_id da URL ou localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const COLABORADOR_ID = urlParams.get('colaborador_id') || localStorage.getItem('colaborador_id');
+        
+        if (!COLABORADOR_ID) {
+            alert('ID do colaborador não fornecido. Use: ?colaborador_id=SEU_ID');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarProgresso();
+            carregarTrilhas();
+        });
+
+        async function carregarProgresso() {
+            try {
+                const response = await fetch(`${API_BASE}/api/colaborador/progresso?tenant=${TENANT}&colaborador_id=${COLABORADOR_ID}`);
+                const data = await response.json();
+                
+                document.getElementById('colaborador-nome').textContent = data.colaborador.name;
+                document.getElementById('pontuacao-total').textContent = data.colaborador.pontuacao_total || 0;
+                
+                const stats = data.estatisticas;
+                document.getElementById('stat-total').textContent = stats.total_trilhas || 0;
+                document.getElementById('stat-concluidas').textContent = stats.trilhas_concluidas || 0;
+                document.getElementById('stat-andamento').textContent = stats.trilhas_em_andamento || 0;
+                document.getElementById('stat-atrasadas').textContent = stats.trilhas_atrasadas || 0;
+                
+            } catch (error) {
+                console.error('Erro ao carregar progresso:', error);
+            }
+        }
+
+        async function carregarTrilhas() {
+            try {
+                const response = await fetch(`${API_BASE}/api/colaborador/trilhas?tenant=${TENANT}&colaborador_id=${COLABORADOR_ID}`);
+                const trilhas = await response.json();
+                
+                const container = document.getElementById('trilhas-container');
+                
+                if (trilhas.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <h3>Nenhuma trilha disponível</h3>
+                            <p>Aguarde o RH configurar suas trilhas de onboarding</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = trilhas.map(trilha => renderTrilhaCard(trilha)).join('');
+                
+            } catch (error) {
+                console.error('Erro ao carregar trilhas:', error);
+                document.getElementById('trilhas-container').innerHTML = `
+                    <div class="empty-state">
+                        <p style="color: #ef4444;">❌ Erro ao carregar trilhas: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderTrilhaCard(trilha) {
+            const status = trilha.status || 'nao_iniciada';
+            const statusLabels = {
+                'nao_iniciada': 'Não Iniciada',
+                'em_andamento': 'Em Andamento',
+                'aguardando_quiz': 'Aguardando Quiz',
+                'concluida': 'Concluída',
+                'atrasada': 'Atrasada'
+            };
+            
+            const totalConteudos = parseInt(trilha.total_conteudos) || 0;
+            const aceitos = parseInt(trilha.conteudos_aceitos) || 0;
+            const progresso = totalConteudos > 0 ? Math.round((aceitos / totalConteudos) * 100) : 0;
+            
+            const dataLimite = trilha.data_limite ? new Date(trilha.data_limite).toLocaleDateString('pt-BR') : '-';
+            
+            let acoes = '';
+            if (status === 'nao_iniciada') {
+                acoes = `<button class="btn btn-primary" onclick="iniciarTrilha('${trilha.id}')">🚀 Iniciar Trilha</button>`;
+            } else if (status === 'em_andamento') {
+                acoes = `<button class="btn btn-primary" onclick="abrirTrilha('${trilha.id}')">📖 Continuar</button>`;
+            } else if (status === 'aguardando_quiz') {
+                acoes = `<button class="btn btn-primary" onclick="fazerQuiz('${trilha.id}')">✍️ Fazer Quiz</button>`;
+            } else if (status === 'concluida') {
+                acoes = `
+                    <span style="color: #10b981; font-weight: 600;">✅ Concluída - ${trilha.pontuacao_final}%</span>
+                    <button class="btn btn-secondary" onclick="abrirTrilha('${trilha.id}')">📄 Ver Detalhes</button>
+                `;
+            }
+            
+            return `
+                <div class="trilha-card">
+                    <div class="trilha-header">
+                        <div style="flex: 1;">
+                            <div class="trilha-title">${trilha.nome}</div>
+                            <div class="trilha-description">${trilha.descricao || ''}</div>
+                        </div>
+                        <span class="status-badge status-${status.replace('_', '-')}">
+                            ${statusLabels[status]}
+                        </span>
+                    </div>
+                    
+                    <div class="trilha-meta">
+                        <div class="meta-item">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Prazo: ${dataLimite}
+                        </div>
+                        <div class="meta-item">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            ${totalConteudos} conteúdos
+                        </div>
+                    </div>
+                    
+                    ${status !== 'nao_iniciada' && status !== 'concluida' ? `
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progresso}%"></div>
+                        </div>
+                        <div class="progress-text">${aceitos} de ${totalConteudos} concluídos (${progresso}%)</div>
+                    ` : ''}
+                    
+                    <div class="trilha-actions">
+                        ${acoes}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function iniciarTrilha(trilhaId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/colaborador/trilhas/${trilhaId}/iniciar?tenant=${TENANT}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ colaborador_id: COLABORADOR_ID })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error);
+                }
+                
+                alert('✅ Trilha iniciada com sucesso!');
+                carregarProgresso();
+                carregarTrilhas();
+                
+            } catch (error) {
+                alert('❌ Erro ao iniciar trilha: ' + error.message);
+            }
+        }
+
+        function abrirTrilha(trilhaId) {
+            window.location.href = `/colaborador-trilha-detalhes.html?trilha_id=${trilhaId}&colaborador_id=${COLABORADOR_ID}`;
+        }
+
+        function fazerQuiz(trilhaId) {
+            window.location.href = `/colaborador-quiz.html?trilha_id=${trilhaId}&colaborador_id=${COLABORADOR_ID}`;
+        }
+    </script>
+</body>
+</html>
+
