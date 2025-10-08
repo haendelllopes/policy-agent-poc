@@ -321,6 +321,13 @@ app.use('/api', (req, res, next) => {
 //   }
 // });
 
+// ============================================
+// FUNÇÕES COMPARTILHADAS (precisam estar antes das rotas)
+// ============================================
+// Serão definidas mais abaixo, mas exportadas via app.locals
+
+// ============================================
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 function simpleChunk(text, size = 1000, overlap = 200) {
@@ -2434,6 +2441,41 @@ async function initializeDatabase() {
     throw error;
   }
 }
+
+// ============================================
+// IMPORTAR E REGISTRAR ROTAS MODULARES
+// ============================================
+const usersRoutes = require('./routes/users');
+const trilhasRoutes = require('./routes/trilhas');
+const colaboradorRoutes = require('./routes/colaborador');
+const quizRoutes = require('./routes/quiz');
+
+// Importar helpers
+const { normalizePhone: normalizePhoneHelper, normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper } = require('./utils/helpers');
+
+// Disponibilizar funções compartilhadas para as rotas via app.locals
+app.locals.getTenantBySubdomain = getTenantBySubdomain;
+app.locals.usePostgres = usePostgres;
+app.locals.getDemoData = getDemoData;
+app.locals.getCachedData = getCachedData;
+app.locals.normalizePhone = normalizePhoneHelper;
+app.locals.normalizePhoneForWhatsApp = normalizePhoneForWhatsAppHelper;
+app.locals.openDatabase = openDatabase;
+app.locals.runQuery = runQuery;
+app.locals.runExec = runExec;
+app.locals.persistDatabase = persistDatabase;
+app.locals.closeDatabase = (db) => db.close();
+
+// Registrar rotas (comentadas temporariamente - manter endpoints antigos funcionando)
+// app.use('/api/users', usersRoutes);
+app.use('/api/trilhas', trilhasRoutes);
+app.use('/api/colaborador', colaboradorRoutes);
+app.use('/api/quiz', quizRoutes);
+app.use('/api/gamificacao', quizRoutes); // Quiz routes contém gamificação
+
+console.log('✅ Rotas modulares carregadas: trilhas, colaborador, quiz, gamificação');
+
+// ============================================
 
 async function bootstrap() {
   try {
