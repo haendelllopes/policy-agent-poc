@@ -39,7 +39,9 @@
         .logo { 
             font-size: 1.5rem; 
             font-weight: 700; 
-            color: #2563eb; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             text-decoration: none; 
         }
 
@@ -61,7 +63,7 @@
         }
 
         .cta-button { 
-            background: #2563eb; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
             padding: 0.75rem 1.5rem; 
             border-radius: 8px; 
@@ -70,11 +72,12 @@
             transition: all 0.2s; 
             border: none; 
             cursor: pointer; 
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
         .cta-button:hover { 
-            background: #1d4ed8; 
-            transform: translateY(-1px); 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
         /* Hero Section */
@@ -94,7 +97,7 @@
             font-weight: 800; 
             line-height: 1.1; 
             margin-bottom: 1.5rem; 
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
             background-clip: text; 
@@ -114,7 +117,7 @@
         }
 
         .btn-primary { 
-            background: #2563eb; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
             padding: 1rem 2rem; 
             border-radius: 12px; 
@@ -124,30 +127,29 @@
             transition: all 0.3s; 
             border: none; 
             cursor: pointer; 
-            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); 
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3); 
         }
 
         .btn-primary:hover { 
-            background: #1d4ed8; 
             transform: translateY(-2px); 
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4); 
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5); 
         }
 
         .btn-secondary { 
             background: white; 
-            color: #2563eb; 
+            color: #667eea; 
             padding: 1rem 2rem; 
             border-radius: 12px; 
             text-decoration: none; 
             font-weight: 600; 
             font-size: 1.1rem; 
-            border: 2px solid #2563eb; 
+            border: 2px solid #667eea; 
             transition: all 0.3s; 
             cursor: pointer; 
         }
 
         .btn-secondary:hover { 
-            background: #2563eb; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
             color: white; 
             transform: translateY(-2px); 
         }
