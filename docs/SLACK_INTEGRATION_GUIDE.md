@@ -382,3 +382,6 @@ curl -X POST https://hndll.app.n8n.cloud/webhook/slack-navigator \
 **Última atualização**: Outubro 2025
 **Versão**: 1.0
 
+
+
+

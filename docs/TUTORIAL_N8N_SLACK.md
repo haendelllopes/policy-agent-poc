@@ -335,3 +335,6 @@ Agora que a integração básica funciona:
 **Status**: ✅ Workflow básico funcionando!  
 **Tempo estimado**: 30-45 minutos
 
+
+
+

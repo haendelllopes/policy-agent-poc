@@ -325,3 +325,6 @@ R: SIM. Configure 1 cliente piloto.
 **Última atualização**: Outubro 2025  
 **Tempo de leitura**: 5 minutos ⏱️
 
+
+
+

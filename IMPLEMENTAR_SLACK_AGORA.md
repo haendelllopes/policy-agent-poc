@@ -439,3 +439,6 @@ Bot deve responder:
 
 **Qualquer dúvida, me avise!** 💬
 
+
+
+

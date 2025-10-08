@@ -583,42 +583,46 @@
             // Show loading state
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = 'Validando...';
+            submitBtn.textContent = 'Entrando...';
             submitBtn.disabled = true;
 
             try {
-                console.log('Validando credenciais:', { companyName, userEmail });
+                console.log('Fazendo login:', { companyName, userEmail });
 
-                // Validar credenciais (não criar nada)
-                const validateResponse = await fetch('/api/auth/validate', {
+                // Login com email
+                const loginResponse = await fetch('/api/auth/login?tenant=demo', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        companyName: companyName,
                         email: userEmail
                     })
                 });
 
-                console.log('Resposta da validação:', validateResponse.status);
+                console.log('Resposta do login:', loginResponse.status);
 
-                if (validateResponse.ok) {
-                    const data = await validateResponse.json();
-                    console.log('Login válido:', data);
+                if (loginResponse.ok) {
+                    const data = await loginResponse.json();
+                    console.log('Login bem-sucedido:', data);
                     
-                    // Redirect to dashboard com subdomain
-                    window.location.href = `/inicio?tenant=${data.tenant.subdomain}`;
+                    // Salvar dados do usuário no localStorage
+                    localStorage.setItem('user_id', data.user.id);
+                    localStorage.setItem('user_name', data.user.name);
+                    localStorage.setItem('user_role', data.user.role);
+                    localStorage.setItem('colaborador_id', data.user.id);
+                    
+                    // Redirecionar baseado no role
+                    window.location.href = data.redirect;
                 } else {
-                    const errorData = await validateResponse.json();
-                    console.error('Erro na validação:', errorData);
+                    const errorData = await loginResponse.json();
+                    console.error('Erro no login:', errorData);
                     
-                    // Mostrar mensagem de erro específica
-                    alert(`Erro: ${errorData.error}`);
+                    alert(`Erro: ${errorData.error || 'Usuário não encontrado'}`);
                 }
             } catch (error) {
                 console.error('Erro no login:', error);
-                alert(`Erro ao validar credenciais: ${error.message}`);
+                alert(`Erro ao fazer login: ${error.message}`);
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;

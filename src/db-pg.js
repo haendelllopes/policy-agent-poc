@@ -474,6 +474,7 @@ async function migrate() {
     // 1. Adicionar colunas de onboarding à tabela users
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS position_id UUID REFERENCES positions(id)`);
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id UUID REFERENCES departments(id)`);
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'colaborador'`);
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_status VARCHAR(50) DEFAULT 'nao_iniciado'`);
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_inicio DATE`);
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_fim DATE`);

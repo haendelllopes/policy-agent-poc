@@ -795,6 +795,7 @@ app.post('/api/users', async (req, res) => {
       department: z.string().optional(), // DEPRECATED: manter por compatibilidade
       position_id: z.string().uuid().optional(), // NOVO: usar FK
       department_id: z.string().uuid().optional(), // NOVO: usar FK
+      role: z.enum(['admin', 'colaborador']).optional().default('colaborador'), // NOVO: role do usuário
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -829,14 +830,15 @@ app.post('/api/users', async (req, res) => {
       await query(`
         INSERT INTO users (
           id, tenant_id, name, email, phone, 
-          position, department, position_id, department_id,
+          position, department, position_id, department_id, role,
           start_date, status, 
           onboarding_status, onboarding_inicio
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       `, [
         userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone,
         parse.data.position || null, parse.data.department || null, 
         parse.data.position_id || null, parse.data.department_id || null,
+        parse.data.role || 'colaborador',
         onboardingInicio, parse.data.status || 'active',
         'em_andamento', onboardingInicio
       ]);
@@ -855,13 +857,14 @@ app.post('/api/users', async (req, res) => {
         
         runExec(db, `INSERT INTO users (
           id, tenant_id, name, email, phone, 
-          position, department, position_id, department_id,
+          position, department, position_id, department_id, role,
           start_date, status,
           onboarding_status, onboarding_inicio
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
           [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, 
            parse.data.position || null, parse.data.department || null,
            parse.data.position_id || null, parse.data.department_id || null,
+           parse.data.role || 'colaborador',
            onboardingInicio, parse.data.status || 'active',
            'em_andamento', onboardingInicio]);
         
@@ -920,6 +923,7 @@ app.post('/api/users', async (req, res) => {
       department: parse.data.department,
       position_id: parse.data.position_id,
       department_id: parse.data.department_id,
+      role: parse.data.role || 'colaborador',
       start_date: parse.data.start_date,
       status: parse.data.status || 'active',
       onboarding_status: 'em_andamento',
@@ -1320,6 +1324,7 @@ app.get('/api/users', async (req, res) => {
               u.position_id, u.department_id,
               p.name as position_name,
               d.name as department_name,
+              u.role,
               u.status, u.start_date,
               u.onboarding_status, u.onboarding_inicio, u.onboarding_fim,
               u.pontuacao_total,
@@ -2492,6 +2497,7 @@ async function initializeDatabase() {
 // ============================================
 // IMPORTAR E REGISTRAR ROTAS MODULARES
 // ============================================
+const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const trilhasRoutes = require('./routes/trilhas');
 const colaboradorRoutes = require('./routes/colaborador');
@@ -2514,13 +2520,14 @@ app.locals.persistDatabase = persistDatabase;
 app.locals.closeDatabase = (db) => db.close();
 
 // Registrar rotas (comentadas temporariamente - manter endpoints antigos funcionando)
+app.use('/api/auth', authRoutes);
 // app.use('/api/users', usersRoutes);
 app.use('/api/trilhas', trilhasRoutes);
 app.use('/api/colaborador', colaboradorRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/gamificacao', quizRoutes); // Quiz routes contém gamificação
 
-console.log('✅ Rotas modulares carregadas: trilhas, colaborador, quiz, gamificação');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação');
 
 // ============================================
 
