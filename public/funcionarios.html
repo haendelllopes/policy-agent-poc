@@ -1024,6 +1024,7 @@
                 document.getElementById('userStartDate').value = user.start_date || '';
                 document.getElementById('userPhone').value = user.phone ? user.phone.replace(/^55/, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '';
                 document.getElementById('userStatus').value = user.status || 'active';
+                document.getElementById('userIsAdmin').checked = user.role === 'admin';
                 
                 // Alterar título e botão
                 document.getElementById('modalTitle').textContent = 'Editar Funcionário';

@@ -1080,6 +1080,7 @@ app.put('/api/users/:id', async (req, res) => {
       department: z.string().optional(), // DEPRECATED
       position_id: z.string().uuid().optional(), // NOVO
       department_id: z.string().uuid().optional(), // NOVO
+      role: z.enum(['admin', 'colaborador']).optional(), // NOVO: role do usuário
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -1115,13 +1116,15 @@ app.put('/api/users/:id', async (req, res) => {
           name = $1, email = $2, phone = $3, 
           position = $4, department = $5, 
           position_id = $6, department_id = $7,
-          start_date = $8, status = $9,
+          role = $8,
+          start_date = $9, status = $10,
           updated_at = NOW()
-        WHERE id = $10 AND tenant_id = $11
+        WHERE id = $11 AND tenant_id = $12
       `, [
         parse.data.name, parse.data.email, normalizedPhone, 
         parse.data.position || null, parse.data.department || null,
         parse.data.position_id || null, parse.data.department_id || null,
+        parse.data.role || 'colaborador',
         parse.data.start_date || null, parse.data.status || 'active', 
         userId, tenant.id
       ]);
@@ -1145,12 +1148,14 @@ app.put('/api/users/:id', async (req, res) => {
           name = ?, email = ?, phone = ?, 
           position = ?, department = ?, 
           position_id = ?, department_id = ?,
+          role = ?,
           start_date = ?, status = ?, 
           updated_at = CURRENT_TIMESTAMP 
         WHERE id = ? AND tenant_id = ?`, 
           [parse.data.name, parse.data.email, normalizedPhone, 
            parse.data.position || null, parse.data.department || null,
            parse.data.position_id || null, parse.data.department_id || null,
+           parse.data.role || 'colaborador',
            parse.data.start_date || null, parse.data.status || 'active', 
            userId, tenant.id]);
       } finally {
@@ -1168,6 +1173,7 @@ app.put('/api/users/:id', async (req, res) => {
       department: parse.data.department,
       position_id: parse.data.position_id,
       department_id: parse.data.department_id,
+      role: parse.data.role || 'colaborador',
       start_date: parse.data.start_date,
       status: parse.data.status || 'active',
       tenant: tenant.name
