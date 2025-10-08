@@ -648,8 +648,19 @@ app.post('/api/tenants', async (req, res) => {
         [tenantId, parse.data.name, parse.data.subdomain, new Date().toISOString()]);
       
       // Criar usuário admin para o tenant
-      await query('INSERT INTO public.users (id, tenant_id, name, email, phone, position, department, start_date, status, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', 
-        [userId, tenantId, parse.data.userName, parse.data.userEmail, 'Não informado', 'Administrador', 'Administração', new Date().toISOString().split('T')[0], 'active', new Date().toISOString()]);
+      await query(`
+        INSERT INTO public.users (
+          id, tenant_id, name, email, phone, 
+          position, department, role,
+          start_date, status, 
+          onboarding_status, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `, [
+        userId, tenantId, parse.data.userName, parse.data.userEmail, 'Não informado', 
+        'Administrador', 'Administração', 'admin',
+        new Date().toISOString().split('T')[0], 'active',
+        'nao_iniciado', new Date().toISOString()
+      ]);
       
       await query('COMMIT');
 
@@ -693,10 +704,30 @@ app.post('/api/tenants', async (req, res) => {
           return res.status(400).json({ error: { formErrors: ['Subdomain já existe'] } });
         }
 
-        const id = uuidv4();
-        runExec(db, 'INSERT INTO tenants (id, name, subdomain) VALUES (?, ?, ?)', [id, parse.data.name, parse.data.subdomain]);
+        const tenantId = uuidv4();
+        const userId = uuidv4();
+        
+        // Criar tenant
+        runExec(db, 'INSERT INTO tenants (id, name, subdomain) VALUES (?, ?, ?)', [tenantId, parse.data.name, parse.data.subdomain]);
+        
+        // Criar usuário admin
+        runExec(db, `INSERT INTO users (
+          id, tenant_id, name, email, phone, 
+          position, department, role,
+          start_date, status,
+          onboarding_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+          [userId, tenantId, parse.data.userName, parse.data.userEmail, 'Não informado', 
+           'Administrador', 'Administração', 'admin',
+           new Date().toISOString().split('T')[0], 'active',
+           'nao_iniciado']);
+        
         persistDatabase(SQL, db);
-        res.status(201).json({ id, name: parse.data.name, subdomain: parse.data.subdomain });
+        
+        res.status(201).json({ 
+          tenant: { id: tenantId, name: parse.data.name, subdomain: parse.data.subdomain },
+          user: { id: userId, name: parse.data.userName, email: parse.data.userEmail }
+        });
       } finally {
         db.close();
       }
