@@ -617,6 +617,37 @@
                         <div class="card-subtitle">Departamentos ativos</div>
                     </div>
                 </div>
+                
+                <!-- Dashboard Onboarding -->
+                <div style="margin-top: 48px;">
+                    <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 24px;">📊 Dashboard de Onboarding</h3>
+                    
+                    <!-- Alertas de Atraso -->
+                    <div class="card" style="margin-bottom: 24px; padding: 28px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h4 style="font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 12px;">
+                                ⚠️ Colaboradores em Atraso
+                                <span id="badge-atrasados" style="background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px;">0</span>
+                            </h4>
+                        </div>
+                        <div id="atrasados-container">
+                            <p style="text-align: center; color: #94a3b8; padding: 24px;">Carregando...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Notas Baixas -->
+                    <div class="card" style="margin-bottom: 24px; padding: 28px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h4 style="font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 12px;">
+                                📉 Notas Abaixo de 60%
+                                <span id="badge-notas" style="background: #f59e0b; color: white; padding: 4px 12px; border-radius: 20px; font-size: 13px;">0</span>
+                            </h4>
+                        </div>
+                        <div id="notas-baixas-container">
+                            <p style="text-align: center; color: #94a3b8; padding: 24px;">Carregando...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Users Section -->
@@ -1435,6 +1466,104 @@
             }
         }
 
+        // Funções do Dashboard de Onboarding
+        async function carregarDashboardOnboarding() {
+            const tenant = getTenantFromUrl();
+            const API_BASE = window.location.origin;
+            
+            // Carregar atrasados
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/alertas/atrasados?tenant=${tenant}`);
+                const atrasados = await response.json();
+                
+                document.getElementById('badge-atrasados').textContent = atrasados.length;
+                
+                const container = document.getElementById('atrasados-container');
+                
+                if (atrasados.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #10b981; padding: 24px;">🎉 Nenhum colaborador em atraso!</p>';
+                } else {
+                    container.innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Colaborador</th>
+                                    <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Trilha</th>
+                                    <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Atraso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${atrasados.map(item => `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 12px;">
+                                            <div style="font-weight: 600;">${item.colaborador_nome}</div>
+                                            <div style="font-size: 13px; color: #64748b;">${item.cargo || '-'} • ${item.departamento || '-'}</div>
+                                        </td>
+                                        <td style="padding: 12px;">${item.trilha_nome}</td>
+                                        <td style="padding: 12px;">
+                                            <span style="background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                                ${Math.ceil(item.dias_atraso)} dias
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar atrasados:', error);
+            }
+            
+            // Carregar notas baixas
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/alertas/notas-baixas?tenant=${tenant}`);
+                const notas = await response.json();
+                
+                document.getElementById('badge-notas').textContent = notas.length;
+                
+                const container = document.getElementById('notas-baixas-container');
+                
+                if (notas.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #10b981; padding: 24px;">✅ Todos com bom desempenho!</p>';
+                } else {
+                    container.innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Colaborador</th>
+                                    <th style="padding: 12px; text-align: left; font-size: 12px; color: #64748b;">Trilha</th>
+                                    <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Nota</th>
+                                    <th style="padding: 12px; text-align: center; font-size: 12px; color: #64748b;">Tentativa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${notas.map(item => `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 12px;">
+                                            <div style="font-weight: 600;">${item.colaborador_nome}</div>
+                                            <div style="font-size: 13px; color: #64748b;">${item.cargo || '-'}</div>
+                                        </td>
+                                        <td style="padding: 12px;">${item.trilha_nome}</td>
+                                        <td style="padding: 12px; text-align: center;">
+                                            <span style="background: ${item.nota < 40 ? '#fee2e2' : '#fef3c7'}; color: ${item.nota < 40 ? '#991b1b' : '#92400e'}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                                                ${item.nota}%
+                                            </span>
+                                        </td>
+                                        <td style="padding: 12px; text-align: center; font-size: 13px; color: #64748b;">
+                                            #${item.tentativa_numero}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar notas baixas:', error);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log(' DOM carregado, iniciando dashboard...');
             
@@ -1448,6 +1577,7 @@
             setTimeout(() => {
                 console.log(' Carregamento inicial dos dados...');
                 updateDashboard(true);
+                carregarDashboardOnboarding();
             }, 100);
             
             // Adicionar listener para mudanças de hash

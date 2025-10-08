@@ -241,16 +241,6 @@ app.get('/admin-trilhas', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/admin-trilhas.html'));
 });
 
-// Página de dashboard onboarding (Admin)
-app.get('/admin-dashboard-onboarding', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/admin-dashboard-onboarding.html'));
-});
-
 // Páginas do Colaborador - Portal de Trilhas
 app.get('/colaborador-trilhas', (req, res) => {
   res.set({
@@ -1718,31 +1708,31 @@ app.post('/api/documents/semantic-search', async (req, res) => {
       
       // Primeiro, tentar busca semântica com embeddings
       try {
-        const { generateEmbedding } = require('./document-analyzer');
-        const queryEmbedding = await generateEmbedding(searchQuery);
-        
-        // Busca semântica usando embeddings
+      const { generateEmbedding } = require('./document-analyzer');
+      const queryEmbedding = await generateEmbedding(searchQuery);
+      
+      // Busca semântica usando embeddings
         const embeddingResult = await query(`
-          SELECT 
-            id, title, category, ai_classification, ai_summary, sentiment_score, 
+        SELECT 
+          id, title, category, ai_classification, ai_summary, sentiment_score, 
             word_count, analysis_status, created_at, description, file_name,
-            (embedding <=> $2) as similarity_distance
-          FROM documents 
-          WHERE tenant_id = $1 
-            AND embedding IS NOT NULL 
-            AND analysis_status = 'completed'
-          ORDER BY embedding <=> $2
-          LIMIT $3
-        `, [tenant.id, JSON.stringify(queryEmbedding), limit]);
-        
+          (embedding <=> $2) as similarity_distance
+        FROM documents 
+        WHERE tenant_id = $1 
+          AND embedding IS NOT NULL 
+          AND analysis_status = 'completed'
+        ORDER BY embedding <=> $2
+        LIMIT $3
+      `, [tenant.id, JSON.stringify(queryEmbedding), limit]);
+      
         console.log('Embedding search results:', embeddingResult.rows.length);
         
         // Se encontrou resultados com embeddings, retorna
         if (embeddingResult.rows.length > 0) {
           const documents = embeddingResult.rows.map(doc => ({
-            ...doc,
-            similarity_score: 1 - doc.similarity_distance
-          }));
+        ...doc,
+        similarity_score: 1 - doc.similarity_distance
+      }));
           console.log('Returning embedding results:', documents);
           return res.json(documents);
         }
