@@ -254,16 +254,18 @@ router.post('/conteudos/:id/aceitar', async (req, res) => {
       WHERE colaborador_trilha_id = $1 AND conteudo_id = $2
     `, [progresso.id, conteudoId]);
 
+    let aceiteId;
     if (aceiteExiste.rows.length > 0) {
-      return res.status(400).json({ error: 'Conteúdo já foi aceito' });
+      // Conteúdo já aceito, usar ID existente
+      aceiteId = aceiteExiste.rows[0].id;
+    } else {
+      // Registrar aceite
+      aceiteId = uuidv4();
+      await query(`
+        INSERT INTO conteudo_aceites (id, colaborador_trilha_id, conteudo_id, aceito_em)
+        VALUES ($1, $2, $3, $4)
+      `, [aceiteId, progresso.id, conteudoId, new Date().toISOString()]);
     }
-
-    // Registrar aceite
-    const aceiteId = uuidv4();
-    await query(`
-      INSERT INTO conteudo_aceites (id, colaborador_trilha_id, conteudo_id, aceito_em)
-      VALUES ($1, $2, $3, $4)
-    `, [aceiteId, progresso.id, conteudoId, new Date().toISOString()]);
 
     // Verificar se todos os conteúdos foram aceitos
     const statusResult = await query(`
