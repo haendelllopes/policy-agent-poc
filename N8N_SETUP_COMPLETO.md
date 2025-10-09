@@ -566,3 +566,4 @@ No n8n, clique em "Execute Workflow" manualmente.
 **Por:** Flowly Assistant  
 **Versão:** 1.0
 
+

@@ -215,3 +215,4 @@ router.post('/alerta-nota-baixa', async (req, res) => {
 
 module.exports = router;
 
+
