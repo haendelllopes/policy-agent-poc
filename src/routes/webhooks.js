@@ -36,6 +36,41 @@ async function enviarWebhookN8N(tipo, dados) {
 }
 
 /**
+ * Enviar dados para análise do agente IA
+ */
+async function enviarParaAnaliseIA(eventType, dados) {
+  const N8N_AI_WEBHOOK_URL = process.env.N8N_AI_WEBHOOK_URL || 'https://hndll.app.n8n.cloud/webhook/ai-analysis';
+  
+  try {
+    const aiData = {
+      timestamp: new Date().toISOString(),
+      event_type: eventType,
+      flowly_url: process.env.VERCEL_URL || 'https://flowly.vercel.app',
+      ...dados
+    };
+    
+    console.log(`🤖 Enviando dados para análise IA [${eventType}]:`, aiData);
+    
+    const response = await fetch(N8N_AI_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(aiData)
+    });
+    
+    if (response.ok) {
+      console.log(`✅ Dados enviados para análise IA [${eventType}] com sucesso!`);
+      return { success: true };
+    } else {
+      console.error(`❌ Erro ao enviar para análise IA [${eventType}]:`, response.status);
+      return { success: false, error: response.statusText };
+    }
+  } catch (error) {
+    console.error(`❌ Erro ao enviar para análise IA [${eventType}]:`, error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * POST /api/webhooks/trilha-iniciada
  * Notificar n8n quando colaborador inicia uma trilha
  */
@@ -103,6 +138,7 @@ router.post('/trilha-concluida', async (req, res) => {
   try {
     const { colaborador_id, colaborador_nome, colaborador_email, colaborador_phone, trilha_id, trilha_nome, nota, pontos } = req.body;
     
+    // Enviar webhook normal para notificações
     const resultado = await enviarWebhookN8N('trilha_concluida', {
       colaborador: {
         id: colaborador_id,
@@ -119,6 +155,19 @@ router.post('/trilha-concluida', async (req, res) => {
         pontos: pontos
       },
       mensagem_sugerida: `🎉🎉🎉 PARABÉNS ${colaborador_nome}!\n\nVocê concluiu a trilha *${trilha_nome}* com ${nota}% de acerto!\n\n⭐ +${pontos} pontos adicionados!\n📜 Seu certificado será enviado por e-mail em breve.\n\nContinue assim! 💪`
+    });
+
+    // Enviar dados para análise do agente IA (assíncrono)
+    enviarParaAnaliseIA('trilha_concluida', {
+      colaborador_id,
+      colaborador_nome,
+      trilha_id,
+      trilha_nome,
+      nota_quiz: nota,
+      pontos_ganhos: pontos,
+      admin_phone: process.env.ADMIN_PHONE // Para notificar admin sobre melhorias
+    }).catch(error => {
+      console.error('Erro ao enviar para análise IA (não crítico):', error);
     });
     
     res.json(resultado);

@@ -1,0 +1,267 @@
+{
+  "name": "Agente IA - Análise de Melhorias",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-analysis",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook - Análise IA",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "ai-analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.event_type }}",
+              "operation": "equal",
+              "value2": "trilha_concluida"
+            }
+          ]
+        }
+      },
+      "id": "switch-event",
+      "name": "Switch - Tipo Evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4o-mini"
+            },
+            {
+              "name": "messages",
+              "value": "=[\n  {\n    \"role\": \"system\",\n    \"content\": \"Você é um especialista em UX/UI e processos de onboarding corporativo. Analise os dados fornecidos e identifique oportunidades de melhoria específicas e acionáveis.\"\n  },\n  {\n    \"role\": \"user\",\n    \"content\": \"Analise os seguintes dados de onboarding e sugira melhorias:\\n\\nDados da Trilha:\\n- Trilha: {{ $json.trilha_nome }}\\n- Tempo médio: {{ $json.tempo_medio_minutos }} minutos\\n- Taxa de conclusão: {{ $json.taxa_conclusao }}%\\n- Conteúdos: {{ $json.total_conteudos }}\\n\\nDados do Colaborador:\\n- Nome: {{ $json.colaborador_nome }}\\n- Tempo total: {{ $json.tempo_total_minutos }} minutos\\n- Conteúdos aceitos: {{ $json.conteudos_aceitos }}/{{ $json.total_conteudos }}\\n- Nota do quiz: {{ $json.nota_quiz }}\\n\\nIdentifique 2-3 melhorias específicas com:\\n1. Categoria (conteudo, interface, fluxo, performance, engajamento)\\n2. Prioridade (baixa, media, alta, critica)\\n3. Título descritivo\\n4. Descrição detalhada\\n5. Impacto estimado\\n6. Esforço estimado\\n\\nResponda em formato JSON válido.\"\n  }\n]"
+            },
+            {
+              "name": "max_tokens",
+              "value": "1000"
+            },
+            {
+              "name": "temperature",
+              "value": "0.3"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "openai-analysis",
+      "name": "OpenAI - Análise",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 200],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-credentials",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processar resposta da OpenAI e extrair melhorias\nconst openaiResponse = $input.first().json;\nconst content = openaiResponse.choices[0].message.content;\n\nlet improvements = [];\ntry {\n  // Tentar extrair JSON da resposta\n  const jsonMatch = content.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    const parsed = JSON.parse(jsonMatch[0]);\n    improvements = Array.isArray(parsed) ? parsed : [parsed];\n  } else {\n    // Se não conseguir extrair JSON, criar melhoria genérica\n    improvements = [{\n      categoria: 'fluxo',\n      prioridade: 'media',\n      titulo: 'Otimização identificada pelo IA',\n      descricao: content,\n      impacto_estimado: 'medio',\n      esforco_estimado: 'medio'\n    }];\n  }\n} catch (error) {\n  console.log('Erro ao processar resposta OpenAI:', error);\n  improvements = [{\n    categoria: 'outros',\n    prioridade: 'baixa',\n    titulo: 'Análise requer revisão manual',\n    descricao: content,\n    impacto_estimado: 'baixo',\n    esforco_estimado: 'baixo'\n  }];\n}\n\n// Preparar dados para envio\nconst originalData = $('webhook-trigger').first().json;\n\nreturn improvements.map(improvement => ({\n  json: {\n    ...improvement,\n    contexto: {\n      trilha_id: originalData.trilha_id,\n      colaborador_id: originalData.colaborador_id,\n      momento: 'pos_conclusao',\n      dados_especificos: {\n        tempo_total: originalData.tempo_total_minutos,\n        nota_quiz: originalData.nota_quiz,\n        taxa_conclusao: originalData.taxa_conclusao\n      }\n    },\n    dados_analise: {\n      evento_origem: originalData.event_type,\n      timestamp: new Date().toISOString(),\n      fonte: 'n8n_ai_agent'\n    }\n  }\n}));"
+      },
+      "id": "process-improvements",
+      "name": "Processar Melhorias",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('webhook-trigger').first().json.flowly_url }}/api/ai/improvements",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "prioridade",
+              "value": "={{ $json.prioridade }}"
+            },
+            {
+              "name": "titulo",
+              "value": "={{ $json.titulo }}"
+            },
+            {
+              "name": "descricao",
+              "value": "={{ $json.descricao }}"
+            },
+            {
+              "name": "contexto",
+              "value": "={{ $json.contexto }}"
+            },
+            {
+              "name": "dados_analise",
+              "value": "={{ $json.dados_analise }}"
+            },
+            {
+              "name": "impacto_estimado",
+              "value": "={{ $json.impacto_estimado }}"
+            },
+            {
+              "name": "esforco_estimado",
+              "value": "={{ $json.esforco_estimado }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-improvement",
+      "name": "Salvar Melhoria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "flowly-api-credentials",
+          "name": "Flowly API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"Análise de melhorias concluída\", \"improvements_saved\": $json.length } }}"
+      },
+      "id": "response",
+      "name": "Resposta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://api.whatsapp.com/send",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "to",
+              "value": "={{ $('webhook-trigger').first().json.admin_phone }}"
+            },
+            {
+              "name": "message",
+              "value": "🤖 *Agente IA - Nova Análise*\\n\\n{{ $json.titulo }}\\n\\n📊 *Categoria:* {{ $json.categoria }}\\n🎯 *Prioridade:* {{ $json.prioridade }}\\n📈 *Impacto:* {{ $json.impacto_estimado }}\\n\\n{{ $json.descricao }}\\n\\nVer detalhes no painel admin."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "notify-admin",
+      "name": "Notificar Admin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "webhook-trigger": {
+      "main": [
+        [
+          {
+            "node": "switch-event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switch-event": {
+      "main": [
+        [
+          {
+            "node": "openai-analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "openai-analysis": {
+      "main": [
+        [
+          {
+            "node": "process-improvements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "process-improvements": {
+      "main": [
+        [
+          {
+            "node": "save-improvement",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "notify-admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "save-improvement": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-09T22:00:00.000Z",
+  "versionId": "1"
+}
