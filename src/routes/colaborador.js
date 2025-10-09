@@ -268,6 +268,8 @@ router.post('/conteudos/:id/aceitar', async (req, res) => {
     }
 
     // Verificar se todos os conteúdos foram aceitos
+    console.log(`🔍 Verificando status da trilha ${progresso.trilha_id}...`);
+    
     const statusResult = await query(`
       SELECT 
         COUNT(tc.id) as total_conteudos,
@@ -278,9 +280,11 @@ router.post('/conteudos/:id/aceitar', async (req, res) => {
     `, [progresso.trilha_id, progresso.id]);
 
     const status = statusResult.rows[0];
+    console.log(`📊 Status: ${status.total_conteudos} total, ${status.conteudos_aceitos} aceitos`);
 
     // Se todos foram aceitos, atualizar status para aguardando_quiz
     if (status.total_conteudos === parseInt(status.conteudos_aceitos)) {
+      console.log(`✅ Todos os conteúdos aceitos! Mudando status para aguardando_quiz...`);
       await query(`
         UPDATE colaborador_trilhas 
         SET status = 'aguardando_quiz', updated_at = NOW()
