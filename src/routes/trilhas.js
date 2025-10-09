@@ -290,6 +290,36 @@ router.post('/:id/conteudos', async (req, res) => {
       parse.data.obrigatorio
     ]);
 
+    // Disparar webhook para n8n processar conteúdo (opcional - apenas se N8N_WEBHOOK_PROCESSAR_CONTEUDO estiver configurado)
+    const N8N_PROCESSAR_URL = process.env.N8N_WEBHOOK_PROCESSAR_CONTEUDO;
+    if (N8N_PROCESSAR_URL) {
+      try {
+        // Buscar informações da trilha
+        const trilhaInfo = await query('SELECT nome FROM trilhas WHERE id = $1', [trilhaId]);
+        
+        await fetch(N8N_PROCESSAR_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            timestamp: new Date().toISOString(),
+            conteudo: {
+              id: conteudoId,
+              trilha_id: trilhaId,
+              trilha_nome: trilhaInfo.rows[0]?.nome,
+              tipo: parse.data.tipo,
+              titulo: parse.data.titulo,
+              descricao: parse.data.descricao,
+              url: parse.data.url
+            }
+          })
+        });
+        console.log(`✅ Webhook n8n disparado para processar conteúdo ${conteudoId}`);
+      } catch (webhookError) {
+        console.error('⚠️ Erro ao enviar webhook processar conteúdo:', webhookError.message);
+        // Não bloqueia a criação do conteúdo se o webhook falhar
+      }
+    }
+
     res.status(201).json({
       id: conteudoId,
       trilha_id: trilhaId,

@@ -1,0 +1,219 @@
+{
+  "name": "Flowly - WhatsApp Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-onboarding",
+      "name": "Webhook Onboarding",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "onboarding"
+    },
+    {
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-trilha-iniciada",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "trilha_iniciada",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trilha Iniciada"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-quiz-disponivel",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "quiz_disponivel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Quiz Disponível"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-trilha-concluida",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "trilha_concluida",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trilha Concluída"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-onboarding-completo",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "onboarding_completo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Onboarding Completo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-alerta-atraso",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "alerta_atraso",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Alerta Atraso"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-alerta-nota-baixa",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "alerta_nota_baixa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Alerta Nota Baixa"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-tipo",
+      "name": "Switch Tipo Webhook",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "content": "=📱 ENVIAR WHATSAPP AQUI\n\nPara cada rota do Switch, adicione um node:\n\n1. **HTTP Request** (para Evolution API)\n   ou\n2. **Twilio** (mais fácil para começar)\n\nMensagem a enviar:\n{{ $json.mensagem_sugerida }}\n\nNúmero do colaborador:\n{{ $json.colaborador.phone }}",
+        "height": 400,
+        "width": 300
+      },
+      "id": "nota-instrucoes",
+      "name": "📝 INSTRUÇÕES",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [650, 200]
+    },
+    {
+      "parameters": {
+        "content": "=🎯 INÍCIO DO WORKFLOW\n\nEste é o webhook que recebe notificações do Flowly.\n\nURL do webhook:\n{{ $webhook.url }}\n\nConfigure no Vercel:\nN8N_WEBHOOK_URL=<URL_DESTE_WEBHOOK>",
+        "height": 250,
+        "width": 300
+      },
+      "id": "nota-webhook",
+      "name": "ℹ️ SOBRE O WEBHOOK",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [50, 150]
+    }
+  ],
+  "connections": {
+    "Webhook Onboarding": {
+      "main": [
+        [
+          {
+            "node": "Switch Tipo Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-10-09T00:00:00.000Z",
+  "versionId": "1"
+}
+
