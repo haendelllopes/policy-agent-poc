@@ -104,3 +104,4 @@ CREATE INDEX IF NOT EXISTS idx_users_onboarding_status ON users(tenant_id, onboa
 
 -- Fim da migração
 
+

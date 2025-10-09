@@ -170,6 +170,83 @@ router.get('/colaboradores/progresso', async (req, res) => {
 });
 
 /**
+ * POST /api/admin/verificar-atrasos
+ * Verificar trilhas atrasadas e enviar alertas via webhook
+ * Este endpoint pode ser chamado por um cron job ou manualmente
+ */
+router.post('/verificar-atrasos', async (req, res) => {
+  try {
+    const { getTenantBySubdomain } = req.app.locals;
+    
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    // Buscar trilhas atrasadas que ainda não foram marcadas como atrasadas
+    const atrasadosResult = await query(`
+      SELECT 
+        u.name as colaborador_nome,
+        t.nome as trilha_nome,
+        EXTRACT(DAY FROM NOW() - ct.data_limite) as dias_atraso,
+        u_rh.email as rh_email,
+        u_rh.phone as rh_phone,
+        ct.id as colaborador_trilha_id
+      FROM colaborador_trilhas ct
+      JOIN users u ON ct.colaborador_id = u.id
+      JOIN trilhas t ON ct.trilha_id = t.id
+      LEFT JOIN users u_rh ON u_rh.tenant_id = u.tenant_id AND u_rh.role = 'admin'
+      WHERE u.tenant_id = $1 
+        AND ct.data_limite < NOW()
+        AND ct.status IN ('em_andamento', 'aguardando_quiz')
+      ORDER BY ct.data_limite ASC
+    `, [tenant.id]);
+
+    const alertasEnviados = [];
+
+    for (const atraso of atrasadosResult.rows) {
+      // Marcar trilha como atrasada
+      await query(`
+        UPDATE colaborador_trilhas
+        SET status = 'atrasada', updated_at = NOW()
+        WHERE id = $1
+      `, [atraso.colaborador_trilha_id]);
+
+      // Disparar webhook para n8n - alerta de atraso
+      try {
+        await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/alerta-atraso?tenant=${req.tenantSubdomain}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            colaborador_nome: atraso.colaborador_nome,
+            trilha_nome: atraso.trilha_nome,
+            dias_atraso: Math.floor(atraso.dias_atraso),
+            rh_email: atraso.rh_email,
+            rh_phone: atraso.rh_phone
+          })
+        });
+        
+        alertasEnviados.push({
+          colaborador: atraso.colaborador_nome,
+          trilha: atraso.trilha_nome,
+          dias_atraso: Math.floor(atraso.dias_atraso)
+        });
+      } catch (webhookError) {
+        console.error('Erro ao enviar webhook alerta-atraso:', webhookError);
+      }
+    }
+
+    res.json({
+      message: `${alertasEnviados.length} alertas de atraso enviados`,
+      alertas: alertasEnviados
+    });
+  } catch (error) {
+    console.error('Erro ao verificar atrasos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
  * GET /api/admin/trilhas/estatisticas
  * Estatísticas de cada trilha
  */
@@ -208,4 +285,5 @@ router.get('/trilhas/estatisticas', async (req, res) => {
 });
 
 module.exports = router;
+
 

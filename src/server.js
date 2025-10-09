@@ -2540,6 +2540,7 @@ const trilhasRoutes = require('./routes/trilhas');
 const colaboradorRoutes = require('./routes/colaborador');
 const quizRoutes = require('./routes/quiz');
 const adminRoutes = require('./routes/admin');
+const webhooksRoutes = require('./routes/webhooks');
 
 // Importar helpers
 const { normalizePhone: normalizePhoneHelper, normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper } = require('./utils/helpers');
@@ -2565,8 +2566,9 @@ app.use('/api/colaborador', colaboradorRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/gamificacao', quizRoutes); // Quiz routes contém gamificação
 app.use('/api/admin', adminRoutes);
+app.use('/api/webhooks', webhooksRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks');
 
 // ============================================
 

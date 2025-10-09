@@ -165,6 +165,37 @@ router.post('/trilhas/:id/iniciar', async (req, res) => {
       dataLimite.toISOString()
     ]);
 
+    // Buscar dados do colaborador e trilha para webhook
+    const colaboradorResult = await query(`
+      SELECT u.name, u.email, u.phone, t.nome as trilha_nome
+      FROM users u, trilhas t
+      WHERE u.id = $1 AND t.id = $2
+    `, [colaborador_id, trilhaId]);
+
+    if (colaboradorResult.rows.length > 0) {
+      const dados = colaboradorResult.rows[0];
+      
+      // Disparar webhook para n8n
+      try {
+        await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/trilha-iniciada?tenant=${req.tenantSubdomain}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            colaborador_id,
+            colaborador_nome: dados.name,
+            colaborador_email: dados.email,
+            colaborador_phone: dados.phone,
+            trilha_id: trilhaId,
+            trilha_nome: dados.trilha_nome,
+            prazo_dias: trilha.prazo_dias,
+            data_limite: dataLimite.toISOString()
+          })
+        });
+      } catch (webhookError) {
+        console.error('Erro ao enviar webhook trilha-iniciada:', webhookError);
+      }
+    }
+
     res.status(201).json({
       id: progressoId,
       trilha_id: trilhaId,
@@ -254,6 +285,37 @@ router.post('/conteudos/:id/aceitar', async (req, res) => {
         WHERE id = $1
       `, [progresso.id]);
 
+      // Buscar dados do colaborador e trilha para webhook
+      const colaboradorResult = await query(`
+        SELECT u.name, u.email, u.phone, t.nome as trilha_nome
+        FROM users u
+        JOIN colaborador_trilhas ct ON u.id = ct.colaborador_id
+        JOIN trilhas t ON ct.trilha_id = t.id
+        WHERE ct.id = $1
+      `, [progresso.id]);
+
+      if (colaboradorResult.rows.length > 0) {
+        const dados = colaboradorResult.rows[0];
+        
+        // Disparar webhook para n8n - quiz disponível
+        try {
+          await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/quiz-disponivel?tenant=${req.tenantSubdomain}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              colaborador_id,
+              colaborador_nome: dados.name,
+              colaborador_email: dados.email,
+              colaborador_phone: dados.phone,
+              trilha_id: progresso.trilha_id,
+              trilha_nome: dados.trilha_nome
+            })
+          });
+        } catch (webhookError) {
+          console.error('Erro ao enviar webhook quiz-disponivel:', webhookError);
+        }
+      }
+
       return res.json({
         message: 'Conteúdo aceito! Todos os conteúdos foram concluídos. Aguardando quiz.',
         id: aceiteId,
@@ -330,4 +392,5 @@ router.get('/progresso', async (req, res) => {
 });
 
 module.exports = router;
+
 

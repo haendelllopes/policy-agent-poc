@@ -216,6 +216,47 @@ router.post('/submeter', async (req, res) => {
       WHERE id = $4
     `, [JSON.stringify(respostas), nota, aprovado, tentativa_id]);
 
+    // Se NÃO aprovado e nota muito baixa, enviar alerta para RH
+    if (!aprovado && nota < 40) {
+      const alertaResult = await query(`
+        SELECT 
+          u.name as colaborador_nome,
+          t.nome as trilha_nome,
+          qt.tentativa_numero,
+          u_rh.email as rh_email,
+          u_rh.phone as rh_phone
+        FROM quiz_tentativas qt
+        JOIN colaborador_trilhas ct ON qt.colaborador_trilha_id = ct.id
+        JOIN users u ON ct.colaborador_id = u.id
+        JOIN trilhas t ON ct.trilha_id = t.id
+        LEFT JOIN users u_rh ON u_rh.tenant_id = u.tenant_id AND u_rh.role = 'admin'
+        WHERE qt.id = $1
+        LIMIT 1
+      `, [tentativa_id]);
+
+      if (alertaResult.rows.length > 0) {
+        const alerta = alertaResult.rows[0];
+        
+        // Disparar webhook para n8n - alerta nota baixa
+        try {
+          await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/alerta-nota-baixa?tenant=${req.tenantSubdomain}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              colaborador_nome: alerta.colaborador_nome,
+              trilha_nome: alerta.trilha_nome,
+              nota: nota,
+              tentativa: alerta.tentativa_numero,
+              rh_email: alerta.rh_email,
+              rh_phone: alerta.rh_phone
+            })
+          });
+        } catch (webhookError) {
+          console.error('Erro ao enviar webhook alerta-nota-baixa:', webhookError);
+        }
+      }
+    }
+
     // Se aprovado, atualizar progresso da trilha
     if (aprovado) {
       await query(`
@@ -250,6 +291,38 @@ router.post('/submeter', async (req, res) => {
         WHERE id = $2
       `, [Math.round(nota), tentativa.colaborador_id]);
 
+      // Buscar dados do colaborador e trilha para webhook trilha-concluida
+      const colaboradorResult = await query(`
+        SELECT u.name, u.email, u.phone, t.nome as trilha_nome
+        FROM users u
+        JOIN trilhas t ON t.id = $2
+        WHERE u.id = $1
+      `, [tentativa.colaborador_id, tentativa.trilha_id]);
+
+      if (colaboradorResult.rows.length > 0) {
+        const dados = colaboradorResult.rows[0];
+        
+        // Disparar webhook para n8n - trilha concluída
+        try {
+          await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/trilha-concluida?tenant=${req.tenantSubdomain}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              colaborador_id: tentativa.colaborador_id,
+              colaborador_nome: dados.name,
+              colaborador_email: dados.email,
+              colaborador_phone: dados.phone,
+              trilha_id: tentativa.trilha_id,
+              trilha_nome: dados.trilha_nome,
+              nota: nota,
+              pontos: Math.round(nota)
+            })
+          });
+        } catch (webhookError) {
+          console.error('Erro ao enviar webhook trilha-concluida:', webhookError);
+        }
+      }
+
       // Verificar se todas as trilhas foram concluídas
       const todasConcluidasResult = await query(`
         SELECT 
@@ -270,6 +343,37 @@ router.post('/submeter', async (req, res) => {
             updated_at = NOW()
           WHERE id = $1
         `, [tentativa.colaborador_id]);
+
+        // Buscar dados do colaborador para webhook onboarding-completo
+        const colaboradorCompleto = await query(`
+          SELECT u.name, u.email, u.phone, u.pontuacao_total,
+                 (SELECT COUNT(*) + 1 FROM users u2 WHERE u2.pontuacao_total > u.pontuacao_total AND u2.tenant_id = u.tenant_id) as ranking_geral
+          FROM users u
+          WHERE u.id = $1
+        `, [tentativa.colaborador_id]);
+
+        if (colaboradorCompleto.rows.length > 0) {
+          const dados = colaboradorCompleto.rows[0];
+          
+          // Disparar webhook para n8n - onboarding completo
+          try {
+            await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/onboarding-completo?tenant=${req.tenantSubdomain}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                colaborador_id: tentativa.colaborador_id,
+                colaborador_nome: dados.name,
+                colaborador_email: dados.email,
+                colaborador_phone: dados.phone,
+                total_trilhas: stats.total_trilhas,
+                pontuacao_total: dados.pontuacao_total,
+                ranking_geral: dados.ranking_geral
+              })
+            });
+          } catch (webhookError) {
+            console.error('Erro ao enviar webhook onboarding-completo:', webhookError);
+          }
+        }
       }
     }
 
@@ -495,4 +599,5 @@ router.get('/meu-ranking', async (req, res) => {
 });
 
 module.exports = router;
+
 

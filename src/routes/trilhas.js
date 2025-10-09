@@ -427,3 +427,4 @@ router.delete('/conteudos/:conteudoId', async (req, res) => {
 
 module.exports = router;
 
+
