@@ -6,25 +6,54 @@ const { query } = require('../db-pg');
 router.get('/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const { limit = 3 } = req.query;
+    const { limit = 3, sentimento } = req.query;
 
-    // Buscar sentimento atual do usuário
-    const userResult = await query(`
-      SELECT sentimento_atual
-      FROM users
-      WHERE id = $1
-    `, [userId]);
-
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
+    // Se recebeu phone, fazer lookup do user_id
+    let colaboradorId = userId;
+    
+    // Verificar se é um phone (contém apenas números)
+    if (/^\d+$/.test(userId)) {
+      const userLookup = await query(
+        `SELECT id FROM users WHERE phone LIKE $1`,
+        [`%${userId}%`]
+      );
+      
+      if (userLookup.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'Usuário não encontrado com este telefone',
+          phone: userId
+        });
+      }
+      
+      colaboradorId = userLookup.rows[0].id;
+      console.log(`📞 Lookup: Phone ${userId} → User ID ${colaboradorId}`);
     }
 
-    const sentimentoAtual = userResult.rows[0].sentimento_atual || 'neutro';
+    // Buscar sentimento atual do usuário ou usar o enviado
+    let sentimentoAtual = sentimento;
+    
+    if (!sentimentoAtual) {
+      const userResult = await query(`
+        SELECT sentimento_atual
+        FROM users
+        WHERE id = $1
+      `, [colaboradorId]);
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      sentimentoAtual = userResult.rows[0].sentimento_atual || 'neutro';
+    }
+
+    console.log(`🔍 Buscando trilhas para user ${colaboradorId} com sentimento ${sentimentoAtual}`);
 
     // Buscar trilhas recomendadas usando a função SQL
     const result = await query(`
       SELECT * FROM buscar_trilhas_por_sentimento($1, $2, $3)
-    `, [userId, sentimentoAtual, parseInt(limit)]);
+    `, [colaboradorId, sentimentoAtual, parseInt(limit)]);
+
+    console.log(`✅ Encontradas ${result.rows.length} trilhas recomendadas`);
 
     res.json({
       sentimento_atual: sentimentoAtual,
@@ -33,7 +62,10 @@ router.get('/:userId', async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao buscar trilhas recomendadas:', error);
-    res.status(500).json({ error: 'Erro ao buscar trilhas recomendadas' });
+    res.status(500).json({ 
+      error: 'Erro ao buscar trilhas recomendadas',
+      details: error.message 
+    });
   }
 });
 
