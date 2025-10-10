@@ -1,0 +1,232 @@
+{
+  "name": "Flowly - Análise de Sentimento Integrada v2.0",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-1200, -100],
+      "id": "note-analise-sentimento",
+      "name": "📝 ANÁLISE DE SENTIMENTO - NOVO FLUXO",
+      "notes": "Este nó analisa o sentimento de TODAS as mensagens e adapta o tom da resposta"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').json.url }}/api/analise-sentimento",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\"Content-Type\": \"application/json\"}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ $json.messageText }}\",\n  \"userId\": \"{{ $json.from }}\",\n  \"context\": \"Mensagem via {{ $json.channel }} durante onboarding\",\n  \"tenantId\": \"{{ $json.tenantId }}\",\n  \"momentoOnboarding\": \"conversa_agente\",\n  \"diaOnboarding\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-800, 200],
+      "id": "analise-sentimento-node",
+      "name": "1️⃣ Analisar Sentimento",
+      "notes": "Chama API de análise de sentimento com OpenAI/Gemini"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').json.url }}/api/sentimentos",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\"Content-Type\": \"application/json\"}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"colaborador_id\": \"{{ $('Merge').item.json.from }}\",\n  \"sentimento\": \"{{ $('1️⃣ Analisar Sentimento').item.json.sentiment.sentimento }}\",\n  \"intensidade\": {{ $('1️⃣ Analisar Sentimento').item.json.sentiment.intensidade }},\n  \"origem\": \"{{ $('Merge').item.json.channel }}\",\n  \"mensagem_analisada\": \"{{ $('Merge').item.json.messageText }}\",\n  \"fatores_detectados\": {{ JSON.stringify($('1️⃣ Analisar Sentimento').item.json.sentiment.fatores_detectados) }},\n  \"momento_onboarding\": \"conversa_agente\",\n  \"dia_onboarding\": 1,\n  \"acao_agente\": \"analise_sentimento\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-600, 200],
+      "id": "salvar-sentimento-node",
+      "name": "2️⃣ Salvar Sentimento",
+      "notes": "Salva o sentimento no banco de dados"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-negative",
+              "leftValue": "={{ $('1️⃣ Analisar Sentimento').item.json.sentiment.sentimento }}",
+              "rightValue": "negativo|muito_negativo",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-400, 200],
+      "id": "check-sentimento-negativo",
+      "name": "3️⃣ É Negativo?",
+      "notes": "Verifica se o sentimento é negativo ou muito negativo"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').json.url }}/api/webhooks/alerta-sentimento-negativo",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\"Content-Type\": \"application/json\"}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"colaborador_id\": \"{{ $('Merge').item.json.from }}\",\n  \"sentimento\": \"{{ $('1️⃣ Analisar Sentimento').item.json.sentiment.sentimento }}\",\n  \"intensidade\": {{ $('1️⃣ Analisar Sentimento').item.json.sentiment.intensidade }},\n  \"mensagem\": \"{{ $('Merge').item.json.messageText }}\",\n  \"canal\": \"{{ $('Merge').item.json.channel }}\",\n  \"tenant_id\": \"{{ $('Merge').item.json.tenantId }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-200, 100],
+      "id": "enviar-alerta-node",
+      "name": "🚨 Enviar Alerta RH",
+      "notes": "Notifica RH/Gestor sobre sentimento negativo"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('BACKEND_URL').json.url }}/api/trilhas-recomendadas/{{ $('Merge').item.json.from }}?sentimento={{ $('1️⃣ Analisar Sentimento').item.json.sentiment.sentimento }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\"Content-Type\": \"application/json\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-200, 300],
+      "id": "buscar-trilhas-node",
+      "name": "4️⃣ Buscar Trilhas",
+      "notes": "Busca trilhas recomendadas baseadas no sentimento"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega os dados de todos os nós anteriores\nconst mensagem = $('Merge').item.json;\nconst sentimento = $('1️⃣ Analisar Sentimento').item.json.sentiment;\nconst trilhas = $('4️⃣ Buscar Trilhas').item.json;\n\n// Define o prompt baseado no sentimento\nlet systemPrompt = \"Você é o Flowly, assistente de onboarding.\";\nlet tonInstrucoes = \"\";\n\nswitch(sentimento.sentimento) {\n  case 'muito_negativo':\n    tonInstrucoes = \"O colaborador está MUITO frustrado. Seja EXTREMAMENTE empático, ofereça ajuda IMEDIATA e mostre que você se importa. Sugira trilhas mais simples e ofereça falar com o RH.\";\n    break;\n  case 'negativo':\n    tonInstrucoes = \"O colaborador está com dificuldades. Seja compreensivo e oferece suporte. Sugira trilhas mais acessíveis e dê dicas práticas.\";\n    break;\n  case 'neutro':\n    tonInstrucoes = \"Mantenha um tom profissional e objetivo. Responda diretamente e seja claro.\";\n    break;\n  case 'positivo':\n    tonInstrucoes = \"O colaborador está motivado! Seja encorajador e reconheça seu progresso. Sugira trilhas desafiadoras.\";\n    break;\n  case 'muito_positivo':\n    tonInstrucoes = \"O colaborador está MUITO empolgado! Celebre com ele! Use emojis positivos e sugira trilhas avançadas.\";\n    break;\n}\n\n// Monta o prompt completo\nconst promptCompleto = `\n**Análise de Sentimento:**\n- Sentimento: ${sentimento.sentimento}\n- Intensidade: ${sentimento.intensidade}\n- Tom detectado: ${sentimento.fatores_detectados?.tom || 'neutro'}\n- Palavras-chave: ${sentimento.fatores_detectados?.palavras_chave?.join(', ') || 'nenhuma'}\n\n**Mensagem original:** ${mensagem.messageText}\n\n**Instruções de Tom:**\n${tonInstrucoes}\n\n**Trilhas Recomendadas:**\n${trilhas && trilhas.length > 0 ? trilhas.map(t => `- ${t.nome}: ${t.descricao} (Dificuldade: ${t.dificuldade_percebida || 'média'})`).join('\\n') : 'Nenhuma trilha disponível no momento.'}\n\n**Sua Resposta:**\nResponda de forma personalizada, humana e empática. Se houver trilhas relevantes, mencione-as naturalmente.\n`;\n\nreturn {\n  json: {\n    prompt: promptCompleto,\n    systemMessage: systemPrompt,\n    sentimento: sentimento.sentimento,\n    from: mensagem.from,\n    channel: mensagem.channel,\n    tenantId: mensagem.tenantId\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 200],
+      "id": "preparar-prompt-node",
+      "name": "5️⃣ Preparar Prompt Adaptado",
+      "notes": "Prepara o prompt da IA baseado no sentimento"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "backend-url",
+              "name": "url",
+              "value": "=https://seu-projeto.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1000, 200],
+      "id": "backend-url-config",
+      "name": "BACKEND_URL",
+      "notes": "Configure aqui a URL do seu backend (Vercel)"
+    }
+  ],
+  "connections": {
+    "BACKEND_URL": {
+      "main": [
+        [
+          {
+            "node": "1️⃣ Analisar Sentimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1️⃣ Analisar Sentimento": {
+      "main": [
+        [
+          {
+            "node": "2️⃣ Salvar Sentimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2️⃣ Salvar Sentimento": {
+      "main": [
+        [
+          {
+            "node": "3️⃣ É Negativo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3️⃣ É Negativo?": {
+      "main": [
+        [
+          {
+            "node": "🚨 Enviar Alerta RH",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "4️⃣ Buscar Trilhas",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "4️⃣ Buscar Trilhas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚨 Enviar Alerta RH": {
+      "main": [
+        []
+      ]
+    },
+    "4️⃣ Buscar Trilhas": {
+      "main": [
+        [
+          {
+            "node": "5️⃣ Preparar Prompt Adaptado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5️⃣ Preparar Prompt Adaptado": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
+
