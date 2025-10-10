@@ -19,17 +19,48 @@ router.post('/', authenticate, async (req, res) => {
   try {
     const { 
       message, 
-      userId, 
+      userId,
+      phone, 
       context = '', 
       trilhaId = null,
       momentoOnboarding = null,
       diaOnboarding = null 
     } = req.body;
 
-    if (!message || !userId) {
+    if (!message) {
       return res.status(400).json({ 
-        error: 'Campos obrigatórios: message, userId' 
+        error: 'Campo obrigatório: message' 
       });
+    }
+
+    if (!userId && !phone) {
+      return res.status(400).json({ 
+        error: 'Informe userId (UUID) ou phone (número de telefone)' 
+      });
+    }
+
+    // Se recebeu phone, fazer lookup do user_id
+    let colaboradorId = userId;
+    
+    if (!userId && phone) {
+      // Normalizar phone (remover caracteres não numéricos)
+      const phoneNormalized = phone.replace(/\D/g, '');
+      
+      const userLookup = await query(
+        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2`,
+        [`%${phoneNormalized}`, `%${phone}`]
+      );
+      
+      if (userLookup.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'Usuário não encontrado com este telefone',
+          phone: phone,
+          hint: 'Verifique se o usuário existe no sistema'
+        });
+      }
+      
+      colaboradorId = userLookup.rows[0].id;
+      console.log(`📞 Lookup: Phone ${phone} → User ID ${colaboradorId}`);
     }
 
     // 1. Analisar sentimento com OpenAI (ou Gemini como fallback)
@@ -55,7 +86,7 @@ router.post('/', authenticate, async (req, res) => {
       RETURNING *`,
       [
         req.tenantId,
-        userId,
+        colaboradorId,
         sentimentAnalysis.sentimento,
         sentimentAnalysis.intensidade,
         'analise_automatica',
