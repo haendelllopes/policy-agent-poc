@@ -1,0 +1,333 @@
+{
+  "name": "Detecção Automática de Anotações",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "Trigger Manual",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message }}",
+              "operation": "regex",
+              "value2": "(dificuldade|problema|não consigo|confuso|complexo|difícil|não entendo|ajuda|sugestão|melhorar|melhor|ideia|recomendo|sugiro)"
+            }
+          ]
+        }
+      },
+      "id": "detect-feedback",
+      "name": "🔍 Detecta Feedback Relevante",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-flash",
+        "options": {
+          "systemMessage": "Você é um analisador de feedback para onboarding empresarial.\n\nAnalise a mensagem e determine:\n1. Tipo de anotação\n2. Título descritivo\n3. Tags relevantes\n4. Categoria do feedback\n\nRetorne JSON:\n{\n  \"tipo\": \"sentimento_trilha|sentimento_empresa|dificuldade_conteudo|sugestao_colaborador|observacao_geral\",\n  \"titulo\": \"Título descritivo\",\n  \"tags\": [\"tag1\", \"tag2\", \"tag3\"],\n  \"categoria\": \"conteudo|interface|fluxo|performance|engajamento|acessibilidade|outros\",\n  \"relevancia\": \"alta|media|baixa\"\n}"
+        },
+        "prompt": "Mensagem do colaborador: {{ $json.message }}\n\nContexto: {{ $json.context || 'Conversa de onboarding' }}\n\nAnalise e categorize este feedback:"
+      },
+      "id": "analyze-feedback",
+      "name": "🧠 Analisar Feedback (Gemini)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGemini",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://navigator-gules.vercel.app/api/agente/anotacoes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-tenant-id",
+              "value": "{{ $json.tenantId || '5978f911-738b-4aae-802a-f037fdac2e64' }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.userId }}"
+            },
+            {
+              "name": "trilha_id",
+              "value": "={{ $json.trilhaId || null }}"
+            },
+            {
+              "name": "tipo",
+              "value": "={{ $json.analysis.tipo }}"
+            },
+            {
+              "name": "titulo",
+              "value": "={{ $json.analysis.titulo }}"
+            },
+            {
+              "name": "anotacao",
+              "value": "={{ $json.message }}"
+            },
+            {
+              "name": "sentimento",
+              "value": "={{ $json.sentiment?.sentimento || 'neutro' }}"
+            },
+            {
+              "name": "intensidade_sentimento",
+              "value": "={{ $json.sentiment?.intensidade || 0.5 }}"
+            },
+            {
+              "name": "contexto",
+              "value": "={{ JSON.stringify({ categoria: $json.analysis.categoria, relevancia: $json.analysis.relevancia, contexto_original: $json.context }) }}"
+            },
+            {
+              "name": "tags",
+              "value": "={{ $json.analysis.tags }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-annotation",
+      "name": "💾 Salvar Anotação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.analysis.relevancia }}",
+              "operation": "equal",
+              "value2": "alta"
+            }
+          ]
+        }
+      },
+      "id": "check-high-relevance",
+      "name": "⚡ Feedback Alta Relevância?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://navigator-gules.vercel.app/api/agente/anotacoes/{{ $json.id }}/gerar-melhoria",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "generate-improvement",
+      "name": "💡 Gerar Sugestão de Melhoria",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://navigator-gules.vercel.app/api/webhooks/alerta-feedback-alto",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "anotacao_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.colaborador_id }}"
+            },
+            {
+              "name": "tipo",
+              "value": "={{ $json.tipo }}"
+            },
+            {
+              "name": "titulo",
+              "value": "={{ $json.titulo }}"
+            },
+            {
+              "name": "relevancia",
+              "value": "alta"
+            },
+            {
+              "name": "tags",
+              "value": "={{ $json.tags }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "alert-admin",
+      "name": "🚨 Alerta Admin (Feedback Alto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "message": "✅ Anotação criada com sucesso!\n\n📝 Tipo: {{ $json.tipo }}\n🏷️ Tags: {{ $json.tags.join(', ') }}\n⭐ Relevância: {{ $json.analysis.relevancia }}\n\n{{ $json.analysis.relevancia === 'alta' ? '🚨 Feedback de alta relevância - Admin notificado!' : '📊 Feedback registrado para análise.' }}"
+      },
+      "id": "success-message",
+      "name": "✅ Sucesso",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "message": "❌ Feedback não detectado\n\nA mensagem não contém indicadores de feedback relevante para anotação automática."
+      },
+      "id": "no-feedback-message",
+      "name": "❌ Sem Feedback",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [680, 400]
+    }
+  ],
+  "connections": {
+    "Trigger Manual": {
+      "main": [
+        [
+          {
+            "node": "🔍 Detecta Feedback Relevante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Detecta Feedback Relevante": {
+      "main": [
+        [
+          {
+            "node": "🧠 Analisar Feedback (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "❌ Sem Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 Analisar Feedback (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "💾 Salvar Anotação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Salvar Anotação": {
+      "main": [
+        [
+          {
+            "node": "⚡ Feedback Alta Relevância?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚡ Feedback Alta Relevância?": {
+      "main": [
+        [
+          {
+            "node": "💡 Gerar Sugestão de Melhoria",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🚨 Alerta Admin (Feedback Alto)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "✅ Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💡 Gerar Sugestão de Melhoria": {
+      "main": [
+        [
+          {
+            "node": "✅ Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚨 Alerta Admin (Feedback Alto)": {
+      "main": [
+        [
+          {
+            "node": "✅ Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-10T21:30:00.000Z",
+  "versionId": "1"
+}
