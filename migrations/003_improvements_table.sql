@@ -93,3 +93,5 @@ COMMENT ON COLUMN onboarding_improvements.contexto IS 'Contexto específico em f
 COMMENT ON COLUMN onboarding_improvements.dados_analise IS 'Dados que geraram a sugestão (ex: métricas, feedback, comportamento)';
 COMMENT ON COLUMN onboarding_improvements.status IS 'Status: sugerida, em_analise, aprovada, em_desenvolvimento, implementada, rejeitada';
 COMMENT ON COLUMN onboarding_improvements.criado_por IS 'Quem criou: ai_agent, admin_id, sistema, etc.';
+
+

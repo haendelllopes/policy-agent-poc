@@ -193,3 +193,5 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 **Data:** 10 de outubro de 2025  
 **Status:** ✅ Documentação Completa e Pronta
 
+
+

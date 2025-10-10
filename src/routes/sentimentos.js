@@ -242,3 +242,5 @@ router.get('/alertas/:tenantId', async (req, res) => {
 
 module.exports = router;
 
+
+

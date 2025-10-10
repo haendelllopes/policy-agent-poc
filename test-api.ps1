@@ -210,3 +210,5 @@ Write-Host "  2. Criar API Key do Gemini"
 Write-Host "  3. Configurar N8N workflows"
 Write-Host "  4. Testar integração completa`n"
 
+
+

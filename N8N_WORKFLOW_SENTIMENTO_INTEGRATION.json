@@ -1,0 +1,323 @@
+{
+  "name": "Flowly - Análise de Sentimento e Recomendação Inteligente",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1200,
+        0
+      ],
+      "id": "whatsapp-trigger",
+      "name": "WhatsApp Trigger",
+      "webhookId": "whatsapp-sentiment-analysis"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "message-type-check",
+              "leftValue": "={{$json.messages?.[0]?.type || ''}}",
+              "rightValue": "^(text|image|audio|document)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -960,
+        0
+      ],
+      "id": "message-filter",
+      "name": "Filter Valid Messages"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extract-user-id",
+              "name": "userId",
+              "value": "={{$json.messages[0].from}}",
+              "type": "string"
+            },
+            {
+              "id": "extract-message",
+              "name": "message",
+              "value": "={{ $json.messages[0].type === 'text' ? $json.messages[0].text?.body : $json.messages[0].type === 'image' ? ($json.messages[0].image?.caption || '[imagem]') : $json.messages[0].type === 'audio' ? '[áudio]' : $json.messages[0].type === 'document'? ($json.messages[0].document?.caption || '[documento]') : '[mensagem]' }}",
+              "type": "string"
+            },
+            {
+              "id": "extract-tenant",
+              "name": "tenantId",
+              "value": "={{$json.tenantId || '5978f911-738b-4aae-802a-f037fdac2e64'}}",
+              "type": "string"
+            },
+            {
+              "id": "extract-channel",
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -720,
+        0
+      ],
+      "id": "normalize-message",
+      "name": "Normalize Message Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/analise-sentimento",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"message\": \"{{ $json.message }}\",\n  \"userId\": \"{{ $json.userId }}\",\n  \"context\": \"Mensagem via WhatsApp durante onboarding\",\n  \"tenantId\": \"{{ $json.tenantId }}\",\n  \"momentoOnboarding\": \"conversa_agente\",\n  \"diaOnboarding\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        0
+      ],
+      "id": "analyze-sentiment",
+      "name": "Analyze Sentiment (Gemini)"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://localhost:3000/api/trilhas-recomendadas/{{ $('Normalize Message Data').item.json.userId }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "get-recommendations",
+      "name": "Get Track Recommendations"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Com base na análise de sentimento e trilhas recomendadas, responda ao colaborador de forma personalizada:\n\n**Análise de Sentimento:**\n- Sentimento: {{ $('Analyze Sentiment (Gemini)').item.json.sentiment.sentimento }}\n- Intensidade: {{ $('Analyze Sentiment (Gemini)').item.json.sentiment.intensidade }}\n- Fatores detectados: {{ JSON.stringify($('Analyze Sentiment (Gemini)').item.json.sentiment.fatores_detectados) }}\n\n**Mensagem original:** {{ $('Normalize Message Data').item.json.message }}\n\n**Trilhas recomendadas:**\n{{ $('Get Track Recommendations').item.json.map(t => `- ${t.nome}: ${t.descricao} (Dificuldade: ${t.dificuldade_percebida})`).join('\\n') }}\n\n**Instruções:**\n1. Adapte seu tom baseado no sentimento detectado\n2. Se o sentimento for negativo, seja empático e ofereça trilhas mais fáceis\n3. Se positivo, seja motivador e sugira trilhas desafiadoras\n4. Se neutro, mantenha tom profissional\n5. Mencione trilhas específicas quando relevante\n6. Responda em português brasileiro, de forma natural e humana\n\nResponda de forma personalizada e útil:",
+        "options": {
+          "systemMessage": "Você é o Flowly, assistente de onboarding. Adapte suas respostas baseado no sentimento do colaborador. Seja empático com sentimentos negativos, motivador com positivos, e profissional com neutros. Sempre sugira trilhas relevantes quando apropriado."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "personalized-response",
+      "name": "Generate Personalized Response",
+      "executeOnce": false,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "textBody": "={{ $json.output.substring(0, 4096) }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "id": "send-response",
+      "name": "Send Personalized Response",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3000/api/analise-sentimento/gerar-anotacao",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"userId\": \"{{ $('Normalize Message Data').item.json.userId }}\",\n  \"tenantId\": \"{{ $('Normalize Message Data').item.json.tenantId }}\",\n  \"messages\": [\n    {\n      \"text\": \"{{ $('Normalize Message Data').item.json.message }}\",\n      \"timestamp\": \"{{ new Date().toISOString() }}\",\n      \"sentiment\": {{ JSON.stringify($('Analyze Sentiment (Gemini)').item.json.sentiment) }}\n    }\n  ],\n  \"userContext\": {\n    \"name\": \"Colaborador\",\n    \"position\": \"N/A\",\n    \"department\": \"N/A\",\n    \"daysOnboarding\": 1\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "generate-agent-note",
+      "name": "Generate Agent Note"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -120,
+        -120
+      ],
+      "id": "gemini-model",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zVg2JCqxlVgfR1dq",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter Valid Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Valid Messages": {
+      "main": [
+        [
+          {
+            "node": "Normalize Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Normalize Message Data": {
+      "main": [
+        [
+          {
+            "node": "Analyze Sentiment (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Sentiment (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "Get Track Recommendations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Track Recommendations": {
+      "main": [
+        [
+          {
+            "node": "Generate Personalized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Personalized Response": {
+      "main": [
+        [
+          {
+            "node": "Send Personalized Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Personalized Response": {
+      "main": [
+        [
+          {
+            "node": "Generate Agent Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Personalized Response",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
+
+

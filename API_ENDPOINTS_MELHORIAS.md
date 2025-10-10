@@ -498,3 +498,5 @@ await fetch('http://localhost:3000/api/anotacoes', {
 **Base URL:** `http://localhost:3000/api`  
 **Produção:** `https://seu-dominio.com/api`
 
+
+

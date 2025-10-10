@@ -296,10 +296,10 @@ BEGIN
   FROM trilhas_recomendadas tr
   WHERE colaborador_tem_acesso_trilha(p_colaborador_id, tr.id) = true
     AND tr.id NOT IN (
-      SELECT trilha_id 
-      FROM colaborador_trilhas 
-      WHERE colaborador_id = p_colaborador_id 
-        AND status IN ('concluida', 'em_andamento')
+      SELECT ct.trilha_id 
+      FROM colaborador_trilhas ct
+      WHERE ct.colaborador_id = p_colaborador_id 
+        AND ct.status IN ('concluida', 'em_andamento')
     )
   ORDER BY 
     -- Ordenar por compatibilidade primeiro, depois por score

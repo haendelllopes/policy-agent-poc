@@ -614,3 +614,5 @@ Esta funcionalidade transforma o Flowly em um **coach inteligente** que:
 **Data:** 10 de outubro de 2025  
 **Status:** 💡 Proposta de Melhoria Adicional
 
+
+

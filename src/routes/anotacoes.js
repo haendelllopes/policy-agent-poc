@@ -299,3 +299,5 @@ router.get('/estatisticas/:tenantId', async (req, res) => {
 
 module.exports = router;
 
+
+

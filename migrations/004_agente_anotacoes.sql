@@ -79,3 +79,5 @@ COMMENT ON COLUMN agente_anotacoes.gerou_melhoria IS 'Se esta anotação já ger
 
 -- Fim da migração
 
+
+

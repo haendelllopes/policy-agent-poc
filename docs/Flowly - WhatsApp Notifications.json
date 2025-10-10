@@ -1,0 +1,1866 @@
+{
+  "name": "Flowly - WhatsApp Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{$json.messageText}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -304,
+        224
+      ],
+      "id": "bb3bfbfc-f512-4b78-8b53-1f38dd4218dd",
+      "name": "AI Agent",
+      "executeOnce": false,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueRegularOutput",
+      "notes": "Você é um assistente de onboarding, chamado Flowly. Responda somente com base nas políticas do tenant. Quando precisar de contexto, use a ferramenta policy_search. Se não encontrar, peça para reformular e ofereça falar com o RH. Responda em PT‑BR, breve e objetivo."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        544
+      ],
+      "id": "7ae1b44d-2d3d-4467-ae0f-324dc0716019",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zVg2JCqxlVgfR1dq",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -32
+      ],
+      "id": "6f6b5235-1ca7-4ce7-9789-68a83331d93b",
+      "name": "WhatsApp Trigger",
+      "webhookId": "fd5d84e1-7670-4e77-a0e5-fe5c387a5a83",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "6473eeqF9sFk1g7n",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.from }}, {{ $json.tenantId }}, {{ $json.channel }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        560
+      ],
+      "id": "e227c579-d7aa-44c4-ada8-9a836a25336a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "textBody": "={{ $json.output.substring(0, 4096) }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        832,
+        -32
+      ],
+      "id": "4e6e2f93-4ba4-4fae-95e0-fc745e4bc48b",
+      "name": "Send message",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 4096,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        0,
+        272
+      ],
+      "id": "89a0b8f3-0b2c-471e-addf-2c61cfcc6a6d",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "0880be8d-7c9b-461a-8de8-900c79a78f80",
+              "leftValue": "={{Array.isArray($json.messages) && $json.messages.length > 0}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "28ccae4e-3f38-4a12-92b1-66538a594cb1",
+              "leftValue": "={{$json.messages?.[0]?.type || ''}}",
+              "rightValue": "^(text|image|audio|document)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -944,
+        -32
+      ],
+      "id": "896339e0-c0d8-4643-abaf-4b27fb94ef79",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "content": "Mensagem de boas vindas",
+        "height": 576,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        -1168
+      ],
+      "typeVersion": 1,
+      "id": "dacb90e7-db76-454c-aad4-716766dc8bc5",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "tenantId",
+              "value": "={{ $json.body.tenantId }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ $json.body.name }}"
+            },
+            {
+              "name": "phone",
+              "value": "={{ $json.body.phone }}"
+            },
+            {
+              "name": "welcome",
+              "value": "=Olá ! {{ $json.body.name }}👋  Seja bem-vindo(a) à {{ $json.body.tenantName }}!  Estou aqui para te ajudar com qualquer dúvida sobre políticas internas, benefícios e processos da empresa.  Como posso te ajudar hoje? 😊 "
+            },
+            {
+              "name": "communication_type",
+              "value": "={{ $('Webhook Onboarding').item.json.body.communication_type }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b658c53a-f4ba-4fab-ad2d-92935fdd5902",
+      "name": "Set Welcome",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        -960
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e947ea0d-aeda-472c-946f-4ff0aafaba43",
+      "name": "Respond Onboarding (plug WhatsApp send)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -752
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $json.phone }}",
+        "textBody": "={{ $json.welcome }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -752
+      ],
+      "id": "ee7935ac-8ca0-4006-a653-41abf2ea4fa4",
+      "name": "Boas vindas",
+      "webhookId": "17721e2b-1e1d-4eba-81a1-f71f519782c5",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "0d2e06d7-5aa7-47d0-8526-deafa2632776",
+      "name": "Webhook Onboarding",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -624
+      ],
+      "webhookId": "c86dc157-c0c4-4a41-93d7-619cd08c6f3f"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7e1e1cd7-59bb-41b6-87be-0315c091c898",
+              "leftValue": "={{$json.body.type === \"user_created\"}}",
+              "rightValue": "\"user_created\"",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -432,
+        -624
+      ],
+      "id": "01d7edba-19e4-4fa2-b42b-669310368f8c",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "content": "AGENTE CONVERSA",
+        "height": 784,
+        "width": 1776
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -992,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "fab481dc-25b0-4bfd-a562-65edc4933153",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        -336
+      ],
+      "id": "9e2dfa91-e092-4280-ba7d-075d9e97ee2f",
+      "name": "Google Gemini Chat Model1",
+      "notesInFlow": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zVg2JCqxlVgfR1dq",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://navigator-gules.vercel.app/documents/categorization-result",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{ \"Content-Type\": \"application/json\" }",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        -496
+      ],
+      "id": "c3fb5df9-2c99-474d-adbb-8f603a62d49b",
+      "name": "Retorno categorização"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analise este documento:\n\nTítulo: {{ $json.body.title }}\nCategoria sugerida: {{ $json.body.category }}\nConteúdo: {{ $json.body.content }}\n\nExtraia as informações estruturadas em JSON.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Você é um especialista em análise de documentos corporativos.\nAnalise documentos e extraia informações estruturadas em JSON.\n\nPara cada documento, identifique:\n1. Categoria principal (Benefícios, Políticas, RH, etc.)\n2. Subcategorias específicas (vale refeição, plano de saúde, etc.)\n3. Tags relevantes\n4. Resumo do conteúdo\n\nSempre responda em JSON válido com esta estrutura:\n{\n  \"suggestedCategory\": \"categoria principal\",\n  \"subcategories\": [\"sub1\", \"sub2\", \"sub3\"],\n  \"tags\": [\"tag1\", \"tag2\", \"tag3\"],\n  \"summary\": \"resumo em 2-3 frases\",\n  \"confidence\": 0.95\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -96,
+        -496
+      ],
+      "id": "54e6e02c-c96c-4512-b3bc-bf78a64e9e3b",
+      "name": "AI Agent - Categorização",
+      "notesInFlow": false,
+      "alwaysOutputData": false,
+      "executeOnce": false,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "content": "CATEGORIZAÇÃO DE DOCUMENTOS",
+        "height": 320,
+        "width": 704
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        -544
+      ],
+      "typeVersion": 1,
+      "id": "75522706-5938-48e3-8769-244722f430e2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrair dados do webhook\nconst webhookData = $('Webhook Onboarding').first().json.body;\nconst aiData = $input.first().json.output;\n\n// Extrair JSON da resposta da IA\nlet aiJson;\ntry {\n  // Remover markdown code blocks se existirem\n  let jsonString = aiData;\n  if (jsonString.includes('```json')) {\n    jsonString = jsonString.split('```json')[1].split('```')[0];\n  }\n  \n  // Limpar e extrair JSON\n  jsonString = jsonString.trim();\n  aiJson = JSON.parse(jsonString);\n} catch (error) {\n  console.log('Erro ao fazer parse do JSON da IA:', error);\n  aiJson = {\n    suggestedCategory: \"Erro\",\n    subcategories: [],\n    tags: [],\n    summary: \"Erro ao processar com IA\",\n    confidence: 0\n  };\n}\n\n// Montar resposta final\nreturn {\n  documentId: webhookData.documentId,\n  tenantId: webhookData.tenantId,\n  category: webhookData.category,\n  suggestedCategory: aiJson.suggestedCategory,\n  subcategories: aiJson.subcategories,\n  tags: aiJson.tags,\n  summary: aiJson.summary,\n  confidence: aiJson.confidence,\n  processedAt: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -496
+      ],
+      "id": "744d2d29-ed40-41c8-b021-a092c2dc82ae",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9feb4d72-8f44-444e-ac23-da122ce3ba0e",
+                    "leftValue": "={{$json.communication_type}}",
+                    "rightValue": "telegram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5aa37de1-61fd-4180-93ca-be5380bef36b",
+                    "leftValue": "={{$json.communication_type}}",
+                    "rightValue": "slack",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "53f6f83e-fe3a-42b2-8bfe-857e04e47468",
+                    "leftValue": "={{$json.communication_type}}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        32,
+        -976
+      ],
+      "id": "54f2e6b4-e5b9-49a5-8003-cc5aec447c9a",
+      "name": "Decide Canal"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://navigator-gules.vercel.app/api/communication/generate-link?tenant={{ $json.tenantId }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{ \"Content-Type\": \"application/json\" }",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"type\": \"telegram\",\n    \"email\": \"{{ $('Webhook Onboarding').item.json.body.email }}\",\n    \"userId\": \"{{ $('Webhook Onboarding').item.json.body.userId }}\",\n    \"name\": \"{{ $json.name }}\",\n    \"phone\": \"{{ $json.phone }}\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -1152
+      ],
+      "id": "a84f7a67-91c3-43ab-87a4-6a59f5730a24",
+      "name": "Generate Link (Telegram)"
+    },
+    {
+      "parameters": {
+        "fromEmail": "navigatortera15@gmail.com",
+        "toEmail": "={{ $json.user.email }}",
+        "subject": "Bem-vindo ao Navigator - Conecte-se no Telegram",
+        "html": "=<h2>Bem-vindo, {{ $json.name || $node[\"Generate Link (Telegram)\"].json[\"user\"][\"name\"] }}!</h2>\n  <p>Conecte-se ao Flowly, nosso agente no Telegram:</p>\n  <p><a href=\"{{ $node[\"Generate Link (Telegram)\"].json[\"deep_link\"] }}\">Abrir no Telegram</a></p>\n  <p>Ou escaneie o QR Code:</p>\n  <img src=\"{{ $node[\"Generate Link (Telegram)\"].json[\"qr_data_url\"] }}\" style=\"width:220px;\">",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        -1152
+      ],
+      "id": "d9b370b7-67ae-46ed-b422-48bfd9c6d1be",
+      "name": "Send email (Telegram)",
+      "webhookId": "18e9fe87-f99b-4b3b-9b2e-84c075bbddb9",
+      "credentials": {
+        "smtp": {
+          "id": "cRrwa0G14wojU1Eh",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "navigatortera15@gmail.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Bem-vindo ao Navigator - Conecte-se no Telegram",
+        "html": "= <h2>Bem-vindo, {{ $json.name || $node[\"Generate Link (Slack)\"].json[\"user\"][\"name\"] }}!</h2>\n  <p>Acesse o Slack para falar com o agente:</p>\n  <p><a href=\"{{ $node[\"Generate Link (Slack)\"].json[\"deep_link\"] }}\">Abrir no app Slack</a></p>\n  <p><a href=\"{{ $node[\"Generate Link (Slack)\"].json[\"web_link\"] }}\">Abrir no navegador</a></p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        432,
+        -960
+      ],
+      "id": "5b170e37-0a28-4d22-9721-b1d644a23c44",
+      "name": "Send email (Slack)",
+      "webhookId": "18e9fe87-f99b-4b3b-9b2e-84c075bbddb9",
+      "credentials": {
+        "smtp": {
+          "id": "cRrwa0G14wojU1Eh",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://navigator-gules.vercel.app/api/communication/generate-link?tenant={{ $json.tenantId }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{ \"Content-Type\": \"application/json\" }",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=  {\n    \"type\": \"telegram\",\n    \"email\": \"{{ $('Webhook Onboarding').item.json.body.email }}\",\n    \"userId\": \"{{ $('Webhook Onboarding').item.json.body.userId }}\",\n    \"name\": \"{{ $json.name }}\",\n    \"phone\": \"{{ $json.phone }}\"\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -960
+      ],
+      "id": "4bcfe09b-974f-4ba3-b2f3-9daba1a2ca0d",
+      "name": "Generate Link (Slack)"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.from }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        240
+      ],
+      "id": "187440e7-6da1-4778-a3a7-f5fd7447c255",
+      "name": "Send a text message",
+      "webhookId": "72fdf73e-c0b2-409a-87a8-094f5e98ec57",
+      "credentials": {
+        "telegramApi": {
+          "id": "S5VBRZetX4SbRp5H",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "53f6f83e-fe3a-42b2-8bfe-857e04e47468",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9feb4d72-8f44-444e-ac23-da122ce3ba0e",
+                    "leftValue": "={{ $json.channel }}",
+                    "rightValue": "telegram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        400,
+        224
+      ],
+      "id": "3b758b57-b5d8-4ac0-b75f-e9daefa9d516",
+      "name": "Decide Canal1"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1120,
+        224
+      ],
+      "id": "c8bec349-fd78-4b54-a553-b51151346d95",
+      "name": "Telegram Trigger",
+      "webhookId": "869acc2f-4ee7-4d41-afd1-bc2ca7adfe1a",
+      "credentials": {
+        "telegramApi": {
+          "id": "S5VBRZetX4SbRp5H",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6fb18c4-814a-464a-9403-33a75f17ff36",
+              "name": "from",
+              "value": "={{ $json.message.from.id }}",
+              "type": "string"
+            },
+            {
+              "id": "edf8db77-3630-4b12-94ca-0bc5aca9d0f2",
+              "name": "type",
+              "value": "=text",
+              "type": "string"
+            },
+            {
+              "id": "7ba95bbc-60a1-43b1-9343-335e8775681a",
+              "name": "tenantId",
+              "value": "={{ $json.tenantId || 'f37a823e-c4af-4b1b-9e88-1d5ec65326ad' }}",
+              "type": "string"
+            },
+            {
+              "id": "2b4e14e1-e608-4b34-ab83-19da8015d2b3",
+              "name": "messageText",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "05de0edd-851d-4bac-a989-742fb8101050",
+              "name": "channel",
+              "value": "telegram",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        224
+      ],
+      "id": "469219a1-17a5-4022-903d-38bfe4c9e2f9",
+      "name": "Normalize Message (Telegram)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6fb18c4-814a-464a-9403-33a75f17ff36",
+              "name": "from",
+              "value": "={{ $json.event.user }}",
+              "type": "string"
+            },
+            {
+              "id": "edf8db77-3630-4b12-94ca-0bc5aca9d0f2",
+              "name": "type",
+              "value": "=text",
+              "type": "string"
+            },
+            {
+              "id": "7ba95bbc-60a1-43b1-9343-335e8775681a",
+              "name": "tenantId",
+              "value": "={{ $json.tenantId || 'f37a823e-c4af-4b1b-9e88-1d5ec65326ad' }}",
+              "type": "string"
+            },
+            {
+              "id": "2b4e14e1-e608-4b34-ab83-19da8015d2b3",
+              "name": "messageText",
+              "value": "={{ $json.event.text }}",
+              "type": "string"
+            },
+            {
+              "id": "05de0edd-851d-4bac-a989-742fb8101050",
+              "name": "channel",
+              "value": "slack",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -624,
+        512
+      ],
+      "id": "cea63066-cd38-4188-a8b2-49354f2984a3",
+      "name": "Normalize Message (Slack)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a6fb18c4-814a-464a-9403-33a75f17ff36",
+              "name": "from",
+              "value": "={{$json.messages[0].from}}",
+              "type": "string"
+            },
+            {
+              "id": "edf8db77-3630-4b12-94ca-0bc5aca9d0f2",
+              "name": "type",
+              "value": "={{$json.messages[0].type}}",
+              "type": "string"
+            },
+            {
+              "id": "7ba95bbc-60a1-43b1-9343-335e8775681a",
+              "name": "tenantId",
+              "value": "={{$json.tenantId || 'f37a823e-c4af-4b1b-9e88-1d5ec65326ad'}}",
+              "type": "string"
+            },
+            {
+              "id": "2b4e14e1-e608-4b34-ab83-19da8015d2b3",
+              "name": "messageText",
+              "value": "={{ $json.messages[0].type === 'text' ? $json.messages[0].text?.body : $json.messages[0].type === 'image' ? ($json.messages[0].image?.caption || '[imagem]') : $json.messages[0].type === 'audio' ? '[áudio]' : $json.messages[0].type === 'document'? ($json.messages[0].document?.caption || '[documento]') : '[mensagem]' }}",
+              "type": "string"
+            },
+            {
+              "id": "2afdb800-2d4b-4a8c-a3fc-87bf2df85814",
+              "name": "channel",
+              "value": "whatsapp",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        -48
+      ],
+      "id": "2c3cc125-487b-4466-8815-d5d3123ee5cc",
+      "name": "Normalize Message (Whatsapp)"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -496,
+        208
+      ],
+      "id": "11337c77-e1e2-41c6-af5f-76b62940d617",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Acessa todos os itens que chegam no nó Code (que podem ser múltiplos\n// se o Text Splitter dividiu a resposta da IA).\nconst allItems = $input.all();\n\n// O dado original (que tem channel, tenantId, etc.) está no primeiro item de entrada\n// na posição [0]. O n8n nos permite acessar o JSON desse item.\n// Pegamos a informação do primeiro item de entrada, que veio do nó Merge/Set.\nconst originalData = allItems[0].json;\n\n// Prepara um novo array para os dados de saída\nconst outputItems = [];\n\n// Vamos percorrer cada pedaço da resposta (se o Text Splitter dividiu)\nfor (const item of allItems) {\n  // Cria o novo item de saída\n  const newItem = {\n    // 1. Pega a resposta da IA. O n8n sugere 'output' (como na imagem) ou 'text'.\n    // Usaremos 'output' conforme o seu input.\n    output: item.json.output, \n\n    // 2. Reintroduzindo os campos importantes usando o dado original\n    channel: $('Merge').first().json.channel,\n    from: $('Merge').first().json.from,\n    tenantId: $('Merge').first().json.tenantId,\n\n    // Se a mensagem original for útil, você também pode reintroduzi-la:\n    // messageText: originalData.messageText,\n  };\n  \n  // O nó Code precisa retornar um array de objetos no formato { json: item }\n  outputItems.push({\n    json: newItem\n  });\n}\n\n// Retorna os dados formatados\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        224
+      ],
+      "id": "3fa6108b-fd90-4baa-bf89-0cbe409be2ad",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Busca trechos de documentos do tenant para responder perguntas do usuário. Use quando a pergunta envolver políticas/benefícios/documentos internos.",
+        "method": "POST",
+        "url": "https://navigator-gules.vercel.app/api/documents/semantic-search",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n\"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tenantId\": \"{{$json.tenantId || $json.tenant}}\",\n  \"query\": \"{{$json.messageText || $json.text || $json.input}}\",\n  \"top_k\": 5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -96,
+        496
+      ],
+      "id": "09716623-d581-4380-b69b-78d54f2b550c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-navigator/",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1136,
+        496
+      ],
+      "id": "9944a41d-b214-49fb-b9d3-94370eda46d1",
+      "name": "Webhook",
+      "webhookId": "5b0746d4-0661-4ff7-b485-0f8ff02f926c",
+      "alwaysOutputData": false,
+      "executeOnce": true,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4be063df-adc9-4c27-81b3-64959be41ec0",
+              "leftValue": "=   Condition: {{ $json.type === 'url_verification' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -928,
+        496
+      ],
+      "id": "c3e73cdc-ef2e-45ca-9001-9293d3cd248d",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "   Status Code: 200\n   Response Body: {\"challenge\": \"{{ $json.challenge }}\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -768,
+        384
+      ],
+      "id": "724a9fb4-7156-4315-b0ed-3a2c558ddc30",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-trilha-iniciada",
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "trilha_iniciada",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trilha Iniciada"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-quiz-disponivel",
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "quiz_disponivel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Quiz Disponível"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-trilha-concluida",
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "trilha_concluida",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trilha Concluída"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-onboarding-completo",
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "onboarding_completo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Onboarding Completo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-alerta-atraso",
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "alerta_atraso",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Alerta Atraso"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "tipo-alerta-nota-baixa",
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "alerta_nota_baixa",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Alerta Nota Baixa"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3b949b55-332b-440f-860a-205f892419f1",
+      "name": "Switch Tipo Webhook",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        -800
+      ]
+    },
+    {
+      "parameters": {
+        "content": "FEEDBACK TRILHAS",
+        "height": 986,
+        "width": 668
+      },
+      "id": "94773376-a5cc-4e7d-94ba-a94270516a14",
+      "name": "ℹ️ SOBRE O WEBHOOK",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        -1184
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $json.body.colaborador.phone }}",
+        "textBody": "={{ $json.body.mensagem_sugerida }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -1152
+      ],
+      "id": "62b89e12-2de2-44e9-94f1-9a372cafedfb",
+      "name": "Send message1",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('Webhook Onboarding2').item.json.body.colaborador.phone }}",
+        "textBody": "={{ $('Webhook Onboarding2').item.json.body.mensagem_sugerida }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -992
+      ],
+      "id": "7d3ea7d3-c0ff-4d24-8a5f-2b68b54cdccf",
+      "name": "Send message2",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('Webhook Onboarding2').item.json.body.colaborador.phone }}",
+        "textBody": "={{ $('Webhook Onboarding2').item.json.body.mensagem_sugerida }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -832
+      ],
+      "id": "feddeff7-88f3-437a-a342-04cd7a4c4559",
+      "name": "Send message3",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('Webhook Onboarding2').item.json.body.colaborador.phone }}",
+        "textBody": "={{ $('Webhook Onboarding2').item.json.body.mensagem_sugerida }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -688
+      ],
+      "id": "d713b9ee-6726-4802-924e-cfa176b031d5",
+      "name": "Send message4",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('Webhook Onboarding2').item.json.body.colaborador.phone }}",
+        "textBody": "={{ $('Webhook Onboarding2').item.json.body.mensagem_sugerida }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -528
+      ],
+      "id": "c99b98e3-8a92-4b85-8f01-0318e69fa5b8",
+      "name": "Send message5",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "854548744399899",
+        "recipientPhoneNumber": "={{ $('Webhook Onboarding2').item.json.body.colaborador.phone }}",
+        "textBody": "={{ $('Webhook Onboarding2').item.json.body.mensagem_sugerida }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        -368
+      ],
+      "id": "e77e90a4-9d86-42de-8417-a81429160f84",
+      "name": "Send message6",
+      "webhookId": "557bc52d-f6c6-4cd3-8e45-a34ccc5eb86a",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "BPgwCD2SMjqAgHHY",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboarding",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "6715b1f7-d199-40aa-b171-2e877d412514",
+      "name": "Webhook Onboarding2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -736
+      ],
+      "webhookId": "c86dc157-c0c4-4a41-93d7-619cd08c6f3f",
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        32,
+        512
+      ],
+      "id": "89e4bf46-f4ea-4992-8b8e-b039ec2cfdbb",
+      "name": "Create a row in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "FSk2Ih5HsXYMTlwA",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook Onboarding": [
+      {
+        "json": {
+          "headers": {
+            "host": "hndll.app.n8n.cloud",
+            "user-agent": "node",
+            "content-length": "380",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "52.91.58.51",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "98a8171fa617e5b4-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "52.91.58.51, 172.71.191.98",
+            "x-forwarded-host": "hndll.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-16-6f778b7769-zs7bd",
+            "x-is-trusted": "yes",
+            "x-real-ip": "52.91.58.51",
+            "x-vercel-id": "gru1::zfbt2-1759784440746-c4bdfa3bffc4"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "type": "user_created",
+            "tenantId": "5978f911-738b-4aae-802a-f037fdac2e64",
+            "tenantName": "Demonstração",
+            "userId": "c230b4b8-4204-4159-b88c-eac0a4234d31",
+            "name": "Fulano da Silva",
+            "email": "haendell@hotmail.com",
+            "phone": "556299940476",
+            "position": "Analista",
+            "department": "Administrativo",
+            "start_date": "2025-10-06",
+            "communication_type": "telegram",
+            "created_at": "2025-10-06T21:00:47.700Z"
+          },
+          "webhookUrl": "https://hndll.app.n8n.cloud/webhook/onboarding",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 74964029,
+          "message": {
+            "message_id": 24,
+            "from": {
+              "id": 1233801973,
+              "is_bot": false,
+              "first_name": "Haendell",
+              "last_name": "Lopes",
+              "username": "Haendell",
+              "language_code": "pt-br"
+            },
+            "chat": {
+              "id": 1233801973,
+              "first_name": "Haendell",
+              "last_name": "Lopes",
+              "username": "Haendell",
+              "type": "private"
+            },
+            "date": 1759801848,
+            "text": "Oi"
+          }
+        }
+      }
+    ],
+    "WhatsApp Trigger": [
+      {
+        "json": {
+          "messaging_product": "whatsapp",
+          "metadata": {
+            "display_phone_number": "15556303598",
+            "phone_number_id": "854548744399899"
+          },
+          "contacts": [
+            {
+              "profile": {
+                "name": "Haendell Lopes"
+              },
+              "wa_id": "556291708483"
+            }
+          ],
+          "messages": [
+            {
+              "from": "556291708483",
+              "id": "wamid.HBgMNTU2MjkxNzA4NDgzFQIAEhggQUNDNTBBMDhDQTdFQjQyREYzQjc4RjgwNEU0NTFENDYA",
+              "timestamp": "1759802108",
+              "text": {
+                "body": "Oi"
+              },
+              "type": "text"
+            }
+          ],
+          "field": "messages"
+        }
+      }
+    ],
+    "Webhook Onboarding2": [
+      {
+        "json": {
+          "headers": {
+            "host": "hndll.app.n8n.cloud",
+            "user-agent": "node",
+            "content-length": "625",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "54.159.105.172",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "98c05bfca4d27fa2-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "54.159.105.172, 172.70.134.215",
+            "x-forwarded-host": "hndll.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-16-6f778b7769-zs7bd",
+            "x-is-trusted": "yes",
+            "x-real-ip": "54.159.105.172",
+            "x-vercel-id": "gru1:iad1::qx92m-1760038926641-ac767d195b9d"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "timestamp": "2025-10-09T19:42:06.761Z",
+            "tipo": "trilha_iniciada",
+            "colaborador": {
+              "id": "321e7f26-a5fc-470d-88d0-7d6bfde35b9b",
+              "nome": "Jose",
+              "email": "haendell@hotmail.com",
+              "phone": "+556299940476"
+            },
+            "trilha": {
+              "id": "279326bb-6051-4d43-ab38-431714a937ce",
+              "nome": "Cultura Organizacional",
+              "prazo_dias": 7,
+              "data_limite": "2025-10-16T19:42:04.762Z"
+            },
+            "mensagem_sugerida": "Olá Jose! 👋\n\nVocê tem uma nova trilha de onboarding: *Cultura Organizacional*\n\n⏰ Prazo: 7 dias (até 16/10/2025)\n\nAcesse aqui: navigator-j7p6k0hu3-haendelllopes-projects.vercel.app/colaborador-trilhas?colaborador_id=321e7f26-a5fc-470d-88d0-7d6bfde35b9b"
+          },
+          "webhookUrl": "https://hndll.app.n8n.cloud/webhook/onboarding",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Normalize Message (Whatsapp)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Set Welcome": {
+      "main": [
+        [
+          {
+            "node": "Decide Canal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond Onboarding (plug WhatsApp send)": {
+      "main": [
+        [
+          {
+            "node": "Boas vindas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Onboarding": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Set Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent - Categorização",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Categorização",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Categorização": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retorno categorização": {
+      "main": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Retorno categorização",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide Canal": {
+      "main": [
+        [
+          {
+            "node": "Generate Link (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Link (Slack)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Onboarding (plug WhatsApp send)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Link (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Send email (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Link (Slack)": {
+      "main": [
+        [
+          {
+            "node": "Send email (Slack)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Decide Canal1": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalize Message (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Message (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Normalize Message (Slack)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Normalize Message (Whatsapp)": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Decide Canal1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch Tipo Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Onboarding2": {
+      "main": [
+        [
+          {
+            "node": "Switch Tipo Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row in Supabase": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "957a5636-6a06-4399-a34f-af7576568464",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a4ca1281b2ad60e5ff5cc68ab6791f8f2e2340627babf9d86569c985045281cc"
+  },
+  "id": "uuTVoD6gdaxDhPT2",
+  "tags": []
+}
