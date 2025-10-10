@@ -247,7 +247,7 @@ RETURNS TABLE (
 BEGIN
   RETURN QUERY
   SELECT 
-    tr.id,
+    tr.id as trilha_id,
     tr.nome,
     tr.descricao,
     tr.sentimento_medio,
@@ -281,7 +281,8 @@ BEGIN
           WHEN tr.dificuldade_percebida = 'muito_dificil' AND tr.sentimento_medio >= 0.60 THEN 90
           ELSE 70
         END
-    END as compatibilidade,
+      ELSE 50
+    END::INTEGER as compatibilidade_sentimento,
     
     -- Motivo da recomendação
     CASE
@@ -291,7 +292,8 @@ BEGIN
         'Trilha equilibrada para seu momento'
       WHEN p_sentimento_atual IN ('positivo', 'muito_positivo') THEN
         'Trilha desafiadora que vai te agregar muito'
-    END as motivo
+      ELSE 'Trilha recomendada'
+    END::TEXT as motivo_recomendacao
     
   FROM trilhas_recomendadas tr
   WHERE colaborador_tem_acesso_trilha(p_colaborador_id, tr.id) = true
