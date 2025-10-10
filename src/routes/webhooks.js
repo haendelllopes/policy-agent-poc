@@ -7,6 +7,7 @@ router.post('/alerta-sentimento-negativo', async (req, res) => {
   try {
     const {
       colaborador_id,
+      phone,
       sentimento,
       intensidade,
       mensagem,
@@ -16,10 +17,35 @@ router.post('/alerta-sentimento-negativo', async (req, res) => {
 
     console.log('🚨 ALERTA: Sentimento negativo detectado!', {
       colaborador_id,
+      phone,
       sentimento,
       intensidade,
       canal
     });
+
+    // Se recebeu phone, fazer lookup do user_id
+    let userId = colaborador_id;
+    
+    if (!colaborador_id && phone) {
+      // Normalizar phone (remover caracteres não numéricos)
+      const phoneNormalized = phone.replace(/\D/g, '');
+      
+      const userLookup = await query(
+        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2`,
+        [`%${phoneNormalized}`, `%${phone}`]
+      );
+      
+      if (userLookup.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'Usuário não encontrado com este telefone',
+          phone: phone,
+          hint: 'Verifique se o usuário existe no sistema'
+        });
+      }
+      
+      userId = userLookup.rows[0].id;
+      console.log(`📞 Lookup: Phone ${phone} → User ID ${userId}`);
+    }
 
     // 1. Buscar dados do colaborador
     const colaboradorResult = await query(`
@@ -35,7 +61,7 @@ router.post('/alerta-sentimento-negativo', async (req, res) => {
       FROM users u
       LEFT JOIN tenants t ON t.id = u.tenant_id
       WHERE u.id = $1
-    `, [colaborador_id]);
+    `, [userId]);
 
     if (colaboradorResult.rows.length === 0) {
       return res.status(404).json({ error: 'Colaborador não encontrado' });
@@ -78,7 +104,7 @@ router.post('/alerta-sentimento-negativo', async (req, res) => {
         'alerta_automatico',
         0
       ]);
-    } catch (error) {
+  } catch (error) {
       console.error('Erro ao registrar alerta:', error);
       // Continua mesmo se falhar
     }
@@ -141,7 +167,7 @@ O colaborador pode estar precisando de suporte adicional. Recomendamos entrar em
       success: true,
       message: 'Alerta registrado com sucesso',
       alerta: {
-        colaborador: {
+      colaborador: {
           id: colaborador.id,
           name: colaborador.name,
           email: colaborador.email
