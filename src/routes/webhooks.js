@@ -81,33 +81,8 @@ router.post('/alerta-sentimento-negativo', async (req, res) => {
       LIMIT 1
     `, [tenant_id]);
 
-    // 3. Registrar alerta no banco (opcional - crie uma tabela alertas se quiser histórico)
-    try {
-      await query(`
-        INSERT INTO colaborador_sentimentos (
-          tenant_id,
-          colaborador_id,
-          sentimento,
-          intensidade,
-          origem,
-          mensagem_analisada,
-          momento_onboarding,
-          dia_onboarding
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      `, [
-        tenant_id,
-        colaborador_id,
-        sentimento,
-        intensidade,
-        `${canal}_alerta`,
-        mensagem,
-        'alerta_automatico',
-        0
-      ]);
-  } catch (error) {
-      console.error('Erro ao registrar alerta:', error);
-      // Continua mesmo se falhar
-    }
+    // 3. Log do alerta (não salvar novamente - já foi salvo no nó de análise)
+    console.log(`✅ Alerta processado - sentimento já salvo no banco pelo nó de análise`);
 
     // 4. Montar mensagem de alerta
     const emojiSentimento = sentimento === 'muito_negativo' ? '🔴' : '🟡';
