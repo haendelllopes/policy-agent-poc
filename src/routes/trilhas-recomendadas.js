@@ -48,9 +48,95 @@ router.get('/:userId', async (req, res) => {
 
     console.log(`🔍 Buscando trilhas para user ${colaboradorId} com sentimento ${sentimentoAtual}`);
 
-    // Buscar trilhas recomendadas usando a função SQL
+    // Buscar trilhas recomendadas - VERSÃO SIMPLIFICADA (sem usar função SQL problemática)
     const result = await query(`
-      SELECT * FROM buscar_trilhas_por_sentimento($1, $2, $3)
+      SELECT 
+        t.id as trilha_id,
+        t.nome,
+        t.descricao,
+        t.sentimento_medio,
+        t.dificuldade_percebida,
+        t.taxa_conclusao,
+        t.tempo_medio_conclusao,
+        
+        -- Score de recomendação
+        CASE
+          WHEN t.sentimento_medio >= 0.80 AND t.taxa_conclusao >= 80 THEN 100
+          WHEN t.sentimento_medio >= 0.70 AND t.taxa_conclusao >= 70 THEN 90
+          WHEN t.sentimento_medio >= 0.60 AND t.taxa_conclusao >= 60 THEN 80
+          WHEN t.sentimento_medio >= 0.50 AND t.taxa_conclusao >= 50 THEN 70
+          ELSE 50
+        END as score_recomendacao,
+        
+        -- Compatibilidade com sentimento
+        CASE
+          WHEN $2 IN ('muito_negativo', 'negativo') THEN
+            CASE
+              WHEN t.dificuldade_percebida IN ('muito_facil', 'facil') AND t.sentimento_medio >= 0.70 THEN 100
+              WHEN t.dificuldade_percebida = 'media' AND t.sentimento_medio >= 0.75 THEN 80
+              ELSE 50
+            END
+          WHEN $2 = 'neutro' THEN
+            CASE
+              WHEN t.dificuldade_percebida = 'media' AND t.sentimento_medio >= 0.60 THEN 100
+              WHEN t.dificuldade_percebida IN ('facil', 'dificil') THEN 80
+              ELSE 60
+            END
+          WHEN $2 IN ('positivo', 'muito_positivo') THEN
+            CASE
+              WHEN t.dificuldade_percebida IN ('media', 'dificil') AND t.sentimento_medio >= 0.50 THEN 100
+              WHEN t.dificuldade_percebida = 'muito_dificil' AND t.sentimento_medio >= 0.60 THEN 90
+              ELSE 70
+            END
+          ELSE 50
+        END as compatibilidade_sentimento,
+        
+        -- Motivo da recomendação
+        CASE
+          WHEN $2 IN ('muito_negativo', 'negativo') THEN
+            'Trilha mais leve para recuperar confiança'
+          WHEN $2 = 'neutro' THEN
+            'Trilha equilibrada para seu momento'
+          WHEN $2 IN ('positivo', 'muito_positivo') THEN
+            'Trilha desafiadora que vai te agregar muito'
+          ELSE 'Trilha recomendada'
+        END as motivo_recomendacao
+        
+      FROM trilhas t
+      WHERE t.ativo = true
+        AND t.id NOT IN (
+          SELECT ct.trilha_id 
+          FROM colaborador_trilhas ct
+          WHERE ct.colaborador_id = $1
+            AND ct.status IN ('concluida', 'em_andamento')
+        )
+      ORDER BY 
+        CASE
+          WHEN $2 IN ('muito_negativo', 'negativo') THEN
+            CASE
+              WHEN t.dificuldade_percebida IN ('muito_facil', 'facil') AND t.sentimento_medio >= 0.70 THEN 100
+              WHEN t.dificuldade_percebida = 'media' AND t.sentimento_medio >= 0.75 THEN 80
+              ELSE 50
+            END
+          WHEN $2 = 'neutro' THEN
+            CASE
+              WHEN t.dificuldade_percebida = 'media' AND t.sentimento_medio >= 0.60 THEN 100
+              WHEN t.dificuldade_percebida IN ('facil', 'dificil') THEN 80
+              ELSE 60
+            END
+          WHEN $2 IN ('positivo', 'muito_positivo') THEN
+            CASE
+              WHEN t.dificuldade_percebida IN ('media', 'dificil') AND t.sentimento_medio >= 0.50 THEN 100
+              WHEN t.dificuldade_percebida = 'muito_dificil' AND t.sentimento_medio >= 0.60 THEN 90
+              ELSE 70
+            END
+        END DESC,
+        CASE
+          WHEN t.sentimento_medio >= 0.80 AND t.taxa_conclusao >= 80 THEN 100
+          WHEN t.sentimento_medio >= 0.70 AND t.taxa_conclusao >= 70 THEN 90
+          ELSE 50
+        END DESC
+      LIMIT $3
     `, [colaboradorId, sentimentoAtual, parseInt(limit)]);
 
     console.log(`✅ Encontradas ${result.rows.length} trilhas recomendadas`);
