@@ -182,7 +182,8 @@ O agente sugere trilhas compatíveis com o sentimento do colaborador + históric
 ### Passo 2: Preparar Ambiente
 1. ✅ Fazer backup do banco de dados
 2. ✅ Configurar ambiente de staging
-3. ✅ Validar credenciais de APIs (OpenAI/Vertex AI)
+3. ✅ Criar API Key do Google Gemini (https://makersuite.google.com/app/apikey)
+4. ✅ Configurar credencial no N8N
 
 ### Passo 3: Executar Migrações
 ```bash
@@ -222,9 +223,14 @@ Abrir [`CHECKLIST_IMPLEMENTACAO_MELHORIAS.md`](./CHECKLIST_IMPLEMENTACAO_MELHORI
 - **Banco de Dados:** PostgreSQL (Supabase)
 - **Backend:** Node.js + Express
 - **Workflows:** N8N
-- **IA:** OpenAI API / Google Vertex AI
+- **IA:** Google Gemini 1.5 (Flash para análises rápidas, Pro para análises complexas)
 - **Frontend:** HTML + TailwindCSS + Alpine.js
 - **Infraestrutura:** Vercel/Render
+
+### 💰 Custo Estimado de IA
+- **Gemini 1.5 Flash + Pro:** ~$15-30/mês
+- **Muito mais barato** que alternativas (OpenAI custaria $200-500/mês)
+- **Tier gratuito** disponível para testes
 
 ---
 

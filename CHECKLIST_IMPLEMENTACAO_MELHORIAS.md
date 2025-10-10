@@ -96,38 +96,42 @@
 
 ### 🤖 Integração de IA
 
-#### OpenAI / Vertex AI
-- [ ] Configurar credenciais da API
+#### Google Gemini
+- [ ] Criar API Key no Google AI Studio (https://makersuite.google.com/app/apikey)
+- [ ] Configurar credenciais no N8N
 - [ ] Criar prompt para análise de sentimento
 - [ ] Testar análise com mensagens de exemplo
 - [ ] Ajustar prompt para melhor precisão
 - [ ] Implementar fallback em caso de erro
 
-#### Prompt de Análise de Sentimento
+#### Prompt de Análise de Sentimento (Gemini)
 ```
 Exemplo de prompt a criar:
-"Analise o sentimento da seguinte mensagem de um colaborador em processo de onboarding.
-Classifique como: muito_positivo, positivo, neutro, negativo, muito_negativo.
-Forneça intensidade de 0.00 a 1.00.
-Identifique palavras-chave, tom e emojis.
 
-Mensagem: {mensagem}
+System Message:
+"Você é um analisador de sentimentos especializado em onboarding empresarial.
+Analise a mensagem do colaborador e retorne um JSON estruturado.
+Seja preciso e considere o contexto de onboarding."
+
+User Message:
+"Mensagem do colaborador: {mensagem}
 
 Retorne em JSON:
 {
-  "sentimento": "...",
-  "intensidade": 0.XX,
+  "sentimento": "muito_positivo|positivo|neutro|negativo|muito_negativo",
+  "intensidade": 0.00-1.00,
   "fatores_detectados": {
     "palavras_chave": [],
-    "tom": "...",
+    "tom": "",
     "emojis": []
   }
 }"
 ```
 
 - [ ] Criar e testar prompt
-- [ ] Validar precisão da análise
+- [ ] Validar precisão da análise (usar Gemini 1.5 Flash)
 - [ ] Ajustar conforme necessário
+- [ ] Monitorar custos (deve ficar em ~$15-30/mês)
 
 ### 🔧 Backend (API)
 
@@ -304,9 +308,12 @@ NÃO criar anotação para:
 - [ ] Nó: Marcar anotações como `gerou_melhoria = true`
 - [ ] Nó: Notificar admins sobre novas sugestões
 
-#### Prompt para Geração de Melhorias
+#### Prompt para Geração de Melhorias (Gemini)
 ```
 Exemplo de prompt:
+
+Model: gemini-1.5-pro (para análises mais complexas)
+
 "Com base nas seguintes anotações do agente de IA, sugira uma melhoria 
 para o processo de onboarding:
 
@@ -327,7 +334,7 @@ Gere uma sugestão de melhoria em JSON:
 ```
 
 - [ ] Criar e testar prompt
-- [ ] Validar qualidade das sugestões
+- [ ] Validar qualidade das sugestões (Gemini 1.5 Pro é excelente nisso)
 - [ ] Ajustar conforme necessário
 
 ### 🎨 Frontend (Admin)

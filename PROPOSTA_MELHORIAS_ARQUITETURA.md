@@ -342,7 +342,7 @@ CREATE INDEX idx_trilha_segmentacao_position ON trilha_segmentacao(position_id);
 
 ```
 1. Colaborador envia mensagem → N8N recebe
-2. N8N analisa mensagem com OpenAI (sentimento + contexto)
+2. N8N analisa mensagem com Google Gemini (sentimento + contexto)
 3. N8N registra em agente_anotacoes via API
 4. Se anotação for relevante → registra também em colaborador_sentimentos
 5. N8N adapta resposta baseado no sentimento
@@ -353,7 +353,7 @@ CREATE INDEX idx_trilha_segmentacao_position ON trilha_segmentacao(position_id);
 ### Fluxo 2: Captura de sentimento em tempo real
 
 ```
-1. Mensagem chega → Análise de sentimento (OpenAI/Vertex AI)
+1. Mensagem chega → Análise de sentimento (Google Gemini)
 2. Registra em colaborador_sentimentos
 3. Atualiza sentimento_atual em users
 4. Agente verifica sentimento_atual antes de responder
