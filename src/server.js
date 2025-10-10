@@ -2542,6 +2542,9 @@ const quizRoutes = require('./routes/quiz');
 const adminRoutes = require('./routes/admin');
 const webhooksRoutes = require('./routes/webhooks');
 const aiImprovementsRoutes = require('./routes/ai-improvements');
+const sentimentosRoutes = require('./routes/sentimentos');
+const trilhasRecomendadasRoutes = require('./routes/trilhas-recomendadas');
+const anotacoesRoutes = require('./routes/anotacoes');
 
 // Importar helpers
 const { normalizePhone: normalizePhoneHelper, normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper } = require('./utils/helpers');
@@ -2569,8 +2572,11 @@ app.use('/api/gamificacao', quizRoutes); // Quiz routes contém gamificação
 app.use('/api/admin', adminRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/ai', aiImprovementsRoutes);
+app.use('/api/sentimentos', sentimentosRoutes);
+app.use('/api/trilhas-recomendadas', trilhasRecomendadasRoutes);
+app.use('/api/anotacoes', anotacoesRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes');
 
 // ============================================
 
