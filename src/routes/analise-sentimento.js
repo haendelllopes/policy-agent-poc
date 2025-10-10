@@ -5,9 +5,27 @@ const openaiSentimentService = require('../services/openaiSentimentService');
 const { query } = require('../db-pg');
 
 // Middleware para autenticação (mock por enquanto)
-const authenticate = (req, res, next) => {
-  req.tenantId = req.body.tenantId || req.headers['x-tenant-id'] || 'mock-tenant-id';
+const authenticate = async (req, res, next) => {
+  // Usa tenant padrão se não especificado
+  const DEFAULT_TENANT_ID = '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant Demonstração
+  
+  req.tenantId = req.body.tenantId || req.headers['x-tenant-id'] || DEFAULT_TENANT_ID;
   req.userId = req.body.userId || req.headers['x-user-id'] || 'mock-user-id';
+  
+  // Verificar se tenant existe
+  try {
+    const tenantCheck = await query('SELECT id FROM tenants WHERE id = $1', [req.tenantId]);
+    
+    if (tenantCheck.rows.length === 0) {
+      console.warn(`⚠️  Tenant ${req.tenantId} não existe! Usando tenant padrão.`);
+      req.tenantId = DEFAULT_TENANT_ID;
+    }
+  } catch (error) {
+    console.error('Erro ao verificar tenant:', error);
+    // Continua com tenant padrão
+    req.tenantId = DEFAULT_TENANT_ID;
+  }
+  
   next();
 };
 
