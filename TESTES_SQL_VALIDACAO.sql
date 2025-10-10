@@ -116,7 +116,7 @@ BEGIN
       v_user_id,
       'positivo',
       0.85,
-      'teste_validacao',
+      'analise_automatica',
       'Mensagem de teste para validar o sistema',
       '{"palavras_chave": ["teste", "validacao"], "tom": "neutro"}'::jsonb
     );
@@ -132,7 +132,7 @@ SELECT
   'Sentimento inserido' as resultado,
   COUNT(*) as total
 FROM colaborador_sentimentos
-WHERE origem = 'teste_validacao';
+WHERE mensagem_analisada = 'Mensagem de teste para validar o sistema';
 
 -- TESTE 7: Verificar se sentimento_atual foi atualizado (via trigger)
 SELECT '=== TESTE 7: Trigger de Sentimento ===' as teste;
