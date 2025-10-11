@@ -9,19 +9,13 @@ const { query } = require('../db-pg');
  */
 router.get('/disponiveis/:colaboradorId', async (req, res) => {
   try {
-    const { getTenantBySubdomain } = req.app.locals;
     const colaboradorId = req.params.colaboradorId;
-    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
-    
-    if (!tenant) {
-      return res.status(404).json({ error: 'Tenant não encontrado' });
-    }
-
-    // Se colaboradorId é um telefone (contém apenas números), buscar o usuário
     let userId = colaboradorId;
+    let tenantId = null;
+
+    // Se colaboradorId é um telefone (contém apenas números), buscar o usuário em todos os tenants
     if (/^\d+$/.test(colaboradorId)) {
-      // É um telefone, normalizar e buscar o usuário correspondente
-      // Tentar com +55 (formato internacional)
+      // É um telefone, normalizar e buscar o usuário correspondente em todos os tenants
       let phoneVariations = [
         colaboradorId,                    // 556291708483
         `+${colaboradorId}`,             // +556291708483
@@ -32,22 +26,34 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
       let userResult = null;
       for (const phone of phoneVariations) {
         userResult = await query(`
-          SELECT id FROM users 
-          WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
-        `, [phone, tenant.id]);
+          SELECT u.id, u.tenant_id FROM users u
+          WHERE u.phone = $1 AND u.status = 'active'
+          LIMIT 1
+        `, [phone]);
         
         if (userResult.rows.length > 0) {
-          console.log(`📞 Lookup: Phone ${colaboradorId} → User ID ${userResult.rows[0].id} (format: ${phone})`);
+          userId = userResult.rows[0].id;
+          tenantId = userResult.rows[0].tenant_id;
+          console.log(`📞 Lookup: Phone ${colaboradorId} → User ID ${userId} (format: ${phone}) → Tenant ${tenantId}`);
           break;
         }
       }
       
       if (!userResult || userResult.rows.length === 0) {
-        console.log(`❌ Phone ${colaboradorId} not found in any format`);
+        console.log(`❌ Phone ${colaboradorId} not found in any format across all tenants`);
+        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      }
+    } else {
+      // Se é UUID, buscar o tenant do usuário
+      const userResult = await query(`
+        SELECT tenant_id FROM users WHERE id = $1 AND status = 'active'
+      `, [colaboradorId]);
+      
+      if (userResult.rows.length === 0) {
         return res.status(404).json({ error: 'Colaborador não encontrado' });
       }
       
-      userId = userResult.rows[0].id;
+      tenantId = userResult.rows[0].tenant_id;
     }
 
     // Buscar trilhas disponíveis (não iniciadas ou em andamento)
@@ -70,7 +76,14 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
       LEFT JOIN colaborador_trilhas ct ON ct.trilha_id = t.id AND ct.colaborador_id = $2
       WHERE t.tenant_id = $1 AND t.ativo = true
       ORDER BY t.ordem, t.nome
-    `, [tenant.id, userId]);
+    `, [tenantId, userId]);
+
+    // Buscar subdomain do tenant para a URL
+    const tenantResult = await query(`
+      SELECT subdomain FROM tenants WHERE id = $1
+    `, [tenantId]);
+    
+    const tenantSubdomain = tenantResult.rows[0]?.subdomain || 'demo';
 
     // Separar trilhas por situação
     const trilhasDisponiveis = result.rows.filter(t => t.situacao === 'disponivel');
@@ -81,7 +94,7 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
       disponiveis: trilhasDisponiveis,
       em_andamento: trilhasEmAndamento,
       concluidas: trilhasConcluidas,
-      dashboard_url: `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${colaboradorId}&tenant=${req.tenantSubdomain}`
+      dashboard_url: `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${colaboradorId}&tenant=${tenantSubdomain}`
     });
   } catch (error) {
     console.error('Erro ao buscar trilhas disponíveis:', error);
