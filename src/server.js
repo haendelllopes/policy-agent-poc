@@ -161,56 +161,6 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static('public'));
 
-// Rota específica para dashboard-onboardflow
-app.get('/dashboard-onboardflow', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/dashboard-onboardflow.html'));
-});
-
-// Rota específica para dashboard simples
-app.get('/dashboard-simple-onboardflow', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/dashboard-simple-onboardflow.html'));
-});
-
-// Rota específica para dashboard teste simples
-app.get('/dashboard-test-simple', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/dashboard-test-simple.html'));
-});
-
-// Rota específica para dashboard teste simples com .html
-app.get('/dashboard-test-simple.html', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/dashboard-test-simple.html'));
-});
-
-// Novo dashboard melhorado
-app.get('/dashboard-new', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/dashboard-new.html'));
-});
-
 // Página inicial do dashboard (redireciona para dashboard.html)
 app.get('/inicio', (req, res) => {
   res.redirect('/dashboard.html' + (req.url.includes('?') ? '?' + req.url.split('?')[1] : ''));
@@ -319,16 +269,6 @@ app.get('/configurador-departamentos', (req, res) => {
     'Expires': '0'
   });
   res.sendFile(path.join(__dirname, '../public/configurador-departamentos.html'));
-});
-
-// Nova landing page melhorada
-app.get('/landing-new', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/landing-new.html'));
 });
 
 // Middleware para extrair tenant do subdomínio (apenas para rotas da API)
