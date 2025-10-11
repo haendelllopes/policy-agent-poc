@@ -394,19 +394,43 @@
 
 ---
 
-#### 🔔 **FLUXO QUATERNÁRIO - FEEDBACK DE TRILHAS** (DESABILITADO)
+#### 🔔 **FLUXO QUATERNÁRIO - FEEDBACK DE TRILHAS** ✅ **PRONTO PARA ATIVAÇÃO**
 
-- [ ] **Webhook Onboarding2** - POST `/webhook/onboarding` (DISABLED)
-- [ ] **Switch Tipo Webhook** - 6 tipos de eventos:
-  - [ ] trilha_iniciada
-  - [ ] quiz_disponivel
-  - [ ] trilha_concluida
-  - [ ] onboarding_completo
-  - [ ] alerta_atraso
-  - [ ] alerta_nota_baixa
-- [ ] **Send message1-6** - Envio automático por tipo
+##### **Backend - Webhooks Implementados:**
+- [x] **POST** `/api/webhooks/trilha-iniciada` - Dispara quando trilha inicia
+- [x] **POST** `/api/webhooks/quiz-disponivel` - Dispara quando quiz fica disponível
+- [x] **POST** `/api/webhooks/trilha-concluida` - Dispara quando colaborador é aprovado
+- [x] **POST** `/api/webhooks/onboarding-completo` - Dispara quando todas as trilhas são concluídas
+- [x] **POST** `/api/webhooks/alerta-atraso` - Dispara para trilhas atrasadas
+- [x] **POST** `/api/webhooks/alerta-nota-baixa` - Dispara quando nota < 40%
 
-**Status:** Fluxo preparado mas desabilitado (aguardando ativação)
+##### **Backend - Integrações Automáticas:**
+- [x] `POST /api/colaborador/trilhas/:id/iniciar` → Dispara `trilha_iniciada`
+- [x] `POST /api/colaborador/conteudos/:id/aceitar` → Dispara `quiz_disponivel` (quando todos aceitos)
+- [x] `POST /api/quiz/submeter` (aprovado ≥60%) → Dispara `trilha_concluida`
+- [x] `POST /api/quiz/submeter` (todas concluídas) → Dispara `onboarding_completo`
+- [x] `POST /api/quiz/submeter` (reprovado <40%) → Dispara `alerta_nota_baixa`
+- [x] `POST /api/admin/verificar-atrasos` → Dispara `alerta_atraso` (para cron job)
+
+##### **N8N - Nós Configurados:**
+- [x] **Webhook Onboarding2** - POST `/webhook/onboarding` (criado, aguardando habilitação)
+- [x] **Switch Tipo Webhook** - 6 tipos de eventos configurados:
+  - [x] Rota 1: trilha_iniciada → Send message1
+  - [x] Rota 2: quiz_disponivel → Send message2
+  - [x] Rota 3: trilha_concluida → Send message3
+  - [x] Rota 4: onboarding_completo → Send message4
+  - [x] Rota 5: alerta_atraso → Send message5
+  - [x] Rota 6: alerta_nota_baixa → Send message6
+- [x] **Send message1-6** - 6 nós de envio WhatsApp configurados
+
+##### **Documentação Criada:**
+- [x] `WEBHOOKS.md` - Documentação completa dos webhooks
+- [x] `ATIVAR_FEEDBACK_TRILHAS.md` - Guia completo de ativação
+- [x] `N8N_ATIVAR_FEEDBACK_TRILHAS.md` - Instruções práticas (15 min)
+
+**Status:** ✅ **100% IMPLEMENTADO - Aguardando ativação no N8N (1 clique)**
+
+**Para ativar:** Siga o guia `N8N_ATIVAR_FEEDBACK_TRILHAS.md` (15 minutos)
 
 ---
 
