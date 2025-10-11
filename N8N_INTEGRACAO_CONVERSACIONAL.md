@@ -26,7 +26,7 @@ Novo: Switch "Tipo de Conversa"
 ## 🛠️ **Nós a Adicionar**
 
 ### **1️⃣ Switch "Tipo de Conversa"**
-**Posição:** Entre "Merge" e "1️⃣ Analisar Sentimento"
+**Posição:** APÓS "1️⃣ Analisar Sentimento" e "4️⃣ Buscar Trilhas"
 
 **Configuração:**
 ```json
@@ -104,6 +104,7 @@ Novo: Switch "Tipo de Conversa"
 **JavaScript:**
 ```javascript
 const trilhas = $input.first().json;
+const sentimento = $('1️⃣ Analisar Sentimento').first().json.sentiment;
 
 let resposta = "📚 *Trilhas Disponíveis:*\n\n";
 
@@ -135,8 +136,20 @@ if (trilhas.concluidas && trilhas.concluidas.length > 0) {
   resposta += "\n";
 }
 
-resposta += "💡 *Para começar uma trilha, digite:*\n";
-resposta += "\"Quero começar a trilha [nome]\"\n\n";
+// Ajustar tom baseado no sentimento
+if (sentimento.sentimento === 'negativo' || sentimento.sentimento === 'muito_negativo') {
+  resposta += "💡 *Vou te ajudar com isso!* Para começar uma trilha, digite:\n";
+  resposta += "\"Quero começar a trilha [nome]\"\n\n";
+  resposta += "🤗 *Estou aqui para te apoiar em qualquer dificuldade!*\n\n";
+} else if (sentimento.sentimento === 'positivo' || sentimento.sentimento === 'muito_positivo') {
+  resposta += "💡 *Ótimo!* Para começar uma trilha, digite:\n";
+  resposta += "\"Quero começar a trilha [nome]\"\n\n";
+  resposta += "🚀 *Vamos continuar esse momentum!*\n\n";
+} else {
+  resposta += "💡 *Para começar uma trilha, digite:*\n";
+  resposta += "\"Quero começar a trilha [nome]\"\n\n";
+}
+
 resposta += "🔗 *Dashboard:* " + trilhas.dashboard_url;
 
 return [{
@@ -215,6 +228,7 @@ return [{
 **JavaScript:**
 ```javascript
 const resultado = $input.first().json;
+const sentimento = $('1️⃣ Analisar Sentimento').first().json.sentiment;
 
 if (resultado.success) {
   let resposta = `🎉 *Trilha Iniciada!*\n\n`;
@@ -230,7 +244,15 @@ if (resultado.success) {
   }
   
   resposta += `🔗 *Acesse seu dashboard:*\n${resultado.dashboard_url}\n\n`;
-  resposta += `💡 *Dica:* Me avise quando terminar ou se tiver alguma dificuldade!`;
+  
+  // Ajustar dica baseada no sentimento
+  if (sentimento.sentimento === 'negativo' || sentimento.sentimento === 'muito_negativo') {
+    resposta += `💡 *Dica:* Estou aqui para te ajudar! Me avise se tiver qualquer dificuldade. 🤗`;
+  } else if (sentimento.sentimento === 'positivo' || sentimento.sentimento === 'muito_positivo') {
+    resposta += `💡 *Dica:* Vamos nessa! Me avise quando terminar ou se precisar de algo! 🚀`;
+  } else {
+    resposta += `💡 *Dica:* Me avise quando terminar ou se tiver alguma dificuldade!`;
+  }
 } else {
   let resposta = `❌ *Erro ao iniciar trilha*\n\n`;
   resposta += resultado.message || 'Erro desconhecido';
@@ -353,9 +375,9 @@ return [{
 
 ## 🔗 **Conexões a Fazer**
 
-### **1️⃣ Modificar conexão do "Merge":**
-- **De:** Merge → BACKEND_URL
-- **Para:** Merge → Switch "Tipo de Conversa"
+### **1️⃣ Modificar conexão do "4️⃣ Buscar Trilhas":**
+- **De:** 4️⃣ Buscar Trilhas → AI Agent
+- **Para:** 4️⃣ Buscar Trilhas → Switch "Tipo de Conversa"
 
 ### **2️⃣ Switch "Tipo de Conversa" → 3 saídas:**
 - **"Consultar Trilhas"** → HTTP Request trilhas disponíveis
@@ -365,6 +387,12 @@ return [{
 
 ### **3️⃣ Todas as saídas → Code responder:**
 - Todos os nós de formatação conectam ao "Code responder" existente
+
+### **4️⃣ Sentimento disponível em todos os fluxos:**
+- **Consultar Trilhas:** Pode sugerir trilhas baseadas no sentimento
+- **Iniciar Trilha:** Pode ajustar tom da resposta (positivo/negativo)
+- **Feedback Trilha:** Pode detectar sentimento do feedback
+- **Outras conversas:** AI Agent usa sentimento normalmente
 
 ---
 
@@ -377,11 +405,13 @@ Normalize Message
         ↓
 Merge
         ↓
+BACKEND_URL → 1️⃣ Analisar Sentimento → 3️⃣ É Negativo? → 4️⃣ Buscar Trilhas
+        ↓
 Switch "Tipo de Conversa"
         ├─ Consultar Trilhas → HTTP → Code → Code responder → Decide Canal1
         ├─ Iniciar Trilha → Code → HTTP → Code → Code responder → Decide Canal1  
         ├─ Feedback Trilha → Code → HTTP → Code → Code responder → Decide Canal1
-        └─ Outras → BACKEND_URL → (fluxo existente)
+        └─ Outras → AI Agent (COM SENTIMENTO) → Code responder → Decide Canal1
 ```
 
 ---
@@ -398,6 +428,8 @@ Switch "Tipo de Conversa"
 - Início de trilhas via comando
 - Feedback contextual sobre trilhas
 - Integração completa com APIs
+- **Análise de sentimento em TODAS as conversas**
+- **Respostas personalizadas baseadas no sentimento**
 
 ### **✅ Experiência unificada:**
 - Colaborador usa um único canal
@@ -423,3 +455,64 @@ Switch "Tipo de Conversa"
 - "Tive dificuldade" → Solicita ajuda
 
 **Tudo via conversa natural no WhatsApp/Telegram!** 🤖
+
+---
+
+## 🎭 **EXEMPLOS DE SENTIMENTO EM AÇÃO**
+
+### **😊 Sentimento Positivo:**
+```
+Colaborador: "Tenho trilhas disponíveis?" (tom animado)
+    ↓
+Agente: "📚 Trilhas Disponíveis:
+       1. Segurança da Informação (7 dias)
+       
+       💡 Ótimo! Para começar uma trilha, digite:
+       'Quero começar a trilha [nome]'
+       
+       🚀 Vamos continuar esse momentum!"
+```
+
+### **😔 Sentimento Negativo:**
+```
+Colaborador: "Tenho trilhas disponíveis?" (tom preocupado)
+    ↓
+Agente: "📚 Trilhas Disponíveis:
+       1. Segurança da Informação (7 dias)
+       
+       💡 Vou te ajudar com isso! Para começar uma trilha, digite:
+       'Quero começar a trilha [nome]'
+       
+       🤗 Estou aqui para te apoiar em qualquer dificuldade!"
+```
+
+### **😐 Sentimento Neutro:**
+```
+Colaborador: "Tenho trilhas disponíveis?" (tom normal)
+    ↓
+Agente: "📚 Trilhas Disponíveis:
+       1. Segurança da Informação (7 dias)
+       
+       💡 Para começar uma trilha, digite:
+       'Quero começar a trilha [nome]'"
+```
+
+---
+
+## 🔄 **FLUXO DE SENTIMENTO PRESERVADO:**
+
+```
+TODA mensagem → 1️⃣ Analisar Sentimento → 3️⃣ É Negativo? → 4️⃣ Buscar Trilhas
+                                                      ↓
+                                            Switch "Tipo de Conversa"
+                                                      ↓
+                                    ┌─────────────────┼─────────────────┐
+                                    ↓                 ↓                 ↓
+                            APIs Trilhas        APIs Trilhas      AI Agent
+                            (com sentimento)    (com sentimento)  (com sentimento)
+                                    ↓                 ↓                 ↓
+                            Code responder    Code responder    Code responder
+                            (tom personalizado) (tom personalizado) (tom personalizado)
+```
+
+**✅ Análise de sentimento mantida em 100% das conversas!**
