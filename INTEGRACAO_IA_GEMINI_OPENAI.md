@@ -648,3 +648,4 @@ Adicione OpenAI GPT-4o para casos específicos (análises muito complexas).
 
 
 
+

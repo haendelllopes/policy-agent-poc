@@ -44,3 +44,4 @@ SELECT
 FROM tenants 
 ORDER BY created_at DESC;
 
+

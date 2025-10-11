@@ -111,3 +111,4 @@ Aguardar deploy no Vercel (~2 min).
 ---
 
 **Problema resolvido!** 🎉
+

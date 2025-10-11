@@ -193,3 +193,4 @@ http://localhost:3000 → https://seu-projeto.vercel.app
 
 **Problema resolvido!** 🎉
 
+

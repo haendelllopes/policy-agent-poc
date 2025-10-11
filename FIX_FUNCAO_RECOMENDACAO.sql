@@ -116,3 +116,4 @@ COMMENT ON FUNCTION buscar_trilhas_por_sentimento IS 'Busca trilhas mais compat√
 
 
 
+

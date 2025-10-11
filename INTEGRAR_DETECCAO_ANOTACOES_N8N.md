@@ -195,3 +195,4 @@ WhatsApp → Merge → 1️⃣ Analisar Sentimento → 3️⃣ É Negativo? → 
 ---
 
 **Quer que eu te ajude a integrar no workflow existente?** 🎯
+

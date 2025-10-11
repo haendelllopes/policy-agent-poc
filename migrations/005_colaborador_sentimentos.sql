@@ -120,3 +120,4 @@ CREATE TRIGGER trigger_atualizar_sentimento_usuario
 
 
 
+

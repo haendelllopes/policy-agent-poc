@@ -39,3 +39,4 @@ https.get(testUrl, (res) => {
 setTimeout(() => {
   console.log('\n⏰ Teste concluído. Se funcionou, o deploy está OK!');
 }, 5000);
+

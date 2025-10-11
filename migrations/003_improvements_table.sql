@@ -95,3 +95,4 @@ COMMENT ON COLUMN onboarding_improvements.status IS 'Status: sugerida, em_analis
 COMMENT ON COLUMN onboarding_improvements.criado_por IS 'Quem criou: ai_agent, admin_id, sistema, etc.';
 
 
+

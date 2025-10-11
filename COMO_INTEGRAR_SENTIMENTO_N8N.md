@@ -347,3 +347,4 @@ Seu workflow já está **65% pronto**! Falta apenas:
 - `N8N_WORKFLOW_SENTIMENTO_MELHORADO.json` - Workflow pronto para importar
 - Este guia - Instruções passo a passo
 
+

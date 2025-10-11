@@ -9,8 +9,9 @@ const authenticate = async (req, res, next) => {
   // Usa tenant padrão se não especificado
   const DEFAULT_TENANT_ID = '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant Demonstração
   
-  req.tenantId = req.body.tenantId || req.headers['x-tenant-id'] || DEFAULT_TENANT_ID;
-  req.userId = req.body.userId || req.headers['x-user-id'] || 'mock-user-id';
+  // Busca tenantId em query params (GET), body (POST), params (URL) ou headers
+  req.tenantId = req.query.tenantId || req.params.tenantId || req.body?.tenantId || req.headers['x-tenant-id'] || DEFAULT_TENANT_ID;
+  req.userId = req.query.userId || req.params.userId || req.body?.userId || req.headers['x-user-id'] || 'mock-user-id';
   
   // Verificar se tenant existe
   try {
@@ -269,6 +270,114 @@ router.get('/historico/:userId', authenticate, async (req, res) => {
     console.error('Erro ao buscar histórico:', error);
     res.status(500).json({ 
       error: 'Erro interno ao buscar histórico',
+      details: error.message 
+    });
+  }
+});
+
+/**
+ * GET /api/analise-sentimento/estatisticas/:tenantId
+ * Retorna estatísticas agregadas de sentimentos de um tenant
+ */
+router.get('/estatisticas/:tenantId', authenticate, async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const days = req.query.days || 30;
+
+    // Total de análises
+    const totalResult = await query(
+      `SELECT COUNT(*) as total_analises 
+       FROM colaborador_sentimentos 
+       WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '${days} days'`,
+      [tenantId]
+    );
+
+    // Distribuição por sentimento
+    const distribuicaoResult = await query(
+      `SELECT 
+        sentimento, 
+        COUNT(*) as total,
+        ROUND(AVG(intensidade), 2) as intensidade_media
+       FROM colaborador_sentimentos 
+       WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '${days} days'
+       GROUP BY sentimento
+       ORDER BY total DESC`,
+      [tenantId]
+    );
+
+    // Sentimento médio geral
+    const mediaResult = await query(
+      `SELECT 
+        ROUND(AVG(
+          CASE sentimento
+            WHEN 'muito_positivo' THEN 5
+            WHEN 'positivo' THEN 4
+            WHEN 'neutro' THEN 3
+            WHEN 'negativo' THEN 2
+            WHEN 'muito_negativo' THEN 1
+            ELSE 3
+          END
+        ), 2) as sentimento_medio_numerico,
+        ROUND(AVG(intensidade), 2) as intensidade_media
+       FROM colaborador_sentimentos 
+       WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '${days} days'`,
+      [tenantId]
+    );
+
+    // Top colaboradores com análises
+    const topColaboradoresResult = await query(
+      `SELECT 
+        cs.colaborador_id,
+        u.name as colaborador_nome,
+        COUNT(*) as total_analises,
+        ROUND(AVG(intensidade), 2) as intensidade_media
+       FROM colaborador_sentimentos cs
+       LEFT JOIN users u ON u.id = cs.colaborador_id
+       WHERE cs.tenant_id = $1 AND cs.created_at >= NOW() - INTERVAL '${days} days'
+       GROUP BY cs.colaborador_id, u.name
+       ORDER BY total_analises DESC
+       LIMIT 10`,
+      [tenantId]
+    );
+
+    // Evolução temporal (últimos 7 dias)
+    const evolucaoResult = await query(
+      `SELECT 
+        DATE(created_at) as data,
+        COUNT(*) as total_analises,
+        ROUND(AVG(
+          CASE sentimento
+            WHEN 'muito_positivo' THEN 5
+            WHEN 'positivo' THEN 4
+            WHEN 'neutro' THEN 3
+            WHEN 'negativo' THEN 2
+            WHEN 'muito_negativo' THEN 1
+            ELSE 3
+          END
+        ), 2) as sentimento_medio
+       FROM colaborador_sentimentos 
+       WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY DATE(created_at)
+       ORDER BY data DESC`,
+      [tenantId]
+    );
+
+    res.json({
+      success: true,
+      periodo_dias: parseInt(days),
+      total_analises: parseInt(totalResult.rows[0].total_analises),
+      sentimento_medio_numerico: parseFloat(mediaResult.rows[0].sentimento_medio_numerico || 3),
+      intensidade_media: parseFloat(mediaResult.rows[0].intensidade_media || 0),
+      distribuicao_sentimentos: distribuicaoResult.rows,
+      top_colaboradores: topColaboradoresResult.rows,
+      evolucao_temporal: evolucaoResult.rows,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
+    res.status(500).json({ 
+      error: 'Erro interno ao buscar estatísticas',
       details: error.message 
     });
   }

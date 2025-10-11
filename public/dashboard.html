@@ -479,6 +479,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a href="#insights" class="nav-link" onclick="showSection('insights')" data-tooltip="Insights do Agente">
+                    <div class="nav-icon">💡</div>
+                    <span class="nav-text">Insights</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="#users" class="nav-link" onclick="showSection('users')" data-tooltip="Colaboradores">
                     <div class="nav-icon">👥</div>
                     <span class="nav-text">Colaboradores</span>
@@ -531,6 +537,94 @@
                 <div class="card">
                     <h3>Bem-vindo ao Flowly!</h3>
                     <p>Dashboard funcionando perfeitamente. Todas as funcionalidades estão operacionais.</p>
+                </div>
+            </div>
+
+            <!-- Insights Section -->
+            <div id="insights-section" class="section hidden">
+                <div class="section-header">
+                    <h2>💡 Insights do Agente de IA</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <select id="insights-period" onchange="loadInsightsData()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="30" selected>Últimos 30 dias</option>
+                            <option value="90">Últimos 90 dias</option>
+                        </select>
+                        <button class="btn-secondary" onclick="loadInsightsData()">🔄 Atualizar</button>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalAnotacoes">0</div>
+                        <div class="stat-label">📝 Anotações Capturadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalPadroes">0</div>
+                        <div class="stat-label">🔍 Padrões Identificados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalMelhorias">0</div>
+                        <div class="stat-label">💡 Melhorias Sugeridas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="sentimentoMedio">--</div>
+                        <div class="stat-label">😊 Sentimento Médio</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem;">📊 Distribuição por Tipo</h3>
+                        <div id="chartTipos" style="min-height: 200px;">
+                            <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando...</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem;">😊 Distribuição por Sentimento</h3>
+                        <div id="chartSentimentos" style="min-height: 200px;">
+                            <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Padrões Identificados -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem;">🔍 Padrões Identificados</h3>
+                    <div id="padroesContainer">
+                        <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando padrões...</p>
+                    </div>
+                </div>
+
+                <!-- Anotações Recentes -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>📝 Anotações Recentes</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <select id="filtroTipo" onchange="filtrarAnotacoes()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                                <option value="">Todos os tipos</option>
+                                <option value="duvida_frequente">Dúvida Frequente</option>
+                                <option value="dificuldade_trilha">Dificuldade na Trilha</option>
+                                <option value="feedback_positivo">Feedback Positivo</option>
+                                <option value="feedback_negativo">Feedback Negativo</option>
+                                <option value="sugestao_melhoria">Sugestão de Melhoria</option>
+                                <option value="observacao_geral">Observação Geral</option>
+                            </select>
+                            <select id="filtroSentimento" onchange="filtrarAnotacoes()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
+                                <option value="">Todos sentimentos</option>
+                                <option value="muito_positivo">Muito Positivo</option>
+                                <option value="positivo">Positivo</option>
+                                <option value="neutro">Neutro</option>
+                                <option value="negativo">Negativo</option>
+                                <option value="muito_negativo">Muito Negativo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="anotacoesContainer">
+                        <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando anotações...</p>
+                    </div>
                 </div>
             </div>
 
@@ -772,11 +866,17 @@
             // Update page title
             const titles = {
                 dashboard: 'Dashboard',
+                insights: 'Insights do Agente',
                 users: 'Colaboradores',
                 documents: 'Documentos',
                 settings: 'Configurações'
             };
             document.getElementById('pageTitle').textContent = titles[section];
+            
+            // Load data for insights section
+            if (section === 'insights') {
+                loadInsightsData();
+            }
         }
         
         // Update time
@@ -784,6 +884,359 @@
             const now = new Date();
             document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR');
         }
+        
+        // ===== INSIGHTS FUNCTIONS =====
+        let allAnotacoes = [];
+        let tenantId = '5978f911-738b-4aae-802a-f037fdac2e64'; // Default tenant
+        
+        async function loadInsightsData() {
+            try {
+                const days = document.getElementById('insights-period').value;
+                console.log('📊 Carregando insights dos últimos', days, 'dias...');
+                
+                // Load statistics
+                await Promise.all([
+                    loadInsightsStats(days),
+                    loadPadroes(days),
+                    loadAnotacoes(days)
+                ]);
+                
+                console.log('✅ Insights carregados com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao carregar insights:', error);
+            }
+        }
+        
+        async function loadInsightsStats(days) {
+            try {
+                // Load anotações
+                const anotacoesRes = await fetch(`${API_BASE}/api/agente/anotacoes/${tenantId}?days=${days}`);
+                const anotacoesData = await anotacoesRes.json();
+                const anotacoes = anotacoesData.anotacoes || anotacoesData;
+                
+                // Load padrões
+                const padroesRes = await fetch(`${API_BASE}/api/agente/anotacoes/padroes/${tenantId}?days=${days}`);
+                const padroes = await padroesRes.json();
+                
+                // Count melhorias (anotações que geraram melhorias)
+                const melhorias = anotacoes.filter(a => a.gerou_melhoria).length;
+                
+                // Calculate average sentiment
+                const sentimentos = {
+                    muito_positivo: 5,
+                    positivo: 4,
+                    neutro: 3,
+                    negativo: 2,
+                    muito_negativo: 1
+                };
+                
+                let totalSentimento = 0;
+                let countSentimento = 0;
+                anotacoes.forEach(a => {
+                    if (a.sentimento && sentimentos[a.sentimento]) {
+                        totalSentimento += sentimentos[a.sentimento];
+                        countSentimento++;
+                    }
+                });
+                
+                const mediaSentimento = countSentimento > 0 ? (totalSentimento / countSentimento).toFixed(1) : '--';
+                const emojiSentimento = mediaSentimento >= 4 ? '😊' : mediaSentimento >= 3 ? '😐' : '😔';
+                
+                // Update stats
+                document.getElementById('totalAnotacoes').textContent = anotacoes.length;
+                document.getElementById('totalPadroes').textContent = padroes.padroes_por_tipo?.length || 0;
+                document.getElementById('totalMelhorias').textContent = melhorias;
+                document.getElementById('sentimentoMedio').textContent = mediaSentimento !== '--' ? `${emojiSentimento} ${mediaSentimento}/5` : '--';
+                
+                // Render charts
+                renderChartTipos(padroes.padroes_por_tipo || []);
+                renderChartSentimentos(anotacoes);
+                
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+                document.getElementById('totalAnotacoes').textContent = '0';
+                document.getElementById('totalPadroes').textContent = '0';
+                document.getElementById('totalMelhorias').textContent = '0';
+                document.getElementById('sentimentoMedio').textContent = '--';
+            }
+        }
+        
+        async function loadPadroes(days) {
+            try {
+                const response = await fetch(`${API_BASE}/api/agente/anotacoes/padroes/${tenantId}?days=${days}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('padroesContainer');
+                
+                if (!data || (!data.padroes_por_tipo && !data.tags_frequentes && !data.trilhas_problematicas)) {
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum padrão identificado ainda</p>';
+                    return;
+                }
+                
+                let html = '';
+                
+                // Padrões por tipo
+                if (data.padroes_por_tipo && data.padroes_por_tipo.length > 0) {
+                    html += '<div style="margin-bottom: 1.5rem;"><h4 style="margin-bottom: 0.5rem;">📋 Por Tipo</h4>';
+                    data.padroes_por_tipo.forEach(p => {
+                        const tipoLabel = formatTipo(p.tipo);
+                        html += `
+                            <div style="padding: 0.75rem; background: #f8fafc; border-left: 3px solid #2563eb; margin-bottom: 0.5rem; border-radius: 4px;">
+                                <strong>${tipoLabel}</strong>: ${p.total} ocorrências
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                // Tags mais frequentes
+                if (data.tags_frequentes && data.tags_frequentes.length > 0) {
+                    html += '<div style="margin-bottom: 1.5rem;"><h4 style="margin-bottom: 0.5rem;">🏷️ Tags Mais Frequentes</h4><div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">';
+                    data.tags_frequentes.forEach(tag => {
+                        html += `<span style="padding: 0.25rem 0.75rem; background: #dbeafe; color: #1e40af; border-radius: 20px; font-size: 0.9rem;">${tag.tag} (${tag.count})</span>`;
+                    });
+                    html += '</div></div>';
+                }
+                
+                // Trilhas problemáticas
+                if (data.trilhas_problematicas && data.trilhas_problematicas.length > 0) {
+                    html += '<div><h4 style="margin-bottom: 0.5rem;">⚠️ Trilhas com Mais Feedbacks Negativos</h4>';
+                    data.trilhas_problematicas.forEach(t => {
+                        html += `
+                            <div style="padding: 0.75rem; background: #fef2f2; border-left: 3px solid #ef4444; margin-bottom: 0.5rem; border-radius: 4px;">
+                                <strong>Trilha ID ${t.trilha_id || 'N/A'}</strong>: ${t.total} feedbacks negativos
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                }
+                
+                container.innerHTML = html || '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum padrão identificado</p>';
+                
+            } catch (error) {
+                console.error('Erro ao carregar padrões:', error);
+                document.getElementById('padroesContainer').innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Erro ao carregar padrões</p>';
+            }
+        }
+        
+        async function loadAnotacoes(days) {
+            try {
+                const response = await fetch(`${API_BASE}/api/agente/anotacoes/${tenantId}?days=${days}`);
+                const data = await response.json();
+                allAnotacoes = data.anotacoes || data;
+                
+                renderAnotacoes(allAnotacoes);
+                
+            } catch (error) {
+                console.error('Erro ao carregar anotações:', error);
+                document.getElementById('anotacoesContainer').innerHTML = '<p style="text-align: center; color: #ef4444; padding: 2rem;">Erro ao carregar anotações</p>';
+            }
+        }
+        
+        function renderAnotacoes(anotacoes) {
+            const container = document.getElementById('anotacoesContainer');
+            
+            if (anotacoes.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhuma anotação encontrada</p>';
+                return;
+            }
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+            
+            // Show last 20 annotations
+            const displayAnotacoes = anotacoes.slice(0, 20);
+            
+            displayAnotacoes.forEach(a => {
+                const tipoLabel = formatTipo(a.tipo);
+                const sentimentoEmoji = getSentimentoEmoji(a.sentimento);
+                const sentimentoBg = getSentimentoBg(a.sentimento);
+                const date = new Date(a.created_at).toLocaleString('pt-BR');
+                
+                html += `
+                    <div style="padding: 1rem; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                            <div>
+                                <span style="padding: 0.25rem 0.5rem; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 0.85rem; font-weight: 500;">${tipoLabel}</span>
+                                ${a.gerou_melhoria ? '<span style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 4px; font-size: 0.85rem;">💡 Gerou Melhoria</span>' : ''}
+                            </div>
+                            <span style="padding: 0.25rem 0.5rem; background: ${sentimentoBg}; border-radius: 4px; font-size: 0.85rem;">${sentimentoEmoji} ${formatSentimento(a.sentimento)}</span>
+                        </div>
+                        <h4 style="margin: 0.5rem 0; color: #1e293b;">${a.titulo || 'Sem título'}</h4>
+                        <p style="margin: 0.5rem 0; color: #64748b; font-size: 0.95rem;">${a.anotacao}</p>
+                        ${a.tags && a.tags.length > 0 ? `
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0.5rem 0;">
+                                ${a.tags.map(tag => `<span style="padding: 0.15rem 0.5rem; background: #f1f5f9; color: #475569; border-radius: 12px; font-size: 0.8rem;">#${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; font-size: 0.85rem; color: #94a3b8;">
+                            <span>👤 ${a.colaborador_nome || 'N/A'}</span>
+                            <span>🕒 ${date}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            if (anotacoes.length > 20) {
+                html += `<p style="text-align: center; color: #64748b; margin-top: 1rem;">Mostrando 20 de ${anotacoes.length} anotações</p>`;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function filtrarAnotacoes() {
+            const tipo = document.getElementById('filtroTipo').value;
+            const sentimento = document.getElementById('filtroSentimento').value;
+            
+            let filtered = allAnotacoes;
+            
+            if (tipo) {
+                filtered = filtered.filter(a => a.tipo === tipo);
+            }
+            
+            if (sentimento) {
+                filtered = filtered.filter(a => a.sentimento === sentimento);
+            }
+            
+            renderAnotacoes(filtered);
+        }
+        
+        function renderChartTipos(padroesTipo) {
+            const container = document.getElementById('chartTipos');
+            
+            if (!padroesTipo || padroesTipo.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Sem dados</p>';
+                return;
+            }
+            
+            const maxValue = Math.max(...padroesTipo.map(p => p.total));
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+            
+            padroesTipo.forEach(p => {
+                const percentage = (p.total / maxValue) * 100;
+                const tipoLabel = formatTipo(p.tipo);
+                
+                html += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-size: 0.9rem; color: #475569;">${tipoLabel}</span>
+                            <span style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">${p.total}</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${percentage}%; height: 100%; background: linear-gradient(90deg, #2563eb, #1d4ed8); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function renderChartSentimentos(anotacoes) {
+            const container = document.getElementById('chartSentimentos');
+            
+            if (!anotacoes || anotacoes.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">Sem dados</p>';
+                return;
+            }
+            
+            // Count sentimentos
+            const counts = {
+                muito_positivo: 0,
+                positivo: 0,
+                neutro: 0,
+                negativo: 0,
+                muito_negativo: 0
+            };
+            
+            anotacoes.forEach(a => {
+                if (a.sentimento && counts.hasOwnProperty(a.sentimento)) {
+                    counts[a.sentimento]++;
+                }
+            });
+            
+            const sentimentos = [
+                { label: 'Muito Positivo', value: counts.muito_positivo, emoji: '😍', color: '#10b981' },
+                { label: 'Positivo', value: counts.positivo, emoji: '😊', color: '#3b82f6' },
+                { label: 'Neutro', value: counts.neutro, emoji: '😐', color: '#6b7280' },
+                { label: 'Negativo', value: counts.negativo, emoji: '😔', color: '#f59e0b' },
+                { label: 'Muito Negativo', value: counts.muito_negativo, emoji: '😡', color: '#ef4444' }
+            ];
+            
+            const maxValue = Math.max(...sentimentos.map(s => s.value));
+            
+            let html = '<div style="display: flex; flex-direction: column; gap: 0.75rem;">';
+            
+            sentimentos.forEach(s => {
+                if (s.value === 0) return; // Skip zero values
+                
+                const percentage = maxValue > 0 ? (s.value / maxValue) * 100 : 0;
+                
+                html += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="font-size: 0.9rem; color: #475569;">${s.emoji} ${s.label}</span>
+                            <span style="font-size: 0.9rem; font-weight: 600; color: #1e293b;">${s.value}</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${percentage}%; height: 100%; background: ${s.color}; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function formatTipo(tipo) {
+            const tipos = {
+                duvida_frequente: '❓ Dúvida Frequente',
+                dificuldade_trilha: '🚧 Dificuldade na Trilha',
+                feedback_positivo: '👍 Feedback Positivo',
+                feedback_negativo: '👎 Feedback Negativo',
+                sugestao_melhoria: '💡 Sugestão de Melhoria',
+                observacao_geral: '📝 Observação Geral'
+            };
+            return tipos[tipo] || tipo;
+        }
+        
+        function formatSentimento(sentimento) {
+            const sentimentos = {
+                muito_positivo: 'Muito Positivo',
+                positivo: 'Positivo',
+                neutro: 'Neutro',
+                negativo: 'Negativo',
+                muito_negativo: 'Muito Negativo'
+            };
+            return sentimentos[sentimento] || sentimento || 'N/A';
+        }
+        
+        function getSentimentoEmoji(sentimento) {
+            const emojis = {
+                muito_positivo: '😍',
+                positivo: '😊',
+                neutro: '😐',
+                negativo: '😔',
+                muito_negativo: '😡'
+            };
+            return emojis[sentimento] || '😐';
+        }
+        
+        function getSentimentoBg(sentimento) {
+            const colors = {
+                muito_positivo: '#dcfce7',
+                positivo: '#dbeafe',
+                neutro: '#f3f4f6',
+                negativo: '#fef3c7',
+                muito_negativo: '#fee2e2'
+            };
+            return colors[sentimento] || '#f3f4f6';
+        }
+        // ===== END INSIGHTS FUNCTIONS =====
         
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {

@@ -108,3 +108,4 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION buscar_trilhas_por_sentimento IS 'Busca trilhas mais compatíveis com o sentimento atual do colaborador';
 
+

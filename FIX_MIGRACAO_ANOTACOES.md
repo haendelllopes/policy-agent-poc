@@ -114,3 +114,4 @@ CREATE POLICY "Admins podem ver anotações do tenant" ON agente_anotacoes
 ---
 
 **Execute o SQL corrigido e me avise o resultado!** 🚀
+

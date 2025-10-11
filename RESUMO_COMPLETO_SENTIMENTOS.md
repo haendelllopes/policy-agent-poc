@@ -294,3 +294,4 @@ if (gestorResult.rows.length > 0) {
 **Commit atual:** `4538ee0`  
 **Status:** 🟢 PRODUÇÃO (Vercel)
 
+
