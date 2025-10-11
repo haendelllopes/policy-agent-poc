@@ -1187,7 +1187,7 @@
         async function loadTenantInfo() {
             try {
                 const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-                const response = await fetch(`/api/tenant/${tenant}`);
+                const response = await fetch(`/api/tenants/${tenant}`);
                 if (response.ok) {
                     const tenantData = await response.json();
                     document.getElementById('tenantName').textContent = tenantData.name || 'Demonstração';
