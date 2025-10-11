@@ -130,7 +130,7 @@ function createPool(connStr) {
     max: 2, // 2 conexões para melhor throughput
     min: 1, // Manter 1 conexão ativa
     idleTimeoutMillis: 10000, // 10 segundos para conexões idle
-    connectionTimeoutMillis: 5000, // 5 segundos para conexão inicial
+    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
     acquireTimeoutMillis: 5000, // 5 segundos para adquirir conexão
     // Configurações de retry otimizadas
     retryDelayMs: 5000, // 5 segundos entre tentativas
@@ -140,8 +140,8 @@ function createPool(connStr) {
     // Configurações para liberar recursos muito rapidamente
     keepAlive: false, // Desabilitar keepAlive para liberar recursos
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 20000, // 20 segundos para queries
-    query_timeout: 20000, // 20 segundos para queries
+    statement_timeout: 30000, // 30 segundos para queries
+    query_timeout: 30000, // 30 segundos para queries
     // Configurações específicas para Lambda/Vercel
     allowExitOnIdle: true, // Permitir saída quando idle
     maxUses: 100, // Limite muito baixo de usos por conexão
@@ -247,9 +247,9 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       client = new Client({
         connectionString: sessionPoolerUrl,
         ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 3000, // 3 segundos - mais agressivo
-        statement_timeout: 5000, // 5 segundos
-        query_timeout: 5000, // 5 segundos
+        connectionTimeoutMillis: 10000, // 10 segundos - mais agressivo
+        statement_timeout: 15000, // 15 segundos
+        query_timeout: 15000, // 15 segundos
         application_name: `navigator-app-${Date.now()}-${attempt}`,
         // Configurações adicionais para estabilidade
         keepAlive: false,
@@ -259,7 +259,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para conexão
       const connectionPromise = client.connect();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 3000)
+        setTimeout(() => reject(new Error('Connection timeout')), 10000)
       );
       
       await Promise.race([connectionPromise, timeoutPromise]);
@@ -268,7 +268,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para query
       const queryPromise = client.query(text, params);
       const queryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 5000)
+        setTimeout(() => reject(new Error('Query timeout')), 15000)
       );
       
       const res = await Promise.race([queryPromise, queryTimeoutPromise]);
