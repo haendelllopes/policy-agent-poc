@@ -211,14 +211,9 @@ app.get('/dashboard-new', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/dashboard-new.html'));
 });
 
-// Página inicial do dashboard (nova rota principal)
+// Página inicial do dashboard (redireciona para dashboard.html)
 app.get('/inicio', (req, res) => {
-  res.set({
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0'
-  });
-  res.sendFile(path.join(__dirname, '../public/inicio.html'));
+  res.redirect('/dashboard.html' + (req.url.includes('?') ? '?' + req.url.split('?')[1] : ''));
 });
 
 // Página de funcionários

@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
         onboarding_status: user.onboarding_status,
         pontuacao_total: user.pontuacao_total
       },
-      redirect: user.role === 'admin' ? '/inicio' : `/colaborador-trilhas?colaborador_id=${user.id}`,
+      redirect: user.role === 'admin' ? '/dashboard.html' : `/colaborador-trilhas?colaborador_id=${user.id}`,
       tenant: {
         id: tenant.id,
         name: tenant.name,

@@ -750,7 +750,7 @@
                     console.log('Conta criada com sucesso:', data);
                     
                     // Redirect to dashboard com subdomain
-                    window.location.href = `/inicio?tenant=${data.tenant.subdomain}`;
+                    window.location.href = `/dashboard.html?tenant=${data.tenant.subdomain}`;
                 } else {
                     const errorData = await createResponse.json();
                     console.error('Erro na criação:', errorData);
