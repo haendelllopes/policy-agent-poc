@@ -296,6 +296,48 @@
             display: none !important;
         }
         
+        /* Tabs para Dashboard/Insights */
+        .dashboard-tabs {
+            display: flex;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 2rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .tab-button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .tab-button:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        
+        .tab-button.active {
+            background: white;
+            color: #2563eb;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-button svg {
+            width: 20px;
+            height: 20px;
+        }
+        
         /* Tooltip para menu recolhido */
         .sidebar.collapsed .nav-link::after {
             content: attr(data-tooltip);
@@ -531,6 +573,22 @@
 
         <!-- Content -->
         <div class="content">
+            <!-- Tabs para alternar entre Dashboard e Insights -->
+            <div class="dashboard-tabs">
+                <button class="tab-button active" onclick="showSection('dashboard')" id="dashboard-tab">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Dashboard
+                </button>
+                <button class="tab-button" onclick="showSection('insights')" id="insights-tab">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    Insights
+                </button>
+            </div>
+            
             <!-- Dashboard Section -->
             <div id="dashboard-section" class="section active">
                 <div class="stats-grid">
@@ -867,9 +925,22 @@
                 el.classList.remove('active');
             });
             
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`${section}-tab`).classList.add('active');
+            
             // Show selected section
             document.getElementById(`${section}-section`).classList.remove('hidden');
             document.getElementById(`${section}-section`).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'insights': 'Insights do Flowly'
+            };
+            document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
             
             // Update navigation
             document.querySelectorAll('.nav-link').forEach(link => {
