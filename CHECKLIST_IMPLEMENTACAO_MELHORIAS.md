@@ -923,7 +923,293 @@ f83c375 - feat: Dashboard de Insights + preparação Fase 1
 
 ---
 
-**Última atualização:** 11 de outubro de 2025 (Tarde)  
-**Status:** 🎉 **TODAS AS FASES COMPLETAS!**  
+---
+
+## 🎉 **CONQUISTAS DA SESSÃO 11/10/2025 (NOITE):**
+
+### ✅ **Refatoração e Melhoria de UX - 100% COMPLETA**
+
+Reorganização completa da navegação e estrutura do sistema para melhor usabilidade!
+
+#### 🎨 **1. Padronização do Menu Lateral** (100%)
+- ✅ Menu idêntico em todas as páginas
+- ✅ Estrutura HTML consistente (ul.nav-menu > li.nav-item > a.nav-link)
+- ✅ Ícones Heroicons padronizados (24x24px)
+- ✅ Tooltips consistentes
+- ✅ CSS uniforme com hover effects e border-left para ativo
+- ✅ Transições suaves
+
+#### 🔄 **2. Unificação e Reorganização** (100%)
+- ✅ Dashboard e Insights unificados inicialmente
+- ✅ Tabs adicionadas para navegação interna
+- ✅ Correção de erros JavaScript (variável duplicada, função global)
+- ✅ Correção de rota da API (/api/tenant/ → /api/tenants/)
+
+#### 📊 **3. Refatoração Final - Insights Separado** (100%)
+- ✅ Removida seção "Dashboard" do dashboard.html
+- ✅ Mantida apenas seção "Insights" focada em IA
+- ✅ Cards de estatísticas movidos para funcionarios.html
+- ✅ Cards: Colaboradores, Documentos, Departamentos
+- ✅ JavaScript para carregar dados via API
+- ✅ Design moderno com hover effects
+
+#### 🎯 **4. Renomeação Completa** (100%)
+- ✅ "Dashboard" → "Insights" em TODAS as páginas:
+  - dashboard.html
+  - funcionarios.html
+  - admin-trilhas.html
+  - documentos.html
+  - configurador.html
+- ✅ Ícone atualizado para lâmpada 💡
+- ✅ Tooltip: "Insights do Flowly"
+
+#### 📦 **Commits Realizados:**
+
+```
+a0e8e00 - fix: Padroniza menu lateral em todas as páginas
+d54d6b1 - refactor: Unifica Dashboard e Insights em menu único
+5bde50b - fix: Adiciona tabs para alternar entre seções
+ef0f191 - fix: Corrige erro de variável duplicada e função
+4b5750a - fix: Corrige rota da API de tenant
+d308de7 - refactor: Reorganiza Dashboard e renomeia para Insights
+```
+
+**Total: 6 commits | 5 arquivos modificados**
+
+---
+
+## 🎯 **ESTRUTURA FINAL DO SISTEMA:**
+
+### **Menu Lateral (5 itens):**
+1. **💡 Insights** → Análises de IA do Flowly (`dashboard.html`)
+2. **👥 Colaboradores** → Lista + Cards de estatísticas (`funcionarios.html`)
+3. **📋 Trilhas** → Gestão de onboarding (`admin-trilhas.html`)
+4. **📄 Documentos** → Biblioteca de documentos (`documentos.html`)
+5. **⚙️ Configurações** → Configurações do sistema (`configurador.html`)
+
+### **Páginas Principais:**
+
+#### **Insights (`dashboard.html`):**
+- 💡 Análises de sentimento
+- 📝 Anotações do Flowly
+- 🚨 Alertas importantes
+- 📊 Estatísticas de IA
+- ⏰ Seletor de período (7, 30, 90 dias)
+- 📋 Padrões identificados
+- 🏷️ Tags mais frequentes
+
+#### **Colaboradores (`funcionarios.html`):**
+- 📊 Cards de estatísticas no topo:
+  - Total de Colaboradores
+  - Total de Documentos
+  - Total de Departamentos
+- 📋 Lista completa de funcionários
+- 🔍 Filtros por departamento e status
+- ➕ Adicionar/Editar/Excluir colaboradores
+
+#### **Trilhas (`admin-trilhas.html`):**
+- 📋 Lista de trilhas de onboarding
+- 🎯 Segmentação por cargo e departamento
+- ☑️ Dropdown com checkboxes (UX moderna)
+- 👥 Preview de acesso
+- ✏️ Criar/Editar trilhas
+
+---
+
+## 🏆 **PROGRESSO GERAL:**
+
+### **Fases Principais: 100%**
+```
+✅ Fase 1: Trilhas por Cargo/Departamento    100% COMPLETA 🎉
+✅ Fase 2: Análise de Sentimento            100% COMPLETA ✅
+✅ Fase 3: Bloco de Notas do Agente        100% COMPLETA ✅
+```
+
+### **Melhorias Adicionais: 100%**
+```
+✅ Dashboard de Insights integrado          100% COMPLETA ✅
+✅ Padronização do menu lateral            100% COMPLETA ✅
+✅ Reorganização de estrutura              100% COMPLETA ✅
+✅ Nomenclatura consistente                100% COMPLETA ✅
+```
+
+**🎊 PROJETO 100% IMPLEMENTADO COM MELHORIAS DE UX! 🎊**
+
+---
+
+## 🚀 **PRÓXIMAS ETAPAS SUGERIDAS:**
+
+### **🎨 Opção A - Melhorias Visuais e UX** (Recomendado)
+**Tempo estimado: 6-8 horas**
+
+1. **Modo Escuro (Dark Mode)** (3-4h)
+   - [ ] Adicionar toggle na sidebar
+   - [ ] Criar paleta de cores dark
+   - [ ] Atualizar todos os componentes
+   - [ ] Salvar preferência no localStorage
+   - [ ] Transição suave entre modos
+
+2. **Animações e Transições** (2-3h)
+   - [ ] Animações de entrada para cards
+   - [ ] Loading states elegantes
+   - [ ] Skeleton screens
+   - [ ] Feedback visual em ações
+
+3. **Responsividade Mobile** (1-2h)
+   - [ ] Menu hamburguer em mobile
+   - [ ] Cards adaptáveis
+   - [ ] Tabelas responsivas
+   - [ ] Touch gestures
+
+---
+
+### **📊 Opção B - Funcionalidades Avançadas**
+**Tempo estimado: 8-12 horas**
+
+1. **Exportação de Dados** (3-4h)
+   - [ ] Exportar lista de colaboradores (CSV/Excel)
+   - [ ] Exportar relatório de insights (PDF)
+   - [ ] Exportar estatísticas de trilhas
+   - [ ] Exportar histórico de sentimentos
+
+2. **Notificações e Alertas** (3-4h)
+   - [ ] Sistema de notificações in-app
+   - [ ] Notificações por email (sentimento negativo)
+   - [ ] Alertas de trilhas não concluídas
+   - [ ] Relatórios semanais automáticos
+
+3. **Dashboard Avançado** (2-4h)
+   - [ ] Gráficos interativos (Chart.js ou Recharts)
+   - [ ] Métricas em tempo real
+   - [ ] Comparação de períodos
+   - [ ] Insights preditivos com IA
+
+---
+
+### **🔐 Opção C - Segurança e Performance**
+**Tempo estimado: 6-10 horas**
+
+1. **Autenticação e Permissões** (3-4h)
+   - [ ] Autenticação de 2 fatores (2FA)
+   - [ ] Gestão de sessões
+   - [ ] Logs de auditoria
+   - [ ] Permissões granulares por página
+
+2. **Performance e Otimização** (2-3h)
+   - [ ] Cache de dados (Redis ou similar)
+   - [ ] Paginação server-side
+   - [ ] Lazy loading de imagens
+   - [ ] Minificação de assets
+
+3. **Monitoramento** (1-3h)
+   - [ ] Integração com Sentry (error tracking)
+   - [ ] Analytics (Google Analytics ou Plausible)
+   - [ ] Métricas de performance (Lighthouse)
+   - [ ] Alertas de downtime
+
+---
+
+### **📱 Opção D - Mobile e PWA**
+**Tempo estimado: 12-20 horas**
+
+1. **Progressive Web App (PWA)** (6-8h)
+   - [ ] Service Worker para cache offline
+   - [ ] Manifest.json configurado
+   - [ ] Instalação no dispositivo
+   - [ ] Push notifications
+
+2. **App Nativo (React Native)** (10-15h)
+   - [ ] Setup React Native
+   - [ ] Recriar principais telas
+   - [ ] Autenticação mobile
+   - [ ] Build e publicação (App Store/Play Store)
+
+---
+
+### **🤖 Opção E - Inteligência Artificial Avançada**
+**Tempo estimado: 10-15 horas**
+
+1. **Análise Preditiva** (4-6h)
+   - [ ] Prever colaboradores em risco de evasão
+   - [ ] Recomendar trilhas automaticamente
+   - [ ] Identificar gaps de conhecimento
+   - [ ] Score de engajamento
+
+2. **Chatbot Avançado** (4-6h)
+   - [ ] Integração com GPT-4 Turbo
+   - [ ] Respostas contextualizadas
+   - [ ] Memória de conversas
+   - [ ] Personalidade do agente
+
+3. **Workflow de Análise Periódica** (2-3h)
+   - [ ] Cron job no N8N (semanal)
+   - [ ] Identificar padrões automaticamente
+   - [ ] Gerar relatórios executivos
+   - [ ] Sugestões de melhoria via IA
+
+---
+
+### **📚 Opção F - Conteúdo e Treinamento**
+**Tempo estimado: 8-12 horas**
+
+1. **Mais Trilhas de Onboarding** (4-6h)
+   - [ ] Criar 10-15 novas trilhas
+   - [ ] Trilhas por departamento
+   - [ ] Trilhas por nível (júnior/pleno/sênior)
+   - [ ] Trilhas técnicas vs. soft skills
+
+2. **Biblioteca de Recursos** (2-3h)
+   - [ ] Upload de vídeos
+   - [ ] PDFs interativos
+   - [ ] Links externos
+   - [ ] Quiz e avaliações
+
+3. **Gamificação** (2-3h)
+   - [ ] Sistema de pontos
+   - [ ] Badges e conquistas
+   - [ ] Ranking de colaboradores
+   - [ ] Recompensas e desafios
+
+---
+
+## 📋 **RECOMENDAÇÃO:**
+
+### **🎯 Plano Ideal para Próximas Sessões:**
+
+**Sessão 1 (6-8h): Melhorias Visuais** ⭐ PRIORIDADE ALTA
+- Modo escuro
+- Animações
+- Responsividade mobile
+
+**Sessão 2 (8-12h): Funcionalidades Avançadas**
+- Exportação de dados
+- Notificações
+- Dashboard avançado
+
+**Sessão 3 (6-10h): Performance e Segurança**
+- Otimizações
+- Monitoramento
+- Logs de auditoria
+
+**Sessão 4 (10-15h): IA Avançada**
+- Análise preditiva
+- Workflow periódico
+- Chatbot melhorado
+
+---
+
+## 💡 **SUGESTÃO IMEDIATA:**
+
+**Começar com Melhorias Visuais (Opção A)** porque:
+1. ✅ Sistema já está 100% funcional
+2. 🎨 Modo escuro é muito valorizado pelos usuários
+3. 📱 Responsividade é essencial hoje
+4. ⚡ Impacto visual rápido e positivo
+5. 🚀 Prepara o sistema para escala
+
+---
+
+**Última atualização:** 11 de outubro de 2025 (Noite)  
+**Status:** 🎉 **TODAS AS FASES COMPLETAS + MELHORIAS DE UX!**  
 **Responsável:** Haendell Lopes
 
