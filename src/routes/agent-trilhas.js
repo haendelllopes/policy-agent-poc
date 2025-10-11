@@ -5,6 +5,7 @@ const { query } = require('../db-pg');
 /**
  * GET /api/agent/trilhas/disponiveis/:colaboradorId
  * Lista trilhas disponíveis para um colaborador específico
+ * Aceita tanto UUID quanto número de telefone
  */
 router.get('/disponiveis/:colaboradorId', async (req, res) => {
   try {
@@ -14,6 +15,22 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
     
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    // Se colaboradorId é um telefone (contém apenas números), buscar o usuário
+    let userId = colaboradorId;
+    if (/^\d+$/.test(colaboradorId)) {
+      // É um telefone, buscar o usuário correspondente
+      const userResult = await query(`
+        SELECT id FROM users 
+        WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
+      `, [colaboradorId, tenant.id]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      }
+      
+      userId = userResult.rows[0].id;
     }
 
     // Buscar trilhas disponíveis (não iniciadas ou em andamento)
@@ -36,7 +53,7 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
       LEFT JOIN colaborador_trilhas ct ON ct.trilha_id = t.id AND ct.colaborador_id = $2
       WHERE t.tenant_id = $1 AND t.ativo = true
       ORDER BY t.ordem, t.nome
-    `, [tenant.id, colaboradorId]);
+    `, [tenant.id, userId]);
 
     // Separar trilhas por situação
     const trilhasDisponiveis = result.rows.filter(t => t.situacao === 'disponivel');
@@ -58,6 +75,7 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
 /**
  * POST /api/agent/trilhas/iniciar
  * Inicia uma trilha via agente
+ * Aceita tanto UUID quanto número de telefone no colaborador_id
  */
 router.post('/iniciar', async (req, res) => {
   try {
@@ -71,6 +89,22 @@ router.post('/iniciar', async (req, res) => {
 
     if (!colaborador_id || !trilha_id) {
       return res.status(400).json({ error: 'colaborador_id e trilha_id são obrigatórios' });
+    }
+
+    // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
+    let userId = colaborador_id;
+    if (/^\d+$/.test(colaborador_id)) {
+      // É um telefone, buscar o usuário correspondente
+      const userResult = await query(`
+        SELECT id FROM users 
+        WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
+      `, [colaborador_id, tenant.id]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      }
+      
+      userId = userResult.rows[0].id;
     }
 
     // Verificar se a trilha existe e está ativa
@@ -88,7 +122,7 @@ router.post('/iniciar', async (req, res) => {
     const progressoResult = await query(`
       SELECT id, status FROM colaborador_trilhas 
       WHERE colaborador_id = $1 AND trilha_id = $2
-    `, [colaborador_id, trilha_id]);
+    `, [userId, trilha_id]);
 
     if (progressoResult.rows.length > 0) {
       const progresso = progressoResult.rows[0];
@@ -111,7 +145,7 @@ router.post('/iniciar', async (req, res) => {
     // Buscar colaborador
     const colaboradorResult = await query(`
       SELECT name, email, phone FROM users WHERE id = $1
-    `, [colaborador_id]);
+    `, [userId]);
 
     if (colaboradorResult.rows.length === 0) {
       return res.status(404).json({ error: 'Colaborador não encontrado' });
@@ -125,7 +159,7 @@ router.post('/iniciar', async (req, res) => {
       INSERT INTO colaborador_trilhas (colaborador_id, trilha_id, status, data_inicio, data_limite)
       VALUES ($1, $2, 'em_andamento', NOW(), $3)
       RETURNING id
-    `, [colaborador_id, trilha_id, dataLimite]);
+    `, [userId, trilha_id, dataLimite]);
 
     // Buscar primeiro conteúdo da trilha
     const primeiroConteudo = await query(`
@@ -144,7 +178,7 @@ router.post('/iniciar', async (req, res) => {
         body: JSON.stringify({
           type: 'trilha',
           tipo: 'trilha_iniciada',
-          colaborador_id,
+          colaborador_id: userId,
           colaborador_nome: colaboradorResult.rows[0].name,
           colaborador_email: colaboradorResult.rows[0].email,
           colaborador_phone: colaboradorResult.rows[0].phone,
@@ -164,7 +198,7 @@ router.post('/iniciar', async (req, res) => {
       trilha: trilhaResult.rows[0],
       progresso_id: novoProgresso.rows[0].id,
       primeiro_conteudo: primeiroConteudo.rows[0] || null,
-      dashboard_url: `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${colaborador_id}&tenant=${req.tenantSubdomain}`
+      dashboard_url: `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${userId}&tenant=${req.tenantSubdomain}`
     });
 
   } catch (error) {
@@ -176,6 +210,7 @@ router.post('/iniciar', async (req, res) => {
 /**
  * POST /api/agent/trilhas/feedback
  * Recebe feedback sobre uma trilha
+ * Aceita tanto UUID quanto número de telefone no colaborador_id
  */
 router.post('/feedback', async (req, res) => {
   try {
@@ -191,6 +226,22 @@ router.post('/feedback', async (req, res) => {
       return res.status(400).json({ error: 'colaborador_id, trilha_id e feedback são obrigatórios' });
     }
 
+    // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
+    let userId = colaborador_id;
+    if (/^\d+$/.test(colaborador_id)) {
+      // É um telefone, buscar o usuário correspondente
+      const userResult = await query(`
+        SELECT id FROM users 
+        WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
+      `, [colaborador_id, tenant.id]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      }
+      
+      userId = userResult.rows[0].id;
+    }
+
     // Buscar dados do colaborador e trilha
     const dadosResult = await query(`
       SELECT 
@@ -200,7 +251,7 @@ router.post('/feedback', async (req, res) => {
         t.nome as trilha_nome
       FROM users u, trilhas t
       WHERE u.id = $1 AND t.id = $2 AND t.tenant_id = $3
-    `, [colaborador_id, trilha_id, tenant.id]);
+    `, [userId, trilha_id, tenant.id]);
 
     if (dadosResult.rows.length === 0) {
       return res.status(404).json({ error: 'Colaborador ou trilha não encontrados' });
@@ -212,7 +263,7 @@ router.post('/feedback', async (req, res) => {
     await query(`
       INSERT INTO trilha_feedbacks (colaborador_id, trilha_id, feedback, tipo_feedback, created_at)
       VALUES ($1, $2, $3, $4, NOW())
-    `, [colaborador_id, trilha_id, feedback, tipo_feedback || 'geral']);
+    `, [userId, trilha_id, feedback, tipo_feedback || 'geral']);
 
     // Disparar webhook para n8n com feedback
     try {
@@ -222,7 +273,7 @@ router.post('/feedback', async (req, res) => {
         body: JSON.stringify({
           type: 'trilha',
           tipo: 'feedback_trilha',
-          colaborador_id,
+          colaborador_id: userId,
           colaborador_nome: dados.colaborador_nome,
           colaborador_email: dados.colaborador_email,
           colaborador_phone: dados.colaborador_phone,
