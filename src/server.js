@@ -373,42 +373,65 @@ app.get('/dashboard', (_req, res) => {
 
 // Função auxiliar para buscar tenant por subdomain
 async function getTenantBySubdomain(subdomain) {
-  // Sempre tentar PostgreSQL primeiro
-  if (await usePostgres()) {
-    try {
-      const result = await query('SELECT * FROM tenants WHERE subdomain = $1', [subdomain]);
-      if (result.rows.length > 0) {
-        return result.rows[0];
-      }
-    } catch (error) {
-      console.error('Erro ao buscar tenant no PostgreSQL:', error);
-      // Se erro de conexão, não usar dados demo
-      if (error.message.includes('Connection terminated') || error.message.includes('timeout')) {
-        throw error; // Re-throw para que o endpoint retorne erro 500
-      }
+  // Verificar se temos variáveis de ambiente do PostgreSQL
+  if (!process.env.PGUSER || !process.env.PGPASSWORD) {
+    console.log('Variáveis PostgreSQL não configuradas, usando dados demo');
+    const demoTenant = getTenantFromDemoData(subdomain);
+    if (demoTenant) {
+      return demoTenant;
     }
+    throw new Error('Tenant não encontrado');
   }
   
-  // Se chegou aqui, PostgreSQL não está disponível ou não encontrou tenant
-  throw new Error('PostgreSQL não disponível');
+  // Tentar PostgreSQL diretamente
+  try {
+    if (!getPool()) {
+      await initializePool();
+    }
+    
+    const result = await query('SELECT * FROM tenants WHERE subdomain = $1', [subdomain]);
+    if (result.rows.length > 0) {
+      return result.rows[0];
+    }
+    
+    // Se não encontrou tenant, usar dados demo como fallback
+    console.log('Tenant não encontrado no PostgreSQL, tentando dados demo');
+    const demoTenant = getTenantFromDemoData(subdomain);
+    if (demoTenant) {
+      return demoTenant;
+    }
+    
+    throw new Error('Tenant não encontrado');
+  } catch (error) {
+    console.error('Erro ao buscar tenant no PostgreSQL:', error);
+    
+    // Fallback para dados demo em caso de erro
+    console.log('Tentando fallback para dados demo');
+    const demoTenant = getTenantFromDemoData(subdomain);
+    if (demoTenant) {
+      return demoTenant;
+    }
+    
+    throw new Error('PostgreSQL não disponível e tenant não encontrado nos dados demo');
+  }
 }
 
 // Helper para decidir se PostgreSQL está disponível (via DATABASE_URL ou PG*)
 async function usePostgres() {
+  // Verificar se temos variáveis de ambiente do PostgreSQL
+  if (!process.env.PGUSER || !process.env.PGPASSWORD) {
+    console.log('Variáveis PostgreSQL não configuradas');
+    return false;
+  }
+  
   // Sempre tentar PostgreSQL primeiro, com fallback apenas em caso de erro
   try {
     if (!getPool()) {
       await initializePool();
     }
     
-    // Testar conexão com uma query simples
-    try {
-      await query('SELECT 1 as test');
-      return true;
-    } catch (testError) {
-      console.log('Teste de conexão PostgreSQL falhou:', testError.message);
-      return false;
-    }
+    // Se chegou até aqui, o pool foi criado com sucesso
+    return true;
   } catch (_e) {
     console.log('PostgreSQL não disponível, usando dados demo');
     return false;
