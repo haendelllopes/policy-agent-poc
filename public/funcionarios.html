@@ -287,6 +287,40 @@
             margin-bottom: 16px;
         }
 
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
         /* Users Table */
         .users-table {
             width: 100%;
@@ -562,11 +596,11 @@
             
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="dashboard.html" class="nav-link" data-tooltip="Dashboard & Insights">
+                    <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Flowly">
                         <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                         </svg>
-                        <span class="nav-text">Dashboard</span>
+                        <span class="nav-text">Insights</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -631,6 +665,22 @@
                     </div>
                 </div>
             </header>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="usersCount">0</div>
+                    <div class="stat-label">Colaboradores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="documentsCount">0</div>
+                    <div class="stat-label">Documentos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="departmentsCount">0</div>
+                    <div class="stat-label">Departamentos</div>
+                </div>
+            </div>
 
             <!-- Users Section -->
             <div class="section">
@@ -1200,11 +1250,41 @@
             }
         }
 
+        // Load stats
+        async function loadStats() {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            try {
+                // Load users count
+                const usersResponse = await fetch(`/api/users?tenant=${tenant}`);
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    document.getElementById('usersCount').textContent = users.length;
+                }
+
+                // Load documents count
+                const docsResponse = await fetch(`/api/documents?tenant=${tenant}`);
+                if (docsResponse.ok) {
+                    const docs = await docsResponse.json();
+                    document.getElementById('documentsCount').textContent = docs.length;
+                }
+
+                // Load departments count
+                const deptsResponse = await fetch(`/api/departments?tenant=${tenant}`);
+                if (deptsResponse.ok) {
+                    const depts = await deptsResponse.json();
+                    document.getElementById('departmentsCount').textContent = depts.length;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de funcionários carregada');
             restoreSidebarState();
             loadTenantInfo();
+            loadStats();
             loadUsers();
         });
     </script>
