@@ -459,6 +459,90 @@
             color: #991b1b;
             border: 1px solid #fca5a5;
         }
+        
+        /* Multi-select dropdown customizado */
+        .multi-select-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        
+        .multi-select-header {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        
+        .multi-select-header:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+        
+        .multi-select-header svg {
+            transition: transform 0.2s;
+            color: #64748b;
+        }
+        
+        .multi-select-header.active svg {
+            transform: rotate(180deg);
+        }
+        
+        .multi-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .multi-select-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .multi-select-option:hover {
+            background: #f1f5f9;
+        }
+        
+        .multi-select-option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #3b82f6;
+        }
+        
+        .multi-select-option label {
+            cursor: pointer;
+            flex: 1;
+            margin: 0;
+            font-weight: 400;
+        }
+        
+        .multi-select-count {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -579,19 +663,33 @@
                     </p>
                     
                     <div class="form-group">
-                        <label for="trilha-departamentos">Departamentos</label>
-                        <select id="trilha-departamentos" multiple style="min-height: 120px;">
-                            <option value="">Carregando...</option>
-                        </select>
-                        <small style="color: #64748b; font-size: 12px;">Mantenha Ctrl/Cmd pressionado para selecionar múltiplos</small>
+                        <label>Departamentos</label>
+                        <div class="multi-select-dropdown">
+                            <div class="multi-select-header" onclick="toggleDropdown('departamentos')">
+                                <span id="departamentos-label">Selecionar departamentos...</span>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
+                            <div id="departamentos-dropdown" class="multi-select-options" style="display: none;">
+                                <div style="padding: 8px; color: #64748b; font-size: 13px;">Carregando...</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="trilha-cargos">Cargos</label>
-                        <select id="trilha-cargos" multiple style="min-height: 120px;">
-                            <option value="">Carregando...</option>
-                        </select>
-                        <small style="color: #64748b; font-size: 12px;">Mantenha Ctrl/Cmd pressionado para selecionar múltiplos</small>
+                        <label>Cargos</label>
+                        <div class="multi-select-dropdown">
+                            <div class="multi-select-header" onclick="toggleDropdown('cargos')">
+                                <span id="cargos-label">Selecionar cargos...</span>
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </div>
+                            <div id="cargos-dropdown" class="multi-select-options" style="display: none;">
+                                <div style="padding: 8px; color: #64748b; font-size: 13px;">Carregando...</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div id="preview-acesso" style="display: none; margin-top: 16px; padding: 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
@@ -800,9 +898,11 @@
             document.getElementById('alert-container').innerHTML = '';
             document.getElementById('preview-acesso').style.display = 'none';
             
-            // Limpar seleções de segmentação
-            document.getElementById('trilha-departamentos').selectedIndex = -1;
-            document.getElementById('trilha-cargos').selectedIndex = -1;
+            // Limpar seleções de segmentação (checkboxes)
+            document.querySelectorAll('#departamentos-dropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#cargos-dropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+            updateLabel('departamentos');
+            updateLabel('cargos');
             
             trilhaAtual = null;
             document.getElementById('modal-trilha').classList.add('active');
@@ -1030,14 +1130,17 @@
                 const response = await fetch(`${API_BASE}/api/departments?tenant=${TENANT}`);
                 const departments = await response.json();
                 
-                const select = document.getElementById('trilha-departamentos');
-                select.innerHTML = departments.map(dept => 
-                    `<option value="${dept.id}">${dept.name}</option>`
-                ).join('');
+                const container = document.getElementById('departamentos-dropdown');
+                container.innerHTML = departments.map(dept => `
+                    <div class="multi-select-option" onclick="toggleCheckbox(event, 'dept-${dept.id}')">
+                        <input type="checkbox" id="dept-${dept.id}" value="${dept.id}" onchange="updateLabel('departamentos')">
+                        <label for="dept-${dept.id}">${dept.name}</label>
+                    </div>
+                `).join('');
             } catch (error) {
                 console.error('Erro ao carregar departamentos:', error);
-                document.getElementById('trilha-departamentos').innerHTML = 
-                    '<option value="">Erro ao carregar</option>';
+                document.getElementById('departamentos-dropdown').innerHTML = 
+                    '<div style="padding: 8px; color: #ef4444;">Erro ao carregar</div>';
             }
         }
 
@@ -1046,16 +1149,75 @@
                 const response = await fetch(`${API_BASE}/api/positions?tenant=${TENANT}`);
                 const positions = await response.json();
                 
-                const select = document.getElementById('trilha-cargos');
-                select.innerHTML = positions.map(pos => 
-                    `<option value="${pos.id}">${pos.name}</option>`
-                ).join('');
+                const container = document.getElementById('cargos-dropdown');
+                container.innerHTML = positions.map(pos => `
+                    <div class="multi-select-option" onclick="toggleCheckbox(event, 'pos-${pos.id}')">
+                        <input type="checkbox" id="pos-${pos.id}" value="${pos.id}" onchange="updateLabel('cargos')">
+                        <label for="pos-${pos.id}">${pos.name}</label>
+                    </div>
+                `).join('');
             } catch (error) {
                 console.error('Erro ao carregar cargos:', error);
-                document.getElementById('trilha-cargos').innerHTML = 
-                    '<option value="">Erro ao carregar</option>';
+                document.getElementById('cargos-dropdown').innerHTML = 
+                    '<div style="padding: 8px; color: #ef4444;">Erro ao carregar</div>';
             }
         }
+
+        function toggleDropdown(type) {
+            const dropdown = document.getElementById(`${type}-dropdown`);
+            const header = dropdown.previousElementSibling;
+            
+            // Fechar outros dropdowns
+            document.querySelectorAll('.multi-select-options').forEach(d => {
+                if (d !== dropdown) {
+                    d.style.display = 'none';
+                    d.previousElementSibling.classList.remove('active');
+                }
+            });
+            
+            // Toggle atual
+            if (dropdown.style.display === 'none') {
+                dropdown.style.display = 'block';
+                header.classList.add('active');
+            } else {
+                dropdown.style.display = 'none';
+                header.classList.remove('active');
+            }
+        }
+
+        function toggleCheckbox(event, checkboxId) {
+            // Permitir clicar no checkbox e no label
+            if (event.target.type !== 'checkbox') {
+                const checkbox = document.getElementById(checkboxId);
+                checkbox.checked = !checkbox.checked;
+                checkbox.dispatchEvent(new Event('change'));
+            }
+        }
+
+        function updateLabel(type) {
+            const container = document.getElementById(`${type}-dropdown`);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            const label = document.getElementById(`${type}-label`);
+            
+            if (checkboxes.length === 0) {
+                label.innerHTML = `Selecionar ${type}...`;
+            } else if (checkboxes.length === 1) {
+                const labelText = checkboxes[0].nextElementSibling.textContent;
+                label.innerHTML = `${labelText} <span class="multi-select-count">1</span>`;
+            } else {
+                label.innerHTML = `${checkboxes.length} ${type} selecionados <span class="multi-select-count">${checkboxes.length}</span>`;
+            }
+        }
+
+        // Fechar dropdowns ao clicar fora
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.multi-select-dropdown')) {
+                document.querySelectorAll('.multi-select-options').forEach(dropdown => {
+                    dropdown.style.display = 'none';
+                    dropdown.previousElementSibling.classList.remove('active');
+                });
+            }
+        });
 
         async function carregarSegmentacao(trilhaId) {
             try {
@@ -1063,20 +1225,25 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    const selectDepts = document.getElementById('trilha-departamentos');
-                    const selectCargos = document.getElementById('trilha-cargos');
-                    
                     // Marcar departamentos selecionados
                     data.departamentos.forEach(dept => {
-                        const option = selectDepts.querySelector(`option[value="${dept.department_id}"]`);
-                        if (option) option.selected = true;
+                        const checkbox = document.getElementById(`dept-${dept.department_id}`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
                     });
                     
                     // Marcar cargos selecionados
                     data.cargos.forEach(cargo => {
-                        const option = selectCargos.querySelector(`option[value="${cargo.position_id}"]`);
-                        if (option) option.selected = true;
+                        const checkbox = document.getElementById(`pos-${cargo.position_id}`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
                     });
+                    
+                    // Atualizar labels
+                    updateLabel('departamentos');
+                    updateLabel('cargos');
                     
                     // Atualizar preview
                     atualizarPreviewAcesso(trilhaId);
@@ -1116,12 +1283,12 @@
         }
 
         async function salvarSegmentacao(trilhaId) {
-            const selectDepts = document.getElementById('trilha-departamentos');
-            const selectCargos = document.getElementById('trilha-cargos');
+            // Pegar checkboxes selecionados
+            const deptCheckboxes = document.querySelectorAll('#departamentos-dropdown input[type="checkbox"]:checked');
+            const posCheckboxes = document.querySelectorAll('#cargos-dropdown input[type="checkbox"]:checked');
             
-            // Pegar IDs selecionados
-            const department_ids = Array.from(selectDepts.selectedOptions).map(opt => opt.value);
-            const position_ids = Array.from(selectCargos.selectedOptions).map(opt => opt.value);
+            const department_ids = Array.from(deptCheckboxes).map(cb => cb.value);
+            const position_ids = Array.from(posCheckboxes).map(cb => cb.value);
             
             // Determinar tipo de segmentação
             let segmentacao_tipo = 'todos';
