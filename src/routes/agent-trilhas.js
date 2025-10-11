@@ -260,22 +260,18 @@ router.post('/iniciar', async (req, res) => {
  */
 router.post('/feedback', async (req, res) => {
   try {
-    const { getTenantBySubdomain } = req.app.locals;
     const { colaborador_id, trilha_id, feedback, tipo_feedback } = req.body;
-    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     
-    if (!tenant) {
-      return res.status(404).json({ error: 'Tenant não encontrado' });
-    }
-
     if (!colaborador_id || !trilha_id || !feedback) {
       return res.status(400).json({ error: 'colaborador_id, trilha_id e feedback são obrigatórios' });
     }
 
-    // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
     let userId = colaborador_id;
+    let tenantId = null;
+
+    // Se colaborador_id é um telefone (contém apenas números), buscar o usuário em todos os tenants
     if (/^\d+$/.test(colaborador_id)) {
-      // É um telefone, normalizar e buscar o usuário correspondente
+      // É um telefone, normalizar e buscar o usuário correspondente em todos os tenants
       let phoneVariations = [
         colaborador_id,                    // 556291708483
         `+${colaborador_id}`,             // +556291708483
@@ -286,22 +282,34 @@ router.post('/feedback', async (req, res) => {
       let userResult = null;
       for (const phone of phoneVariations) {
         userResult = await query(`
-          SELECT id FROM users 
-          WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
-        `, [phone, tenant.id]);
+          SELECT u.id, u.tenant_id FROM users u
+          WHERE u.phone = $1 AND u.status = 'active'
+          LIMIT 1
+        `, [phone]);
         
         if (userResult.rows.length > 0) {
-          console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userResult.rows[0].id} (format: ${phone})`);
+          userId = userResult.rows[0].id;
+          tenantId = userResult.rows[0].tenant_id;
+          console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userId} (format: ${phone}) → Tenant ${tenantId}`);
           break;
         }
       }
       
       if (!userResult || userResult.rows.length === 0) {
-        console.log(`❌ Phone ${colaborador_id} not found in any format`);
+        console.log(`❌ Phone ${colaborador_id} not found in any format across all tenants`);
+        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      }
+    } else {
+      // Se é UUID, buscar o tenant do usuário
+      const userResult = await query(`
+        SELECT tenant_id FROM users WHERE id = $1 AND status = 'active'
+      `, [colaborador_id]);
+      
+      if (userResult.rows.length === 0) {
         return res.status(404).json({ error: 'Colaborador não encontrado' });
       }
       
-      userId = userResult.rows[0].id;
+      tenantId = userResult.rows[0].tenant_id;
     }
 
     // Buscar dados do colaborador e trilha
@@ -313,7 +321,7 @@ router.post('/feedback', async (req, res) => {
         t.nome as trilha_nome
       FROM users u, trilhas t
       WHERE u.id = $1 AND t.id = $2 AND t.tenant_id = $3
-    `, [userId, trilha_id, tenant.id]);
+    `, [userId, trilha_id, tenantId]);
 
     if (dadosResult.rows.length === 0) {
       return res.status(404).json({ error: 'Colaborador ou trilha não encontrados' });
@@ -327,9 +335,16 @@ router.post('/feedback', async (req, res) => {
       VALUES ($1, $2, $3, $4, NOW())
     `, [userId, trilha_id, feedback, tipo_feedback || 'geral']);
 
+    // Buscar subdomain do tenant para o webhook
+    const tenantResult = await query(`
+      SELECT subdomain FROM tenants WHERE id = $1
+    `, [tenantId]);
+    
+    const tenantSubdomain = tenantResult.rows[0]?.subdomain || 'demo';
+
     // Disparar webhook para n8n com feedback
     try {
-      await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
+      await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${tenantSubdomain}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
