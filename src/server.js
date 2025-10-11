@@ -2548,6 +2548,8 @@ const anotacoesRoutes = require('./routes/anotacoes');
 const analiseSentimentoRoutes = require('./routes/analise-sentimento');
 const agenteAnotacoesRoutes = require('./routes/agente-anotacoes');
 const trilhasSegmentacaoRoutes = require('./routes/trilhas-segmentacao');
+const departmentsRoutes = require('./routes/departments');
+const positionsRoutes = require('./routes/positions');
 
 // Importar helpers
 const { normalizePhone: normalizePhoneHelper, normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper } = require('./utils/helpers');
@@ -2581,8 +2583,10 @@ app.use('/api/anotacoes', anotacoesRoutes);
 app.use('/api/analise-sentimento', analiseSentimentoRoutes);
 app.use('/api/agente', agenteAnotacoesRoutes);
 app.use('/api/trilhas', trilhasSegmentacaoRoutes);
+app.use('/api/departments', departmentsRoutes);
+app.use('/api/positions', positionsRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions');
 
 // ============================================
 

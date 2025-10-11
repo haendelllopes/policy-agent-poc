@@ -569,6 +569,39 @@
                     </label>
                 </div>
                 
+                <!-- Seção de Segmentação -->
+                <div class="form-group" style="margin-top: 32px; padding-top: 32px; border-top: 2px solid #e2e8f0;">
+                    <label style="font-size: 16px; margin-bottom: 16px; display: block; color: #1e293b;">
+                        🎯 Segmentação da Trilha
+                    </label>
+                    <p style="color: #64748b; font-size: 13px; margin-bottom: 16px;">
+                        Defina quem terá acesso a esta trilha. Se nenhum departamento ou cargo for selecionado, a trilha estará disponível para todos.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="trilha-departamentos">Departamentos</label>
+                        <select id="trilha-departamentos" multiple style="min-height: 120px;">
+                            <option value="">Carregando...</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 12px;">Mantenha Ctrl/Cmd pressionado para selecionar múltiplos</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="trilha-cargos">Cargos</label>
+                        <select id="trilha-cargos" multiple style="min-height: 120px;">
+                            <option value="">Carregando...</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 12px;">Mantenha Ctrl/Cmd pressionado para selecionar múltiplos</small>
+                    </div>
+                    
+                    <div id="preview-acesso" style="display: none; margin-top: 16px; padding: 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;">
+                        <p style="font-weight: 600; color: #0369a1; margin-bottom: 8px;">
+                            📊 Preview de Acesso
+                        </p>
+                        <p id="preview-texto" style="color: #0c4a6e; font-size: 13px;"></p>
+                    </div>
+                </div>
+                
                 <!-- Seção de Conteúdos (aparece só ao editar) -->
                 <div id="conteudos-section" class="conteudos-section" style="display: none;">
                     <div class="conteudos-header">
@@ -655,12 +688,27 @@
         // Carregar trilhas ao iniciar
         document.addEventListener('DOMContentLoaded', () => {
             carregarTrilhas();
+            carregarDepartamentos();
+            carregarCargos();
         });
 
         async function carregarTrilhas() {
             try {
                 const response = await fetch(`${API_BASE}/api/trilhas?tenant=${TENANT}`);
-                const trilhas = await response.json();
+                let trilhas = await response.json();
+                
+                // Buscar segmentação de cada trilha
+                trilhas = await Promise.all(trilhas.map(async (trilha) => {
+                    try {
+                        const segResponse = await fetch(`${API_BASE}/api/trilhas/${trilha.id}/segmentacao?tenant=${TENANT}`);
+                        const segData = await segResponse.json();
+                        trilha.segmentacao = segData.segmentacao_tipo || 'todos';
+                        trilha.segmentacao_info = segData;
+                    } catch (error) {
+                        trilha.segmentacao = 'todos';
+                    }
+                    return trilha;
+                }));
                 
                 const container = document.getElementById('trilhas-container');
                 
@@ -707,6 +755,16 @@
                             </div>
                         </div>
                         
+                        ${trilha.segmentacao && trilha.segmentacao !== 'todos' ? `
+                            <div style="margin-top: 12px; padding: 8px 12px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; font-size: 13px; color: #92400e;">
+                                🎯 Segmentada: ${
+                                    trilha.segmentacao === 'departamentos' ? 'Por Departamentos' :
+                                    trilha.segmentacao === 'cargos' ? 'Por Cargos' :
+                                    'Por Departamentos e Cargos'
+                                }
+                            </div>
+                        ` : ''}
+                        
                         <div class="trilha-actions">
                             <button class="btn btn-secondary btn-small" onclick="editarTrilha('${trilha.id}')">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -740,6 +798,12 @@
             document.getElementById('trilha-id').value = '';
             document.getElementById('conteudos-section').style.display = 'none';
             document.getElementById('alert-container').innerHTML = '';
+            document.getElementById('preview-acesso').style.display = 'none';
+            
+            // Limpar seleções de segmentação
+            document.getElementById('trilha-departamentos').selectedIndex = -1;
+            document.getElementById('trilha-cargos').selectedIndex = -1;
+            
             trilhaAtual = null;
             document.getElementById('modal-trilha').classList.add('active');
         }
@@ -763,6 +827,9 @@
                 // Mostrar seção de conteúdos
                 document.getElementById('conteudos-section').style.display = 'block';
                 carregarConteudos(trilha.conteudos || []);
+                
+                // Carregar segmentação
+                await carregarSegmentacao(trilha.id);
                 
                 document.getElementById('modal-trilha').classList.add('active');
             } catch (error) {
@@ -832,6 +899,10 @@
                 }
                 
                 const result = await response.json();
+                
+                // Salvar segmentação (sempre, mesmo para novas trilhas)
+                const trilhaIdParaSegmentacao = isEditing ? trilhaId : result.id;
+                await salvarSegmentacao(trilhaIdParaSegmentacao);
                 
                 // Mostrar mensagem de sucesso
                 document.getElementById('alert-container').innerHTML = `
@@ -947,6 +1018,141 @@
                 
             } catch (error) {
                 alert('Erro ao deletar: ' + error.message);
+            }
+        }
+
+        // ============================================
+        // SEGMENTAÇÃO DE TRILHAS
+        // ============================================
+
+        async function carregarDepartamentos() {
+            try {
+                const response = await fetch(`${API_BASE}/api/departments?tenant=${TENANT}`);
+                const departments = await response.json();
+                
+                const select = document.getElementById('trilha-departamentos');
+                select.innerHTML = departments.map(dept => 
+                    `<option value="${dept.id}">${dept.name}</option>`
+                ).join('');
+            } catch (error) {
+                console.error('Erro ao carregar departamentos:', error);
+                document.getElementById('trilha-departamentos').innerHTML = 
+                    '<option value="">Erro ao carregar</option>';
+            }
+        }
+
+        async function carregarCargos() {
+            try {
+                const response = await fetch(`${API_BASE}/api/positions?tenant=${TENANT}`);
+                const positions = await response.json();
+                
+                const select = document.getElementById('trilha-cargos');
+                select.innerHTML = positions.map(pos => 
+                    `<option value="${pos.id}">${pos.name}</option>`
+                ).join('');
+            } catch (error) {
+                console.error('Erro ao carregar cargos:', error);
+                document.getElementById('trilha-cargos').innerHTML = 
+                    '<option value="">Erro ao carregar</option>';
+            }
+        }
+
+        async function carregarSegmentacao(trilhaId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/segmentacao?tenant=${TENANT}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const selectDepts = document.getElementById('trilha-departamentos');
+                    const selectCargos = document.getElementById('trilha-cargos');
+                    
+                    // Marcar departamentos selecionados
+                    data.departamentos.forEach(dept => {
+                        const option = selectDepts.querySelector(`option[value="${dept.department_id}"]`);
+                        if (option) option.selected = true;
+                    });
+                    
+                    // Marcar cargos selecionados
+                    data.cargos.forEach(cargo => {
+                        const option = selectCargos.querySelector(`option[value="${cargo.position_id}"]`);
+                        if (option) option.selected = true;
+                    });
+                    
+                    // Atualizar preview
+                    atualizarPreviewAcesso(trilhaId);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar segmentação:', error);
+            }
+        }
+
+        async function atualizarPreviewAcesso(trilhaId) {
+            if (!trilhaId) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/preview-acesso?tenant=${TENANT}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const preview = document.getElementById('preview-acesso');
+                    const texto = document.getElementById('preview-texto');
+                    
+                    const total = data.total_colaboradores_com_acesso;
+                    const tipo = data.segmentacao_tipo;
+                    
+                    let mensagem = '';
+                    if (tipo === 'todos') {
+                        mensagem = `✅ Esta trilha está disponível para TODOS os colaboradores (${total} no total)`;
+                    } else {
+                        mensagem = `✅ ${total} colaborador${total !== 1 ? 'es' : ''} terá acesso a esta trilha`;
+                    }
+                    
+                    texto.textContent = mensagem;
+                    preview.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Erro ao gerar preview:', error);
+            }
+        }
+
+        async function salvarSegmentacao(trilhaId) {
+            const selectDepts = document.getElementById('trilha-departamentos');
+            const selectCargos = document.getElementById('trilha-cargos');
+            
+            // Pegar IDs selecionados
+            const department_ids = Array.from(selectDepts.selectedOptions).map(opt => opt.value);
+            const position_ids = Array.from(selectCargos.selectedOptions).map(opt => opt.value);
+            
+            // Determinar tipo de segmentação
+            let segmentacao_tipo = 'todos';
+            if (department_ids.length > 0 && position_ids.length > 0) {
+                segmentacao_tipo = 'departamentos_cargos';
+            } else if (department_ids.length > 0) {
+                segmentacao_tipo = 'departamentos';
+            } else if (position_ids.length > 0) {
+                segmentacao_tipo = 'cargos';
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/segmentacao?tenant=${TENANT}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        segmentacao_tipo,
+                        department_ids,
+                        position_ids
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao salvar segmentação');
+                }
+                
+                console.log('✅ Segmentação salva com sucesso');
+                return true;
+            } catch (error) {
+                console.error('Erro ao salvar segmentação:', error);
+                return false;
             }
         }
     </script>
