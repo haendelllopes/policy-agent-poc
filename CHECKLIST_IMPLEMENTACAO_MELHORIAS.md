@@ -160,18 +160,289 @@
 - [x] Testar sistema de alertas
 - [x] Testar busca de trilhas personalizadas
 
-### 🤖 N8N Workflow ✅ **COMPLETO**
+### 🤖 N8N Workflow ✅ **COMPLETO E ATUALIZADO**
 
-#### Nós de Análise ✅ **FUNCIONANDO**
+**Nome do Workflow:** `Navigator`  
+**ID:** `uuTVoD6gdaxDhPT2`  
+**Status:** ✅ Ativo e em Produção  
+**Última Atualização:** 11 de outubro de 2025
+
+#### 📊 Visão Geral do Workflow
+
+**Total de Nós:** 50+ nós configurados  
+**Canais Suportados:** WhatsApp, Telegram, Slack  
+**IA Utilizada:** Google Gemini (Primary), Suporte a múltiplos canais  
+**Backend URL:** `https://navigator-gules.vercel.app`
+
+---
+
+#### 🎯 **FLUXO PRINCIPAL - CONVERSAÇÃO COM AGENTE**
+
+##### **1️⃣ Triggers (Entrada de Mensagens):**
+- [x] **WhatsApp Trigger** - Webhook configurado
+  - Phone ID: `854548744399899`
+  - Display: `15556303598`
+  - Credencial: WhatsApp OAuth account
+  
+- [x] **Telegram Trigger** - Bot configurado
+  - Webhook ID: `869acc2f-4ee7-4d41-afd1-bc2ca7adfe1a`
+  - Updates: messages
+  - Credencial: Telegram API
+
+##### **2️⃣ Normalização de Mensagens:**
+- [x] **Normalize Message (WhatsApp)** - Extrai:
+  - `from` (remetente)
+  - `type` (texto/imagem/áudio/documento)
+  - `tenantId` (com fallback)
+  - `messageText` (conteúdo processado)
+  - `channel` = "whatsapp"
+  
+- [x] **Normalize Message (Telegram)** - Extrai:
+  - `from` (chat ID)
+  - `type` = "text"
+  - `tenantId` (com fallback)
+  - `messageText` (mensagem)
+  - `channel` = "telegram"
+
+##### **3️⃣ Merge de Canais:**
+- [x] **Merge** - Unifica mensagens de todos os canais
+  - Combina WhatsApp + Telegram
+  - Formato padronizado para processamento
+
+##### **4️⃣ Backend URL Config:**
+- [x] **BACKEND_URL** - Configuração centralizada
+  - URL: `https://navigator-gules.vercel.app`
+  - Usado por todos os nós HTTP
+
+##### **5️⃣ Análise de Sentimento:**
+- [x] **1️⃣ Analisar Sentimento** - POST `/api/analise-sentimento`
+  - Envia: message, phone, context, tenantId
+  - Recebe: sentimento, intensidade, fatores
+  - Momento: "conversa_agente"
+  - Dia de onboarding: 1
+
+##### **6️⃣ Decisão de Tom:**
+- [x] **3️⃣ É Negativo?** - Condicional
+  - Regex: `negativo|muito_negativo`
+  - TRUE → Envia alerta RH + Busca trilhas
+  - FALSE → Apenas busca trilhas
+
+##### **7️⃣ Alerta RH (Sentimento Negativo):**
+- [x] **🚨 Enviar Alerta RH** - POST `/api/webhooks/alerta-sentimento-negativo`
+  - Envia: phone, sentimento, intensidade, mensagem, canal
+  - Notifica gestor/RH automaticamente
+
+##### **8️⃣ Busca de Trilhas Personalizadas:**
+- [x] **4️⃣ Buscar Trilhas** - GET `/api/trilhas-recomendadas/:phone`
+  - Query: `?sentimento=[sentimento]`
+  - Retorna: trilhas recomendadas baseadas no sentimento
+
+##### **9️⃣ Agente de IA:**
+- [x] **AI Agent** - Agente conversacional
+  - **Model:** Google Gemini Chat Model
+  - **Memory:** Simple Memory (Buffer Window)
+    - Session Key: `{from}, {tenantId}, {channel}`
+  - **Tools:**
+    - HTTP Request (Semantic Search de documentos)
+    - Create a row in Supabase (Log de conversas)
+  
+  **System Prompt:**
+  ```
+  Você é um assistente de onboarding da empresa Flowly.
+  
+  CONTEXTO:
+  - Sentimento detectado: {{ sentimento }}
+  - Intensidade: {{ intensidade }}
+  
+  TOM BASEADO NO SENTIMENTO:
+  - Negativo/Muito Negativo → EMPÁTICO e ACOLHEDOR
+  - Positivo/Muito Positivo → ENTUSIASMADO e MOTIVADOR
+  - Neutro → PROFISSIONAL e CLARO
+  
+  TRILHAS DISPONÍVEIS:
+  {{ nome da trilha + motivo }}
+  
+  DIRETRIZES:
+  1. Responda em 3-4 linhas (WhatsApp)
+  2. Use emojis moderadamente
+  3. SEMPRE mencione a trilha recomendada se disponível
+  4. Sempre ofereça ajuda adicional
+  ```
+
+##### **🔟 Detecção de Feedback:**
+- [x] **Detectar feedback** - Code Node (JavaScript)
+  - Palavras-chave: dificuldade, difícil, problema, não consigo, ajuda, sugestão, melhorar, trilha
+  - Retorna: `tem_feedback` (boolean)
+
+##### **1️⃣1️⃣ Salvamento de Anotações:**
+- [x] **Tem feedback?** - Condicional
+  - TRUE → Salva anotação
+  - FALSE → Pula para resposta
+
+- [x] **💾 Salvar Anotação** - POST `/api/agente/anotacoes`
+  - tipo: "observacao_geral"
+  - titulo: Primeiros 50 chars da mensagem
+  - anotacao: Mensagem completa
+  - tags: ["feedback", "automatico"]
+
+##### **1️⃣2️⃣ Preparação da Resposta:**
+- [x] **Code responder** - Reintroduz dados do canal
+  - Preserva: output, channel, from, tenantId
+
+##### **1️⃣3️⃣ Envio da Resposta:**
+- [x] **Decide Canal1** - Switch por canal
+  - WhatsApp → Send message
+  - Telegram → Send a text message
+
+- [x] **Send message (WhatsApp)**
+  - Phone ID: `854548744399899`
+  - Trunca mensagem: 4096 chars max
+  
+- [x] **Send a text message (Telegram)**
+  - Chat ID: `{{ from }}`
+  - Texto completo da resposta
+
+---
+
+#### 🎉 **FLUXO SECUNDÁRIO - ONBOARDING INICIAL**
+
+##### **Webhook de Onboarding:**
+- [x] **Webhook Onboarding** - POST `/webhook/onboarding`
+  - Path: `onboarding`
+  - Response Mode: lastNode
+
+##### **Detecção de Novo Usuário:**
+- [x] **If1** - Condicional
+  - Verifica: `body.type === "user_created"`
+  - TRUE → Fluxo de boas-vindas
+  - FALSE → Fluxo de categorização de documento
+
+##### **Preparação de Boas-Vindas:**
+- [x] **Set Welcome** - Cria mensagem
+  - Extrai: tenantId, name, phone, communication_type
+  - Mensagem personalizada com nome da empresa
+
+##### **Decisão de Canal:**
+- [x] **Decide Canal** - Switch
+  - Telegram → Generate Link (Telegram) → Send email
+  - Slack → Generate Link (Slack) → Send email
+  - WhatsApp → Respond Onboarding → Boas vindas
+
+##### **WhatsApp (Caminho Direto):**
+- [x] **Respond Onboarding** - Responde webhook
+- [x] **Boas vindas** - Envia mensagem WhatsApp
+  - Phone ID: `854548744399899`
+  - Texto de boas-vindas personalizado
+
+##### **Telegram (Deep Link):**
+- [x] **Generate Link (Telegram)** - POST `/api/communication/generate-link`
+  - Gera: deep_link, qr_code, user data
+  
+- [x] **Send email (Telegram)** - SMTP
+  - From: `navigatortera15@gmail.com`
+  - Subject: "Bem-vindo ao Navigator - Conecte-se no Telegram"
+  - HTML com link e QR Code
+
+##### **Slack (Deep Link):**
+- [x] **Generate Link (Slack)** - POST `/api/communication/generate-link`
+  - Gera: deep_link, web_link
+  
+- [x] **Send email (Slack)** - SMTP
+  - From: `navigatortera15@gmail.com`
+  - Subject: "Bem-vindo ao Navigator - Conecte-se no Slack"
+  - HTML com links (app + web)
+
+---
+
+#### 📄 **FLUXO TERCIÁRIO - CATEGORIZAÇÃO DE DOCUMENTOS**
+
+##### **Agente de Categorização:**
+- [x] **AI Agent - Categorização**
+  - **Model:** Google Gemini Chat Model1 (temp: 0.3)
+  - **Output Parser:** Ativado (JSON estruturado)
+  
+  **System Prompt:**
+  ```
+  Você é um especialista em análise de documentos corporativos.
+  Analise documentos e extraia informações estruturadas em JSON.
+  
+  Para cada documento, identifique:
+  1. Categoria principal (Benefícios, Políticas, RH, etc.)
+  2. Subcategorias específicas (vale refeição, plano de saúde, etc.)
+  3. Tags relevantes
+  4. Resumo do conteúdo
+  
+  JSON estrutura:
+  {
+    "suggestedCategory": "categoria principal",
+    "subcategories": ["sub1", "sub2", "sub3"],
+    "tags": ["tag1", "tag2", "tag3"],
+    "summary": "resumo em 2-3 frases",
+    "confidence": 0.95
+  }
+  ```
+
+##### **Processamento da Resposta:**
+- [x] **Code in JavaScript** - Extrai JSON da resposta
+  - Remove markdown code blocks
+  - Parse JSON
+  - Trata erros
+
+##### **Retorno ao Backend:**
+- [x] **Retorno categorização** - POST `/documents/categorization-result`
+  - Envia: documentId, tenantId, category, suggestedCategory, subcategories, tags, summary, confidence
+
+---
+
+#### 🔔 **FLUXO QUATERNÁRIO - FEEDBACK DE TRILHAS** (DESABILITADO)
+
+- [ ] **Webhook Onboarding2** - POST `/webhook/onboarding` (DISABLED)
+- [ ] **Switch Tipo Webhook** - 6 tipos de eventos:
+  - [ ] trilha_iniciada
+  - [ ] quiz_disponivel
+  - [ ] trilha_concluida
+  - [ ] onboarding_completo
+  - [ ] alerta_atraso
+  - [ ] alerta_nota_baixa
+- [ ] **Send message1-6** - Envio automático por tipo
+
+**Status:** Fluxo preparado mas desabilitado (aguardando ativação)
+
+---
+
+#### 🎯 **FERRAMENTAS DO AI AGENT**
+
+##### **1. HTTP Request (Semantic Search):**
+- [x] Descrição: "Busca trechos de documentos do tenant"
+- [x] Endpoint: POST `/api/documents/semantic-search`
+- [x] Body:
+  ```json
+  {
+    "tenantId": "{{ tenantId }}",
+    "query": "{{ messageText }}",
+    "top_k": 5
+  }
+  ```
+
+##### **2. Create a row in Supabase:**
+- [x] Tool: Supabase Tool
+- [x] Table: `conversation_logs`
+- [x] Credencial: Supabase API configurada
+
+---
+
+#### 📊 **NODOS DE ANÁLISE ✅ FUNCIONANDO**
 - [x] Nó: Receber mensagem do colaborador (Merge)
 - [x] Nó: Chamar API de análise de sentimento (1️⃣ Analisar Sentimento)
 - [x] Nó: Parsear resposta da IA
 - [x] Nó: Salvar sentimento no banco de dados (automático)
 - [x] Nó: Decidir tom da resposta baseado no sentimento (3️⃣ É Negativo?)
-- [x] Nó: Gerar resposta adaptada (5️⃣ AI Agent)
+- [x] Nó: Gerar resposta adaptada (AI Agent)
 - [x] Nó: Buscar trilhas personalizadas (4️⃣ Buscar Trilhas)
 - [x] Nó: Enviar alertas para RH (🚨 Alerta RH)
 - [x] Nó: Salvar log da conversa (💾 Create Supabase)
+- [x] Nó: Detectar feedback relevante (Detectar feedback)
+- [x] Nó: Salvar anotação automática (💾 Salvar Anotação)
 
 #### Lógica de Adaptação de Tom ✅ **IMPLEMENTADA**
 - [x] **Muito Negativo** → Tom empático, oferecer ajuda imediata
