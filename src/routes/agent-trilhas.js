@@ -20,13 +20,30 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
     // Se colaboradorId é um telefone (contém apenas números), buscar o usuário
     let userId = colaboradorId;
     if (/^\d+$/.test(colaboradorId)) {
-      // É um telefone, buscar o usuário correspondente
-      const userResult = await query(`
-        SELECT id FROM users 
-        WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
-      `, [colaboradorId, tenant.id]);
+      // É um telefone, normalizar e buscar o usuário correspondente
+      // Tentar com +55 (formato internacional)
+      let phoneVariations = [
+        colaboradorId,                    // 556291708483
+        `+${colaboradorId}`,             // +556291708483
+        `55${colaboradorId}`,            // 55556291708483
+        `+55${colaboradorId}`            // +55556291708483
+      ];
       
-      if (userResult.rows.length === 0) {
+      let userResult = null;
+      for (const phone of phoneVariations) {
+        userResult = await query(`
+          SELECT id FROM users 
+          WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
+        `, [phone, tenant.id]);
+        
+        if (userResult.rows.length > 0) {
+          console.log(`📞 Lookup: Phone ${colaboradorId} → User ID ${userResult.rows[0].id} (format: ${phone})`);
+          break;
+        }
+      }
+      
+      if (!userResult || userResult.rows.length === 0) {
+        console.log(`❌ Phone ${colaboradorId} not found in any format`);
         return res.status(404).json({ error: 'Colaborador não encontrado' });
       }
       
@@ -94,13 +111,29 @@ router.post('/iniciar', async (req, res) => {
     // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
     let userId = colaborador_id;
     if (/^\d+$/.test(colaborador_id)) {
-      // É um telefone, buscar o usuário correspondente
-      const userResult = await query(`
-        SELECT id FROM users 
-        WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
-      `, [colaborador_id, tenant.id]);
+      // É um telefone, normalizar e buscar o usuário correspondente
+      let phoneVariations = [
+        colaborador_id,                    // 556291708483
+        `+${colaborador_id}`,             // +556291708483
+        `55${colaborador_id}`,            // 55556291708483
+        `+55${colaborador_id}`            // +55556291708483
+      ];
       
-      if (userResult.rows.length === 0) {
+      let userResult = null;
+      for (const phone of phoneVariations) {
+        userResult = await query(`
+          SELECT id FROM users 
+          WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
+        `, [phone, tenant.id]);
+        
+        if (userResult.rows.length > 0) {
+          console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userResult.rows[0].id} (format: ${phone})`);
+          break;
+        }
+      }
+      
+      if (!userResult || userResult.rows.length === 0) {
+        console.log(`❌ Phone ${colaborador_id} not found in any format`);
         return res.status(404).json({ error: 'Colaborador não encontrado' });
       }
       
@@ -229,13 +262,29 @@ router.post('/feedback', async (req, res) => {
     // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
     let userId = colaborador_id;
     if (/^\d+$/.test(colaborador_id)) {
-      // É um telefone, buscar o usuário correspondente
-      const userResult = await query(`
-        SELECT id FROM users 
-        WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
-      `, [colaborador_id, tenant.id]);
+      // É um telefone, normalizar e buscar o usuário correspondente
+      let phoneVariations = [
+        colaborador_id,                    // 556291708483
+        `+${colaborador_id}`,             // +556291708483
+        `55${colaborador_id}`,            // 55556291708483
+        `+55${colaborador_id}`            // +55556291708483
+      ];
       
-      if (userResult.rows.length === 0) {
+      let userResult = null;
+      for (const phone of phoneVariations) {
+        userResult = await query(`
+          SELECT id FROM users 
+          WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
+        `, [phone, tenant.id]);
+        
+        if (userResult.rows.length > 0) {
+          console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userResult.rows[0].id} (format: ${phone})`);
+          break;
+        }
+      }
+      
+      if (!userResult || userResult.rows.length === 0) {
+        console.log(`❌ Phone ${colaborador_id} not found in any format`);
         return res.status(404).json({ error: 'Colaborador não encontrado' });
       }
       
