@@ -1471,6 +1471,12 @@ d308de7 - refactor: Reorganiza Dashboard e renomeia para Insights
 
 ### **🎯 Plano Ideal para Próximas Sessões:**
 
+**Sessão 0 (30min): Ativar Feedback de Trilhas** ⭐ **AÇÃO IMEDIATA**
+- Unificar webhooks no N8N (seguir guia `N8N_UNIFICAR_WEBHOOKS.md`)
+- Testar 6 tipos de eventos
+- Criar cron job para atrasos
+- **Impacto:** Notificações automáticas funcionando
+
 **Sessão 1 (6-8h): Melhorias Visuais** ⭐ PRIORIDADE ALTA
 - Modo escuro
 - Animações
@@ -1495,7 +1501,22 @@ d308de7 - refactor: Reorganiza Dashboard e renomeia para Insights
 
 ## 💡 **SUGESTÃO IMEDIATA:**
 
-**Começar com Melhorias Visuais (Opção A)** porque:
+**PASSO 1 (30min): Ativar Feedback de Trilhas** 🔥 **URGENTE**
+
+**Por que fazer AGORA:**
+1. ✅ **100% já implementado** - só falta 1 ajuste no N8N
+2. 🚀 **Alto impacto** - notificações automáticas para colaboradores
+3. ⏰ **Rápido** - apenas 30 minutos
+4. 📱 **Engajamento** - colaboradores recebem lembretes
+5. 🚨 **RH Informado** - alertas de problemas
+
+**Guia:** Siga `N8N_UNIFICAR_WEBHOOKS.md` (30 minutos)
+
+---
+
+**PASSO 2 (6-8h): Melhorias Visuais** ⭐ **PRÓXIMA PRIORIDADE**
+
+**Por que fazer depois:**
 1. ✅ Sistema já está 100% funcional
 2. 🎨 Modo escuro é muito valorizado pelos usuários
 3. 📱 Responsividade é essencial hoje
