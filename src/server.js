@@ -1455,7 +1455,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
         tenantId: tenant.id,
         title,
         category: analysis ? analysis.classification : category,
-        content: extractedText || '',
+        content: analysis ? analysis.extractedText : '',
         department: department || null,
         description: description || null,
         fileName: req.file.originalname,
