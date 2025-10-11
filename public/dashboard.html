@@ -917,46 +917,45 @@
             }
         }
         
-        // Show section
-        function showSection(section) {
+        // Show section - função global para navegação entre seções
+        window.showSection = function(section) {
             // Hide all sections
             document.querySelectorAll('.section').forEach(el => {
                 el.classList.add('hidden');
                 el.classList.remove('active');
             });
             
-            // Update tab buttons
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`${section}-tab`).classList.add('active');
+            // Update tab buttons (if they exist)
+            const tabButtons = document.querySelectorAll('.tab-button');
+            if (tabButtons.length > 0) {
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                const targetTab = document.getElementById(`${section}-tab`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+            }
             
             // Show selected section
-            document.getElementById(`${section}-section`).classList.remove('hidden');
-            document.getElementById(`${section}-section`).classList.add('active');
+            const targetSection = document.getElementById(`${section}-section`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.classList.add('active');
+            }
             
             // Update page title
             const titles = {
                 'dashboard': 'Dashboard',
-                'insights': 'Insights do Flowly'
+                'insights': 'Insights do Flowly',
+                'users': 'Colaboradores',
+                'documents': 'Documentos',
+                'settings': 'Configurações'
             };
-            document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
-            
-            // Update navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
-            
-            // Update page title
-            const titles = {
-                dashboard: 'Dashboard',
-                insights: 'Insights do Agente',
-                users: 'Colaboradores',
-                documents: 'Documentos',
-                settings: 'Configurações'
-            };
-            document.getElementById('pageTitle').textContent = titles[section];
+            const pageTitle = document.getElementById('pageTitle');
+            if (pageTitle) {
+                pageTitle.textContent = titles[section] || 'Dashboard';
+            }
             
             // Load data for insights section
             if (section === 'insights') {
