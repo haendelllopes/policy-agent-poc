@@ -243,6 +243,8 @@ router.post('/submeter', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              type: 'trilha',
+              tipo: 'alerta_nota_baixa',
               colaborador_nome: alerta.colaborador_nome,
               trilha_nome: alerta.trilha_nome,
               nota: nota,
@@ -308,6 +310,8 @@ router.post('/submeter', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              type: 'trilha',
+              tipo: 'trilha_concluida',
               colaborador_id: tentativa.colaborador_id,
               colaborador_nome: dados.name,
               colaborador_email: dados.email,
@@ -361,6 +365,8 @@ router.post('/submeter', async (req, res) => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                type: 'trilha',
+                tipo: 'onboarding_completo',
                 colaborador_id: tentativa.colaborador_id,
                 colaborador_nome: dados.name,
                 colaborador_email: dados.email,

@@ -218,6 +218,8 @@ router.post('/verificar-atrasos', async (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'trilha',
+            tipo: 'alerta_atraso',
             colaborador_nome: atraso.colaborador_nome,
             trilha_nome: atraso.trilha_nome,
             dias_atraso: Math.floor(atraso.dias_atraso),

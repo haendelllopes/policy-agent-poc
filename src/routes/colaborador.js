@@ -181,6 +181,8 @@ router.post('/trilhas/:id/iniciar', async (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'trilha',
+            tipo: 'trilha_iniciada',
             colaborador_id,
             colaborador_nome: dados.name,
             colaborador_email: dados.email,
@@ -309,6 +311,8 @@ router.post('/conteudos/:id/aceitar', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              type: 'trilha',
+              tipo: 'quiz_disponivel',
               colaborador_id,
               colaborador_nome: dados.name,
               colaborador_email: dados.email,
