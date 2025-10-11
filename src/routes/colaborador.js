@@ -177,7 +177,7 @@ router.post('/trilhas/:id/iniciar', async (req, res) => {
       
       // Disparar webhook para n8n
       try {
-        await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/trilha-iniciada?tenant=${req.tenantSubdomain}`, {
+        await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -307,7 +307,7 @@ router.post('/conteudos/:id/aceitar', async (req, res) => {
         
         // Disparar webhook para n8n - quiz disponível
         try {
-          await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/quiz-disponivel?tenant=${req.tenantSubdomain}`, {
+          await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

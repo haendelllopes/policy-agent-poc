@@ -214,7 +214,7 @@ router.post('/verificar-atrasos', async (req, res) => {
 
       // Disparar webhook para n8n - alerta de atraso
       try {
-        await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/alerta-atraso?tenant=${req.tenantSubdomain}`, {
+        await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

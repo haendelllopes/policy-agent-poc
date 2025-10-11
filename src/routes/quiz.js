@@ -239,7 +239,7 @@ router.post('/submeter', async (req, res) => {
         
         // Disparar webhook para n8n - alerta nota baixa
         try {
-          await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/alerta-nota-baixa?tenant=${req.tenantSubdomain}`, {
+          await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -306,7 +306,7 @@ router.post('/submeter', async (req, res) => {
         
         // Disparar webhook para n8n - trilha concluída
         try {
-          await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/trilha-concluida?tenant=${req.tenantSubdomain}`, {
+          await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -361,7 +361,7 @@ router.post('/submeter', async (req, res) => {
           
           // Disparar webhook para n8n - onboarding completo
           try {
-            await fetch(`${req.protocol}://${req.get('host')}/api/webhooks/onboarding-completo?tenant=${req.tenantSubdomain}`, {
+            await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
