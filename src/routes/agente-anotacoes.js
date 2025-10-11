@@ -7,8 +7,9 @@ const authenticate = async (req, res, next) => {
   // Usa tenant padrão se não especificado
   const DEFAULT_TENANT_ID = '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant Demonstração
 
-  req.tenantId = req.body.tenantId || req.headers['x-tenant-id'] || DEFAULT_TENANT_ID;
-  req.userId = req.body.userId || req.headers['x-user-id'] || 'mock-user-id';
+  // Busca tenantId em query params (GET), body (POST), params (URL) ou headers
+  req.tenantId = req.query.tenantId || req.params.tenantId || req.body?.tenantId || req.headers['x-tenant-id'] || DEFAULT_TENANT_ID;
+  req.userId = req.query.userId || req.params.userId || req.body?.userId || req.headers['x-user-id'] || 'mock-user-id';
 
   next();
 };
