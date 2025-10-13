@@ -12,9 +12,463 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Brand Manual CSS -->
-    <link rel="stylesheet" href="/css/navi-brand.css">
-    <link rel="stylesheet" href="/css/navi-animations.css">
+    <!-- Brand Manual CSS - Inline -->
+    <style>
+/**
+ * NAVI BRAND MANUAL - Variáveis CSS
+ * Sistema de Design Oficial do Navigator
+ * Data: Outubro 2025
+ */
+
+:root {
+  /* ===== CORES PRIMÁRIAS ===== */
+  
+  /* Brand Dark Grey - Cor Principal */
+  --navi-primary-dark: #343A40;
+  --navi-primary-dark-rgb: 52, 58, 64;
+  
+  /* Accent Teal - CTAs e Estados Ativos */
+  --navi-accent-teal: #17A2B8;
+  --navi-accent-teal-rgb: 23, 162, 184;
+  --navi-accent-teal-hover: #138496;
+  --navi-accent-teal-light: rgba(23, 162, 184, 0.1);
+  --navi-accent-teal-medium: rgba(23, 162, 184, 0.3);
+  
+  /* Brand Medium Grey - Textos Secundários */
+  --navi-secondary-grey: #6C7570;
+  --navi-secondary-grey-rgb: 108, 117, 112;
+  --navi-secondary-grey-light: #8a9490;
+  
+  /* Success Green - Apenas para Conclusões */
+  --navi-success-green: #28A745;
+  --navi-success-green-rgb: 40, 167, 69;
+  --navi-success-green-light: rgba(40, 167, 69, 0.1);
+  
+  /* ===== CORES DE SUPORTE ===== */
+  
+  --navi-background: #f8fafc;
+  --navi-white: #ffffff;
+  --navi-border: #e2e8f0;
+  --navi-border-dark: #cbd5e0;
+  
+  /* Cores de Alerta (opcional) */
+  --navi-warning: #ffc107;
+  --navi-danger: #dc3545;
+  --navi-info: #17A2B8; /* Mesma do accent */
+  
+  /* ===== SOMBRAS ===== */
+  
+  --navi-shadow-sm: 0 1px 3px rgba(52, 58, 64, 0.08);
+  --navi-shadow-md: 0 4px 12px rgba(52, 58, 64, 0.12);
+  --navi-shadow-lg: 0 10px 24px rgba(52, 58, 64, 0.15);
+  
+  /* ===== RAIOS DE BORDA ===== */
+  
+  --navi-radius-sm: 6px;
+  --navi-radius-md: 8px;
+  --navi-radius-lg: 12px;
+  --navi-radius-full: 9999px;
+  
+  /* ===== ESPAÇAMENTO (Generoso) ===== */
+  
+  --navi-spacing-xs: 8px;
+  --navi-spacing-sm: 12px;
+  --navi-spacing-md: 16px;
+  --navi-spacing-lg: 24px;
+  --navi-spacing-xl: 32px;
+  --navi-spacing-2xl: 48px;
+  
+  /* ===== TRANSIÇÕES ===== */
+  
+  --navi-transition-fast: 0.15s ease;
+  --navi-transition-base: 0.2s ease;
+  --navi-transition-slow: 0.3s ease;
+}
+
+/* ===== TIPOGRAFIA ===== */
+
+/* Títulos - Montserrat */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+  color: var(--navi-primary-dark);
+  line-height: 1.3;
+  margin: 0;
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+h4 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+h5 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+h6 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Corpo de Texto e UI - Roboto */
+body, p, span, div, button, input, select, textarea, label, a {
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  color: var(--navi-primary-dark);
+}
+
+/* UI Elements com Ênfase */
+.btn, .nav-link, label, .form-label, strong, b {
+  font-weight: 500; /* Medium */
+}
+
+/* Textos Secundários */
+.text-secondary, .subtitle, .description, small {
+  color: var(--navi-secondary-grey);
+  font-weight: 400;
+}
+
+/* ===== BOTÕES ===== */
+
+.btn {
+  padding: var(--navi-spacing-sm) var(--navi-spacing-lg);
+  border-radius: var(--navi-radius-md);
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  transition: all var(--navi-transition-base);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--navi-spacing-xs);
+  text-decoration: none;
+}
+
+/* Botão Primário - Accent Teal */
+.btn-primary {
+  background: var(--navi-accent-teal);
+  color: var(--navi-white);
+  box-shadow: 0 2px 4px rgba(23, 162, 184, 0.15);
+}
+
+.btn-primary:hover {
+  background: var(--navi-accent-teal-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(23, 162, 184, 0.25);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Botão Secundário */
+.btn-secondary {
+  background: var(--navi-white);
+  color: var(--navi-secondary-grey);
+  border: 1px solid var(--navi-border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--navi-accent-teal);
+  color: var(--navi-accent-teal);
+  background: var(--navi-accent-teal-light);
+}
+
+/* Botão de Sucesso */
+.btn-success {
+  background: var(--navi-success-green);
+  color: var(--navi-white);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.15);
+}
+
+.btn-success:hover {
+  background: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.25);
+}
+
+/* ===== CARDS ===== */
+
+.card {
+  background: var(--navi-white);
+  border: 1px solid var(--navi-border);
+  border-radius: var(--navi-radius-lg);
+  padding: var(--navi-spacing-lg);
+  margin-bottom: var(--navi-spacing-lg);
+  box-shadow: var(--navi-shadow-sm);
+  transition: all var(--navi-transition-base);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--navi-shadow-md);
+}
+
+.card-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--navi-primary-dark);
+  margin-bottom: var(--navi-spacing-md);
+}
+
+.card-subtitle {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--navi-secondary-grey);
+  margin-bottom: var(--navi-spacing-sm);
+}
+
+/* ===== NAVEGAÇÃO ===== */
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--navi-spacing-sm);
+  padding: var(--navi-spacing-sm) var(--navi-spacing-lg);
+  color: var(--navi-secondary-grey);
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: all var(--navi-transition-base);
+}
+
+.nav-link:hover {
+  background: var(--navi-accent-teal-light);
+  color: var(--navi-accent-teal);
+}
+
+.nav-link.active {
+  background: var(--navi-accent-teal-light);
+  color: var(--navi-accent-teal);
+  border-left-color: var(--navi-accent-teal);
+  font-weight: 500;
+}
+
+/* ===== BADGES ===== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--navi-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.badge-primary {
+  background: var(--navi-accent-teal-light);
+  color: var(--navi-accent-teal);
+}
+
+.badge-success {
+  background: var(--navi-success-green-light);
+  color: var(--navi-success-green);
+}
+
+.badge-secondary {
+  background: #f1f5f9;
+  color: var(--navi-secondary-grey);
+}
+
+/* ===== INDICADORES DE PROGRESSO ===== */
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--navi-border);
+  border-radius: var(--navi-radius-sm);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--navi-accent-teal);
+  transition: width var(--navi-transition-slow);
+  border-radius: var(--navi-radius-sm);
+}
+
+/* ===== UTILITÁRIOS ===== */
+
+/* Cores de Texto */
+.text-primary { color: var(--navi-primary-dark); }
+.text-accent { color: var(--navi-accent-teal); }
+.text-secondary { color: var(--navi-secondary-grey); }
+.text-success { color: var(--navi-success-green); }
+.text-white { color: var(--navi-white); }
+
+/* Cores de Background */
+.bg-primary { background-color: var(--navi-primary-dark); }
+.bg-accent { background-color: var(--navi-accent-teal); }
+.bg-secondary { background-color: var(--navi-secondary-grey); }
+.bg-success { background-color: var(--navi-success-green); }
+.bg-light { background-color: var(--navi-background); }
+.bg-white { background-color: var(--navi-white); }
+
+/* Espaçamentos */
+.p-sm { padding: var(--navi-spacing-sm); }
+.p-md { padding: var(--navi-spacing-md); }
+.p-lg { padding: var(--navi-spacing-lg); }
+.p-xl { padding: var(--navi-spacing-xl); }
+
+.m-sm { margin: var(--navi-spacing-sm); }
+.m-md { margin: var(--navi-spacing-md); }
+.m-lg { margin: var(--navi-spacing-lg); }
+.m-xl { margin: var(--navi-spacing-xl); }
+
+/* Sombras */
+.shadow-sm { box-shadow: var(--navi-shadow-sm); }
+.shadow-md { box-shadow: var(--navi-shadow-md); }
+.shadow-lg { box-shadow: var(--navi-shadow-lg); }
+
+/* Arredondamento */
+.rounded-sm { border-radius: var(--navi-radius-sm); }
+.rounded-md { border-radius: var(--navi-radius-md); }
+.rounded-lg { border-radius: var(--navi-radius-lg); }
+.rounded-full { border-radius: var(--navi-radius-full); }
+
+/* ===== TABELAS ===== */
+
+.navi-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--navi-spacing-md);
+}
+
+.navi-table th,
+.navi-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.navi-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.navi-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* ===== ANIMAÇÕES ===== */
+
+* {
+  transition-timing-function: ease;
+}
+
+.interactive {
+  transition: transform var(--navi-transition-base);
+}
+
+.interactive:hover {
+  transform: translateY(-1px);
+}
+
+.card-hover {
+  transition: all var(--navi-transition-base);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--navi-shadow-md);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in 0.2s ease-in;
+}
+
+@keyframes slide-in-top {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-top {
+  animation: slide-in-top 0.3s ease-out;
+}
+
+@keyframes success-flash {
+  0% {
+    background: var(--navi-success-green-light);
+    border-color: var(--navi-success-green);
+  }
+  50% {
+    background: var(--navi-success-green);
+    color: var(--navi-white);
+  }
+  100% {
+    background: var(--navi-white);
+    border-color: var(--navi-border);
+    color: var(--navi-secondary-grey);
+  }
+}
+
+.task-completed {
+  animation: success-flash 2s ease-in-out;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+*:focus {
+  outline: 2px solid var(--navi-accent-teal);
+  outline-offset: 2px;
+}
+
+button:focus, 
+input:focus, 
+select:focus, 
+textarea:focus {
+  outline: 2px solid var(--navi-accent-teal);
+  outline-offset: 2px;
+}
+
+button:not(:disabled):hover,
+a:hover {
+  transition: all var(--navi-transition-base);
+}
+    </style>
     
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
