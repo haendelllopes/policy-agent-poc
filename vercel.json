@@ -6,6 +6,20 @@
       "dest": "src/server.js"
     },
     {
+      "src": "/css/(.*)",
+      "dest": "public/css/$1",
+      "headers": {
+        "Content-Type": "text/css"
+      }
+    },
+    {
+      "src": "/assets/(.*\\.svg)",
+      "dest": "public/assets/$1",
+      "headers": {
+        "Content-Type": "image/svg+xml"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "public/$1"
     }
