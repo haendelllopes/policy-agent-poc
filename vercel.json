@@ -1,23 +1,29 @@
 {
   "version": 2,
+  "headers": [
+    {
+      "source": "/css/(.*)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*\\.svg)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "image/svg+xml"
+        }
+      ]
+    }
+  ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "src/server.js"
-    },
-    {
-      "src": "/css/(.*)",
-      "dest": "public/css/$1",
-      "headers": {
-        "Content-Type": "text/css"
-      }
-    },
-    {
-      "src": "/assets/(.*\\.svg)",
-      "dest": "public/assets/$1",
-      "headers": {
-        "Content-Type": "image/svg+xml"
-      }
     },
     {
       "src": "/(.*)",
