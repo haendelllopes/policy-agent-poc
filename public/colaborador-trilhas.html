@@ -3,15 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minhas Trilhas - Flowly</title>
+    <title>Minhas Trilhas - Navigator</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon-navi.svg">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Roboto', sans-serif; 
+            background: var(--navi-background);
             min-height: 100vh;
             padding: 24px;
+            color: var(--navi-primary-dark);
         }
         
         .container {
@@ -20,11 +32,11 @@
         }
         
         .header {
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
             padding: 32px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .header-top {
@@ -37,7 +49,13 @@
         .header h1 {
             font-size: 32px;
             font-weight: 700;
-            color: #1e293b;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
+        }
+        
+        .header p {
+            color: var(--navi-secondary-grey);
+            margin-top: 8px;
         }
         
         .pontuacao {
@@ -46,7 +64,7 @@
         
         .pontuacao-label {
             font-size: 12px;
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 4px;
@@ -55,9 +73,8 @@
         .pontuacao-valor {
             font-size: 36px;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-accent-teal);
         }
         
         .stats {
@@ -68,20 +85,21 @@
         
         .stat-card {
             padding: 16px;
-            background: #f8fafc;
-            border-radius: 12px;
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
         }
         
         .stat-label {
             font-size: 13px;
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             margin-bottom: 8px;
         }
         
         .stat-value {
             font-size: 28px;
             font-weight: 700;
-            color: #1e293b;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
         }
         
         .trilhas-list {
@@ -90,16 +108,16 @@
         }
         
         .trilha-card {
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
             padding: 28px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all var(--navi-transition-base);
         }
         
         .trilha-card:hover {
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
         
         .trilha-header {
@@ -112,12 +130,13 @@
         .trilha-title {
             font-size: 24px;
             font-weight: 700;
-            color: #1e293b;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
             margin-bottom: 8px;
         }
         
         .trilha-description {
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             line-height: 1.6;
         }
         
@@ -134,8 +153,8 @@
         }
         
         .status-em-andamento {
-            background: #dbeafe;
-            color: #1e40af;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
         }
         
         .status-aguardando-quiz {
@@ -145,7 +164,7 @@
         
         .status-concluida {
             background: #dcfce7;
-            color: #166534;
+            color: var(--navi-success-green);
         }
         
         .status-atrasada {
@@ -158,8 +177,8 @@
             gap: 24px;
             margin: 20px 0;
             padding: 16px;
-            background: #f8fafc;
-            border-radius: 12px;
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
         }
         
         .meta-item {
@@ -167,12 +186,12 @@
             align-items: center;
             gap: 8px;
             font-size: 14px;
-            color: #64748b;
+            color: var(--navi-secondary-grey);
         }
         
         .progress-bar {
             height: 8px;
-            background: #e2e8f0;
+            background: var(--navi-border);
             border-radius: 4px;
             overflow: hidden;
             margin: 16px 0;
@@ -180,76 +199,14 @@
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: var(--navi-accent-teal);
             transition: width 0.3s ease;
         }
         
         .progress-text {
             font-size: 14px;
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             text-align: center;
-        }
-        
-        .conteudos-list {
-            margin-top: 20px;
-        }
-        
-        .conteudo-item {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background: #f8fafc;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            transition: all 0.2s;
-        }
-        
-        .conteudo-item.aceito {
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-        }
-        
-        .conteudo-checkbox {
-            width: 24px;
-            height: 24px;
-            margin-right: 16px;
-            cursor: pointer;
-        }
-        
-        .conteudo-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 16px;
-            font-size: 20px;
-        }
-        
-        .icon-documento { background: #dbeafe; }
-        .icon-video { background: #fce7f3; }
-        .icon-link { background: #d1fae5; }
-        .icon-pdf { background: #fed7aa; }
-        
-        .conteudo-info {
-            flex: 1;
-        }
-        
-        .conteudo-titulo {
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 4px;
-        }
-        
-        .conteudo-link {
-            font-size: 13px;
-            color: #3b82f6;
-            text-decoration: none;
-        }
-        
-        .conteudo-link:hover {
-            text-decoration: underline;
         }
         
         .trilha-actions {
@@ -261,24 +218,25 @@
         .btn {
             padding: 14px 28px;
             border: none;
-            border-radius: 8px;
+            border-radius: 8px !important;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
         }
         
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            background: var(--navi-accent-teal-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
         }
         
         .btn-primary:disabled {
@@ -288,26 +246,27 @@
         }
         
         .btn-secondary {
-            background: white;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
+            background: var(--navi-white);
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
         }
         
         .btn-secondary:hover {
-            background: #f8fafc;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
         }
         
         .empty-state {
             text-align: center;
             padding: 64px 24px;
-            background: white;
-            border-radius: 16px;
-            color: #94a3b8;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
+            color: var(--navi-secondary-grey);
         }
         
-        .empty-state svg {
-            width: 80px;
-            height: 80px;
+        .empty-state i {
+            font-size: 80px;
             margin-bottom: 16px;
             opacity: 0.5;
         }
@@ -315,13 +274,13 @@
         .loading {
             text-align: center;
             padding: 48px;
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
         }
         
         .spinner {
-            border: 3px solid #e2e8f0;
-            border-top: 3px solid #667eea;
+            border: 3px solid var(--navi-border);
+            border-top: 3px solid var(--navi-accent-teal);
             border-radius: 50%;
             width: 48px;
             height: 48px;
@@ -333,6 +292,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        button {
+            border-radius: 8px !important;
+        }
     </style>
 </head>
 <body>
@@ -342,7 +305,7 @@
             <div class="header-top">
                 <div>
                     <h1>Olá, <span id="colaborador-nome">Colaborador</span>! 👋</h1>
-                    <p style="color: #64748b; margin-top: 8px;">Acompanhe seu progresso no onboarding</p>
+                    <p>Acompanhe seu progresso no onboarding</p>
                 </div>
                 <div class="pontuacao">
                     <div class="pontuacao-label">Pontuação Total</div>
@@ -357,11 +320,11 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">✅ Concluídas</div>
-                    <div class="stat-value" id="stat-concluidas" style="color: #10b981;">-</div>
+                    <div class="stat-value" id="stat-concluidas" style="color: var(--navi-success-green);">-</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">⏳ Em Andamento</div>
-                    <div class="stat-value" id="stat-andamento" style="color: #3b82f6;">-</div>
+                    <div class="stat-value" id="stat-andamento" style="color: var(--navi-accent-teal);">-</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">⚠️ Atrasadas</div>
@@ -374,7 +337,7 @@
         <div id="trilhas-container" class="trilhas-list">
             <div class="loading">
                 <div class="spinner"></div>
-                <p style="color: #64748b;">Carregando suas trilhas...</p>
+                <p style="color: var(--navi-secondary-grey);">Carregando suas trilhas...</p>
             </div>
         </div>
     </div>
@@ -394,6 +357,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             carregarProgresso();
             carregarTrilhas();
+            
+            // Initialize Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         });
 
         async function carregarProgresso() {
@@ -425,13 +393,12 @@
                 if (trilhas.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
+                            <i data-feather="layers"></i>
                             <h3>Nenhuma trilha disponível</h3>
                             <p>Aguarde o RH configurar suas trilhas de onboarding</p>
                         </div>
                     `;
+                    if (typeof feather !== 'undefined') feather.replace();
                     return;
                 }
                 
@@ -472,7 +439,7 @@
                 acoes = `<button class="btn btn-primary" onclick="fazerQuiz('${trilha.id}')">✍️ Fazer Quiz</button>`;
             } else if (status === 'concluida') {
                 acoes = `
-                    <span style="color: #10b981; font-weight: 600;">✅ Concluída - ${trilha.pontuacao_final}%</span>
+                    <span style="color: var(--navi-success-green); font-weight: 600;">✅ Concluída - ${trilha.pontuacao_final}%</span>
                     <button class="btn btn-secondary" onclick="abrirTrilha('${trilha.id}')">📄 Ver Detalhes</button>
                 `;
             }
@@ -491,15 +458,11 @@
                     
                     <div class="trilha-meta">
                         <div class="meta-item">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                            <i data-feather="clock" style="width: 16px; height: 16px;"></i>
                             Prazo: ${dataLimite}
                         </div>
                         <div class="meta-item">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
+                            <i data-feather="file-text" style="width: 16px; height: 16px;"></i>
                             ${totalConteudos} conteúdos
                         </div>
                     </div>
@@ -548,11 +511,8 @@
             window.location.href = `/colaborador-quiz.html?trilha_id=${trilhaId}&colaborador_id=${COLABORADOR_ID}`;
         }
     </script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
 </body>
 </html>
-
-
-
-
-
-

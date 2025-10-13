@@ -4,13 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurador - Navigator</title>
+    
+    <!-- Google Fonts - Brand Manual Navi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/assets/favicon-navi.svg">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: #f8fafc; 
-            color: #1e293b; 
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: var(--navi-background); 
+            color: var(--navi-primary-dark); 
         }
         
         .container { display: flex; min-height: 100vh; }
@@ -18,90 +31,100 @@
         /* Sidebar */
         .sidebar { 
             width: 280px; 
-            background: white; 
-            border-right: 1px solid #e2e8f0; 
-            padding: 24px 0; 
+            background: var(--navi-white); 
+            border-right: 1px solid var(--navi-border); 
+            padding: var(--navi-spacing-xl) 0; 
             position: fixed; 
             height: 100vh; 
             overflow-y: auto;
-            transition: all 0.3s ease;
+            transition: width var(--navi-transition-slow);
         }
         
         .sidebar.collapsed {
             width: 80px;
         }
         
-        .sidebar.collapsed .logo h1,
-        .sidebar.collapsed .nav-item span {
-            display: none;
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left var(--navi-transition-slow);
         }
         
-        .sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 12px;
+        .sidebar.collapsed + .main-content {
+            margin-left: 80px;
         }
         
-        .sidebar.collapsed .nav-item svg {
-            margin-right: 0;
-        }
         
         /* Toggle Button */
         .sidebar-toggle {
             position: absolute;
-            top: 24px;
-            right: -15px;
-            width: 30px;
-            height: 30px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            top: var(--navi-spacing-md);
+            right: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border: none;
+            border-radius: var(--navi-radius-sm);
+            padding: var(--navi-spacing-sm);
             cursor: pointer;
-            transition: all 0.2s;
-            z-index: 10;
+            transition: all var(--navi-transition-base);
         }
         
         .sidebar-toggle:hover {
-            background: #f8fafc;
-            border-color: #3b82f6;
-            color: #3b82f6;
+            background: var(--navi-border);
         }
         
-        .sidebar-toggle svg {
-            width: 16px;
-            height: 16px;
-            transition: transform 0.3s ease;
+        .sidebar-header {
+            padding: 0 var(--navi-spacing-xl);
+            margin-bottom: var(--navi-spacing-xl);
+            transition: padding var(--navi-transition-slow);
         }
         
-        .sidebar.collapsed .sidebar-toggle svg {
-            transform: rotate(180deg);
-        }
-        
-        .logo { 
-            padding: 0 24px 32px; 
-            border-bottom: 1px solid #e2e8f0; 
-            margin-bottom: 24px; 
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 1rem;
         }
         
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
+            transition: all 0.3s ease;
         }
         
-        .logo svg {
-            color: #3b82f6;
+        .sidebar.collapsed .logo {
+            font-size: 1rem;
+            justify-content: center;
         }
         
-        .logo h1 { 
-            font-size: 24px; 
-            font-weight: 700; 
-            color: #3b82f6;
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
         }
         
-        .nav { padding: 0 24px; }
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .sidebar.collapsed .logo-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+        
+        .nav-text {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        
+        
         
         .nav-menu {
             list-style: none;
@@ -115,24 +138,29 @@
         .nav-link {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 2rem;
-            color: #64748b;
+            gap: var(--navi-spacing-sm);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-xl);
+            color: var(--navi-secondary-grey);
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
             border-left: 3px solid transparent;
             position: relative;
         }
         
+        .sidebar.collapsed .nav-link {
+            padding: 0.75rem 1rem;
+            justify-content: center;
+        }
+        
         .nav-link:hover {
-            background: #f1f5f9;
-            color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
         }
         
         .nav-link.active {
-            background: #eff6ff;
-            color: #2563eb;
-            border-left-color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-left-color: var(--navi-accent-teal);
         }
         
         .nav-icon {
@@ -146,12 +174,91 @@
         .main { 
             flex: 1; 
             margin-left: 280px; 
-            padding: 32px;
+            min-height: 100vh;
             transition: margin-left 0.3s ease;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
         }
         
         .main.expanded {
             margin-left: 80px;
+        }
+        
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .top-bar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--navi-primary-dark);
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .top-bar span {
+            font-size: 0.875rem;
+            color: var(--navi-secondary-grey);
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .tenant-info {
+            margin-top: var(--navi-spacing-md);
+            padding: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
+            border-left: 4px solid var(--navi-accent-teal);
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .tenant-info h3 {
+            font-size: 0.9rem;
+            color: var(--navi-secondary-grey);
+            margin-bottom: 0.25rem;
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info h3 {
+            font-size: 0.7rem;
+            text-align: center;
+        }
+        
+        .tenant-info p {
+            font-size: 0.8rem;
+            color: var(--navi-secondary-grey);
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info p {
+            display: none;
         }
         
         .header { 
@@ -417,34 +524,46 @@
         }
 
         .btn-secondary {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            padding: 10px 20px;
-            border-radius: 8px;
+            background: var(--navi-white);
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: var(--navi-border-radius);
             font-weight: 500;
             cursor: pointer;
+            font-family: 'Roboto', sans-serif;
             transition: all 0.2s;
         }
 
         .btn-secondary:hover {
-            background: #e2e8f0;
-            color: #475569;
+            background: var(--navi-background);
+            border-color: var(--navi-secondary-grey);
+            color: var(--navi-primary-dark);
         }
 
         .btn-primary {
-            background: #3b82f6;
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: var(--navi-border-radius);
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s;
         }
 
         .btn-primary:hover {
-            background: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal) !important;
+            border: 1px solid var(--navi-accent-teal);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        }
+        
+        /* Forçar border-radius em todos os botões */
+        button {
+            border-radius: 8px !important;
         }
 
         .loading {
@@ -501,77 +620,82 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Recolher/Expandir menu">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-            </button>
-            
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">←</span>
+        </button>
+        
+        <div class="sidebar-header">
             <div class="logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: inline-block; vertical-align: middle; margin-right: 12px; color: #3b82f6;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                <h1 style="display: inline-block;">Navigator</h1>
+                <div class="logo-icon">
+                    <img src="/assets/logo-navi-compact.svg" alt="Navigator">
+                </div>
+                <span class="nav-text">Navigator</span>
             </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Flowly">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                        <span class="nav-text">Insights</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="funcionarios.html" class="nav-link" data-tooltip="Colaboradores">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        <span class="nav-text">Colaboradores</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="admin-trilhas.html" class="nav-link" data-tooltip="Trilhas">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                        </svg>
-                        <span class="nav-text">Trilhas</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="nav-text">Documentos</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="configurador.html" class="nav-link active" data-tooltip="Configurações">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span class="nav-text">Configurações</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
+            <div class="tenant-info">
+                <h3 id="tenantName">Carregando...</h3>
+                <p id="tenantSubdomain">Carregando...</p>
+            </div>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Navî">
+                    <i data-feather="bar-chart-2" class="nav-icon"></i>
+                    <span class="nav-text">Insights</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="funcionarios.html" class="nav-link" data-tooltip="Colaboradores">
+                    <i data-feather="users" class="nav-icon"></i>
+                    <span class="nav-text">Colaboradores</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="admin-trilhas.html" class="nav-link" data-tooltip="Trilhas">
+                    <i data-feather="layers" class="nav-icon"></i>
+                    <span class="nav-text">Trilhas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
+                    <i data-feather="file-text" class="nav-icon"></i>
+                    <span class="nav-text">Documentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="configurador.html" class="nav-link active" data-tooltip="Configurações">
+                    <i data-feather="settings" class="nav-icon"></i>
+                    <span class="nav-text">Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
         <!-- Main Content -->
         <main class="main" id="mainContent">
-            <!-- Header -->
-            <header class="header">
-                <div class="header-content">
-                    <div>
-                        <h1>Configurador</h1>
-                        <p>Gerencie as configurações da empresa</p>
-                    </div>
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <h1 id="pageTitle">Configurações</h1>
+                <div>
+                    <span id="currentTime"></span>
                 </div>
             </header>
+            
+            <!-- Content -->
+            <div class="content">
+                <!-- Configurações Section -->
+                <div class="section active">
+                    <div class="section-header">
+                        <h2>⚙️ Configurações</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-secondary" onclick="location.reload()">
+                                <i data-feather="refresh-cw"></i>
+                                Atualizar
+                            </button>
+                        </div>
+                    </div>
 
             <!-- Configuration Sections -->
             <div class="config-sections">
@@ -648,6 +772,7 @@
                         <span id="communicationStatus">Nenhum tipo selecionado</span>
                     </div>
                 </div>
+            </div>
             </div>
         </main>
     </div>
@@ -767,6 +892,69 @@
             restoreSidebarState();
             loadCommunicationType();
         });
+    </script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        // Inicializar Feather Icons
+        feather.replace();
+        
+        // Atualizar ícones após mudanças dinâmicas
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+            
+            // Carregar informações do tenant
+            loadTenantInfo();
+            
+            // Atualizar tempo
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+        
+        // Load tenant info
+        async function loadTenantInfo() {
+            try {
+                const tenantSubdomain = getTenantFromUrl();
+                console.log('🔍 Buscando tenant:', tenantSubdomain);
+                
+                const response = await fetch(`${API_BASE}/api/tenants/${tenantSubdomain}`);
+                console.log('📡 Resposta da API:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const currentTenant = await response.json();
+                    console.log('✅ Tenant carregado:', currentTenant);
+                    document.getElementById('tenantName').textContent = currentTenant.name;
+                    document.getElementById('tenantSubdomain').textContent = `${currentTenant.subdomain}.flowly.com`;
+                } else {
+                    console.warn('⚠️ Tenant não encontrado, usando fallback');
+                    // Fallback para demo
+                    document.getElementById('tenantName').textContent = 'Empresa Demo';
+                    document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar tenant:', error);
+                // Fallback para demo
+                document.getElementById('tenantName').textContent = 'Empresa Demo';
+                document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
+            }
+        }
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR');
+        }
+        
+        // Get tenant from URL
+        function getTenantFromUrl() {
+            const hostname = window.location.hostname;
+            if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+                return 'demo';
+            }
+            const parts = hostname.split('.');
+            return parts.length > 1 ? parts[0] : 'demo';
+        }
     </script>
 </body>
 </html>

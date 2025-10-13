@@ -1,0 +1,53 @@
+<svg width="200" height="120" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background cinza claro -->
+  <rect width="200" height="120" fill="#F8F9FA"/>
+  
+  <!-- Grupo do logo centralizado -->
+  <g transform="translate(100, 50)">
+    <!-- Texto "NAV" -->
+    <text 
+      font-family="Montserrat, Arial, sans-serif" 
+      font-weight="700" 
+      font-size="32" 
+      fill="#343A40"
+      text-anchor="middle"
+      y="8">NAV</text>
+    
+    <!-- Letra "I" -->
+    <text 
+      font-family="Montserrat, Arial, sans-serif" 
+      font-weight="700" 
+      font-size="32" 
+      fill="#343A40"
+      x="48" 
+      y="8">I</text>
+    
+    <!-- Caret substituindo o ponto do "i" -->
+    <path 
+      d="M48 -6 L50 -10 L52 -6" 
+      stroke="#17A2B8" 
+      stroke-width="2.5" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+      fill="none"/>
+    
+    <!-- Tagline "ONBOARD" -->
+    <text 
+      font-family="Montserrat, Arial, sans-serif" 
+      font-weight="400" 
+      font-size="14" 
+      fill="#6C7570"
+      text-anchor="middle"
+      y="32">ONBOARD</text>
+  </g>
+  
+  <!-- Elemento decorativo: estrela no canto inferior direito -->
+  <g transform="translate(180, 100)">
+    <path 
+      d="M0 -4 L1.2 -1.2 L4 0 L1.2 1.2 L0 4 L-1.2 1.2 L-4 0 L-1.2 -1.2 Z" 
+      fill="#6C7570" 
+      opacity="0.6"/>
+  </g>
+</svg>
+
+

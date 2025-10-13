@@ -3,7 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Funcionários - Navigator</title>
+    <title>Colaboradores - Navigator</title>
+    
+    <!-- Google Fonts - Brand Manual Navi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/assets/favicon-navi.svg">
+
     <style>
         * {
             margin: 0;
@@ -12,20 +25,20 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--navi-background);
+            color: var(--navi-primary-dark);
         }
         
         .sidebar {
             width: 280px;
-            background: white;
-            border-right: 1px solid #e2e8f0;
-            padding: 24px 0;
+            background: var(--navi-white);
+            border-right: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-xl) 0;
             position: fixed;
             height: 100vh;
             overflow-y: auto;
-            transition: width 0.3s ease;
+            transition: width var(--navi-transition-slow);
         }
         
         .sidebar.collapsed {
@@ -34,24 +47,24 @@
         
         .sidebar-toggle {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #f1f5f9;
+            top: var(--navi-spacing-md);
+            right: var(--navi-spacing-md);
+            background: var(--navi-background);
             border: none;
-            border-radius: 6px;
-            padding: 0.5rem;
+            border-radius: var(--navi-radius-sm);
+            padding: var(--navi-spacing-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
         }
         
         .sidebar-toggle:hover {
-            background: #e2e8f0;
+            background: var(--navi-border);
         }
         
         .sidebar-header {
-            padding: 0 2rem;
-            margin-bottom: 2rem;
-            transition: padding 0.3s ease;
+            padding: 0 var(--navi-spacing-xl);
+            margin-bottom: var(--navi-spacing-xl);
+            transition: padding var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .sidebar-header {
@@ -64,7 +77,8 @@
             gap: 0.75rem;
             font-size: 1.5rem;
             font-weight: 700;
-            color: #2563eb;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
             transition: all 0.3s ease;
         }
         
@@ -76,14 +90,13 @@
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
             flex-shrink: 0;
+        }
+        
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .sidebar.collapsed .logo-icon {
@@ -101,12 +114,12 @@
         }
         
         .tenant-info {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f1f5f9;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            transition: all 0.3s ease;
+            margin-top: var(--navi-spacing-md);
+            padding: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
+            border-left: 4px solid var(--navi-accent-teal);
+            transition: all var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .tenant-info {
@@ -116,9 +129,9 @@
         
         .tenant-info h3 {
             font-size: 0.9rem;
-            color: #475569;
+            color: var(--navi-secondary-grey);
             margin-bottom: 0.25rem;
-            transition: all 0.3s ease;
+            transition: all var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .tenant-info h3 {
@@ -128,8 +141,8 @@
         
         .tenant-info p {
             font-size: 0.8rem;
-            color: #64748b;
-            transition: all 0.3s ease;
+            color: var(--navi-secondary-grey);
+            transition: all var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .tenant-info p {
@@ -149,7 +162,7 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            padding: 0.75rem 2rem;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-xl);
             color: #64748b;
             text-decoration: none;
             transition: all 0.2s;
@@ -163,14 +176,14 @@
         }
         
         .nav-link:hover {
-            background: #f1f5f9;
-            color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
         }
         
         .nav-link.active {
-            background: #eff6ff;
-            color: #2563eb;
-            border-left-color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-left-color: var(--navi-accent-teal);
         }
         
         .nav-icon {
@@ -188,19 +201,46 @@
         .main-content {
             margin-left: 280px;
             min-height: 100vh;
-            transition: margin-left 0.3s ease;
+            transition: margin-left var(--navi-transition-slow);
+            width: calc(100% - 280px);
         }
         
         .sidebar.collapsed + .main-content {
             margin-left: 80px;
+            width: calc(100% - 80px);
+        }
+        
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .content {
             padding: 2rem;
         }
         
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
         .header { 
-            margin-bottom: 32px; 
+            margin-bottom: var(--navi-spacing-xl);
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .header-content {
@@ -209,6 +249,28 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
+        }
+        
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: var(--navi-spacing-md);
+        }
+        
+        .mobile-menu-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            padding: var(--navi-spacing-sm);
+            border-radius: var(--navi-radius-sm);
+            cursor: pointer;
+            color: var(--navi-secondary-grey);
+            transition: all var(--navi-transition-base);
+        }
+        
+        .mobile-menu-toggle:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
         }
         
         .header h1 { 
@@ -230,41 +292,45 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-lg);
+            border-radius: var(--navi-radius-md);
             font-weight: 500;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: background-color 0.2s;
+            gap: var(--navi-spacing-sm);
+            transition: all var(--navi-transition-base);
         }
 
         .btn-primary:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal) !important;
+            border: 1px solid var(--navi-accent-teal);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
         }
 
         .btn-secondary {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            padding: 12px 24px;
-            border-radius: 8px;
+            background: var(--navi-white);
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-lg);
+            border-radius: var(--navi-radius-md);
             font-weight: 500;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
+            gap: var(--navi-spacing-sm);
+            transition: all var(--navi-transition-base);
         }
 
         .btn-secondary:hover {
-            background: #e2e8f0;
-            color: #475569;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
         }
 
         /* Users Section */
@@ -275,9 +341,10 @@
         .card {
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: var(--navi-spacing-lg);
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 24px;
+            margin-bottom: var(--navi-spacing-lg);
+            border: 1px solid var(--navi-border);
         }
 
         .card h2 {
@@ -312,7 +379,7 @@
         .stat-value {
             font-size: 2.5rem;
             font-weight: 700;
-            color: #2563eb;
+            color: var(--navi-accent-teal);
             margin-bottom: 0.5rem;
         }
 
@@ -321,28 +388,9 @@
             font-size: 0.9rem;
         }
 
-        /* Users Table */
+        /* Users Table - igual ao de documentos */
         .users-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-
-        .users-table th,
-        .users-table td {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .users-table th {
-            background: #f8fafc;
-            font-weight: 600;
-            color: #374151;
-        }
-
-        .users-table tbody tr:hover {
-            background: #f8fafc;
+            margin-top: var(--navi-spacing-md);
         }
 
         .status-badge {
@@ -363,40 +411,53 @@
         }
 
         .action-btn {
-            padding: 6px 12px;
+            padding: var(--navi-spacing-sm);
             border: none;
-            border-radius: 6px;
+            border-radius: var(--navi-radius-sm);
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            margin-right: 8px;
+            margin-right: var(--navi-spacing-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 32px;
+            transition: all var(--navi-transition-base);
         }
 
         .btn-edit {
-            background: #dbeafe;
-            color: #1d4ed8;
+            background: transparent;
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
         }
 
         .btn-edit:hover {
-            background: #bfdbfe;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
         }
 
         .btn-delete {
+            background: transparent;
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
+        }
+        
+        .btn-delete:hover {
             background: #fee2e2;
             color: #dc2626;
-        }
-
-        .btn-delete:hover {
-            background: #fecaca;
+            border-color: #dc2626;
         }
 
         /* Search and Filters */
         .filters {
             display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
+            gap: var(--navi-spacing-md);
+            margin-bottom: var(--navi-spacing-lg);
             align-items: center;
             flex-wrap: wrap;
+            max-width: 800px;
         }
 
         .search-box {
@@ -545,177 +606,341 @@
             margin: 16px 0;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
+        /* Responsividade Dinâmica */
+        
+        /* Classes para responsividade dinâmica */
+        .table-compact {
+            font-size: 0.9rem;
+        }
+        
+        .table-compact th,
+        .table-compact td {
+            padding: var(--navi-spacing-sm);
+        }
+        
+        .table-mobile {
+            font-size: 0.875rem;
+        }
+        
+        .table-mobile th:nth-child(3),
+        .table-mobile th:nth-child(4),
+        .table-mobile td:nth-child(3),
+        .table-mobile td:nth-child(4) {
+            display: none;
+        }
+        
+        .table-tiny {
+            font-size: 0.75rem;
+        }
+        
+        .table-tiny th:nth-child(2),
+        .table-tiny th:nth-child(3),
+        .table-tiny th:nth-child(4),
+        .table-tiny td:nth-child(2),
+        .table-tiny td:nth-child(3),
+        .table-tiny td:nth-child(4) {
+            display: none;
+        }
+        
+        .content-compact {
+            padding: var(--navi-spacing-md);
+        }
+        
+        .content-mobile {
+            padding: var(--navi-spacing-sm);
+        }
+        
+        /* Media queries para fallback */
+        @media (max-width: 1024px) {
+            .main {
+                padding: var(--navi-spacing-md);
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                gap: var(--navi-spacing-sm);
+                align-items: stretch;
+            }
+            
+            .header-actions .btn-primary,
+            .header-actions .btn-secondary {
                 width: 100%;
-                position: static;
-                height: auto;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .sidebar {
+                width: 280px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 1000;
+                transform: translateX(-100%);
+                transition: transform var(--navi-transition-slow);
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                opacity: 0;
+                visibility: hidden;
+                transition: all var(--navi-transition-slow);
+            }
+            
+            .sidebar-overlay.active {
+                opacity: 1;
+                visibility: visible;
             }
             
             .main {
                 margin-left: 0;
-                padding: 16px;
+                padding: var(--navi-spacing-md);
+                width: 100%;
+            }
+            
+            .content {
+                padding: var(--navi-spacing-md) var(--navi-spacing-sm);
+            }
+            
+            .header {
+                max-width: 100%;
             }
 
             .header-content {
                 flex-direction: column;
                 align-items: flex-start;
+                gap: var(--navi-spacing-md);
+            }
+            
+            .header-title {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .section {
+                max-width: 100%;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .header-actions .btn-primary,
+            .header-actions .btn-secondary {
+                flex: 1;
+                margin: 0;
             }
 
             .filters {
                 flex-direction: column;
                 align-items: stretch;
+                gap: var(--navi-spacing-sm);
+            }
+            
+            .filters .search-box,
+            .filters .filter-select {
+                width: 100%;
+            }
+
+            .users-table {
+                font-size: 0.875rem;
+            }
+            
+            .users-table th,
+            .users-table td {
+                padding: var(--navi-spacing-sm);
+            }
+            
+            .users-table th:nth-child(3),
+            .users-table th:nth-child(4),
+            .users-table td:nth-child(3),
+            .users-table td:nth-child(4) {
+                display: none;
             }
 
             .form-row {
                 grid-template-columns: 1fr;
             }
         }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: var(--navi-spacing-sm);
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .header p {
+                font-size: 0.875rem;
+            }
+            
+            .users-table {
+                font-size: 0.75rem;
+            }
+            
+            .users-table th,
+            .users-table td {
+                padding: 0.5rem 0.25rem;
+            }
+            
+            .users-table th:nth-child(2),
+            .users-table td:nth-child(2) {
+                display: none;
+            }
+            
+            .action-btn {
+                min-width: 28px;
+                height: 28px;
+                padding: 0.25rem;
+            }
+            
+            .pagination {
+                flex-direction: column;
+                gap: var(--navi-spacing-sm);
+            }
+            
+            .pagination button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+        
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <button class="sidebar-toggle" onclick="toggleSidebar()">
-                <span id="toggle-icon">←</span>
-            </button>
-            
-            <div class="sidebar-header">
-                <div class="logo">
-                    <svg class="logo-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    <span class="nav-text">Navigator</span>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">←</span>
+        </button>
+        
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="/assets/logo-navi-compact.svg" alt="Navigator">
                 </div>
-                <div class="tenant-info">
-                    <h3 id="tenantName">Carregando...</h3>
-                    <p id="tenantSubdomain">Carregando...</p>
-                </div>
+                <span class="nav-text">Navigator</span>
             </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Flowly">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                        <span class="nav-text">Insights</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="funcionarios.html" class="nav-link active" data-tooltip="Colaboradores">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        <span class="nav-text">Colaboradores</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="admin-trilhas.html" class="nav-link" data-tooltip="Trilhas">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                        </svg>
-                        <span class="nav-text">Trilhas</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="nav-text">Documentos</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span class="nav-text">Configurações</span>
-                    </a>
-                </li>
-            </ul>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <div class="content">
-                <!-- Header -->
-                <header class="header">
-                <div class="header-content">
-                    <div>
-                        <h1>Funcionários</h1>
-                        <p>Gerencie os funcionários da empresa</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn-secondary" onclick="refreshUsers()" title="Atualizar funcionários">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Atualizar
-                        </button>
-                        <button class="btn-primary" onclick="openAddUserModal()" title="Adicionar funcionário">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Adicionar Funcionário
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="usersCount">0</div>
-                    <div class="stat-label">Colaboradores</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="documentsCount">0</div>
-                    <div class="stat-label">Documentos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="departmentsCount">0</div>
-                    <div class="stat-label">Departamentos</div>
-                </div>
+            <div class="tenant-info">
+                <h3 id="tenantName">Carregando...</h3>
+                <p id="tenantSubdomain">Carregando...</p>
             </div>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Navî">
+                    <i data-feather="bar-chart-2" class="nav-icon"></i>
+                    <span class="nav-text">Insights</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="funcionarios.html" class="nav-link active" data-tooltip="Colaboradores">
+                    <i data-feather="users" class="nav-icon"></i>
+                    <span class="nav-text">Colaboradores</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="admin-trilhas.html" class="nav-link" data-tooltip="Trilhas">
+                    <i data-feather="layers" class="nav-icon"></i>
+                    <span class="nav-text">Trilhas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
+                    <i data-feather="file-text" class="nav-icon"></i>
+                    <span class="nav-text">Documentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
+                    <i data-feather="settings" class="nav-icon"></i>
+                    <span class="nav-text">Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
-            <!-- Users Section -->
-            <div class="section">
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <h1 id="pageTitle">Colaboradores</h1>
+            <div>
+                <span id="currentTime"></span>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Colaboradores Section -->
+            <div id="colaboradores-section" class="section active">
                 <div class="card">
-                    <h2>Lista de Funcionários</h2>
-                    
+                    <div class="section-header">
+                        <h2>👥 Colaboradores</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-secondary" onclick="refreshUsers()">
+                                <i data-feather="refresh-cw"></i>
+                                Atualizar
+                            </button>
+                            <button class="btn-primary" onclick="openAddUserModal()">
+                                <i data-feather="plus"></i>
+                                Adicionar Colaborador
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Filters -->
-                    <div class="filters">
-                        <input type="text" id="searchInput" class="search-box" placeholder="Buscar funcionários..." onkeyup="filterUsers()">
-                        <select id="departmentFilter" class="filter-select" onchange="filterUsers()">
-                            <option value="">Todos os departamentos</option>
-                        </select>
-                        <select id="statusFilter" class="filter-select" onchange="filterUsers()">
-                            <option value="">Todas as situações</option>
-                            <option value="active">Ativo</option>
-                            <option value="inactive">Inativo</option>
-                        </select>
-                    </div>
+                <div class="filters">
+                    <input type="text" id="searchInput" class="search-box" placeholder="Buscar colaboradores..." onkeyup="filterUsers()">
+                    <select id="departmentFilter" class="filter-select" onchange="filterUsers()">
+                        <option value="">Todos os departamentos</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select" onchange="filterUsers()">
+                        <option value="">Todas as situações</option>
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
 
-                    <!-- Users Table -->
-                    <div id="usersTableContainer">
-                        <div class="loading">Carregando funcionários...</div>
-                    </div>
+                <!-- Users Table -->
+                <div id="usersTableContainer">
+                    <div class="loading">Carregando colaboradores...</div>
+                </div>
 
-                    <!-- Pagination -->
-                    <div class="pagination" id="pagination" style="display: none;">
-                        <button onclick="previousPage()" id="prevBtn">Anterior</button>
-                        <span id="pageInfo"></span>
-                        <button onclick="nextPage()" id="nextBtn">Próxima</button>
-                    </div>
+                <!-- Pagination -->
+                <div class="pagination" id="pagination" style="display: none;">
+                    <button onclick="previousPage()" id="prevBtn">Anterior</button>
+                    <span id="pageInfo"></span>
+                    <button onclick="nextPage()" id="nextBtn">Próxima</button>
+                </div>
                 </div>
             </div>
-            </div>
-        </main>
-    </div>
+        </div>
+    </main>
     </div>
 
     <!-- Add/Edit User Modal -->
@@ -817,19 +1042,19 @@
         // Load users
         async function loadUsers() {
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            console.log('Carregando funcionários para tenant:', tenant);
+            console.log('Carregando colaboradores para tenant:', tenant);
             
             try {
                 const response = await fetchData(`/api/users?tenant=${tenant}`);
                 allUsers = response;
                 filteredUsers = [...allUsers];
                 
-                console.log('Funcionários carregados:', allUsers.length);
+                console.log('Colaboradores carregados:', allUsers.length);
                 renderUsers();
                 populateDepartmentFilter();
             } catch (error) {
-                console.error('Erro ao carregar funcionários:', error);
-                showUsersError('Erro ao carregar funcionários. Tente novamente.');
+                console.error('Erro ao carregar colaboradores:', error);
+                showUsersError('Erro ao carregar colaboradores. Tente novamente.');
             }
         }
 
@@ -847,18 +1072,15 @@
             }
 
             let tableHTML = `
-                <table class="users-table">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>E-mail</th>
-                            <th>Departamento</th>
-                            <th>Cargo</th>
-                            <th>Situação</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <table class="navi-table">
+                    <thead><tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>Departamento</th>
+                        <th>Cargo</th>
+                        <th>Situação</th>
+                        <th>Ações</th>
+                    </tr></thead><tbody>
             `;
 
             pageUsers.forEach(user => {
@@ -873,8 +1095,12 @@
                         <td>${user.position || '-'}</td>
                         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
                         <td>
-                            <button class="action-btn btn-edit" onclick="editUser('${user.id}')">Editar</button>
-                            <button class="action-btn btn-delete" onclick="deleteUser('${user.id}')">Excluir</button>
+                            <button class="action-btn btn-edit" onclick="editUser('${user.id}')" title="Editar colaborador">
+                                <i data-feather="edit"></i>
+                            </button>
+                            <button class="action-btn btn-delete" onclick="deleteUser('${user.id}')" title="Excluir colaborador">
+                                <i data-feather="trash-2"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -887,6 +1113,14 @@
 
             container.innerHTML = tableHTML;
             updatePagination();
+            
+            // Inicializar Feather Icons após renderizar a tabela
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+            
+            // Atualizar layout responsivo após renderizar
+            updateResponsiveLayout();
         }
 
         // Filter users
@@ -1211,16 +1445,40 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const toggleIcon = document.getElementById('toggle-icon');
+            const overlay = document.getElementById('sidebarOverlay');
             
-            sidebar.classList.toggle('collapsed');
+            // Verificar se é mobile
+            const isMobile = window.innerWidth <= 768;
             
-            // Salvar estado no localStorage
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-            
-            if (sidebar.classList.contains('collapsed')) {
-                toggleIcon.textContent = '→';
+            if (isMobile) {
+                // No mobile, toggle open/close
+                sidebar.classList.toggle('open');
+                if (overlay) {
+                    overlay.classList.toggle('active');
+                }
             } else {
-                toggleIcon.textContent = '←';
+                // No desktop, toggle collapsed/expanded
+                sidebar.classList.toggle('collapsed');
+                
+                // Salvar estado no localStorage apenas no desktop
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    toggleIcon.textContent = '→';
+                } else {
+                    toggleIcon.textContent = '←';
+                }
+            }
+        }
+        
+        // Close sidebar function for mobile
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.remove('open');
+            if (overlay) {
+                overlay.classList.remove('active');
             }
         }
         
@@ -1279,13 +1537,56 @@
             }
         }
 
+        // Responsividade dinâmica
+        function updateResponsiveLayout() {
+            const screenWidth = window.innerWidth;
+            const table = document.querySelector('.users-table');
+            const container = document.querySelector('.content');
+            
+            if (!table || !container) return;
+            
+            // Reset classes
+            table.classList.remove('table-compact', 'table-mobile', 'table-tiny');
+            container.classList.remove('content-compact', 'content-mobile');
+            
+            if (screenWidth <= 480) {
+                // Mobile muito pequeno
+                table.classList.add('table-tiny');
+                container.classList.add('content-mobile');
+            } else if (screenWidth <= 768) {
+                // Mobile/Tablet
+                table.classList.add('table-mobile');
+                container.classList.add('content-mobile');
+            } else if (screenWidth <= 1024) {
+                // Tablet grande
+                table.classList.add('table-compact');
+                container.classList.add('content-compact');
+            } else {
+                // Desktop - layout normal
+                // Remove todas as classes de compactação
+            }
+        }
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR');
+        }
+
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Página de funcionários carregada');
+            console.log('Página de colaboradores carregada');
             restoreSidebarState();
             loadTenantInfo();
-            loadStats();
             loadUsers();
+            updateResponsiveLayout();
+            
+            // Atualizar layout quando a janela for redimensionada
+            window.addEventListener('resize', updateResponsiveLayout);
+            
+            // Atualizar horário
+            updateTime();
+            setInterval(updateTime, 1000);
         });
     </script>
     <script>
@@ -1316,6 +1617,13 @@
                 }
             });
         });
+    </script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        // Inicializar Feather Icons
+        feather.replace();
     </script>
 </body>
 </html>

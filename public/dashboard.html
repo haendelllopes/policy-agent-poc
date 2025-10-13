@@ -4,8 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Flowly v6</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <title>Insights - Navigator</title>
+    <link rel="icon" href="/assets/favicon-navi.svg">
+    
+    <!-- Google Fonts - Brand Manual Navi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
     <style>
         * {
             margin: 0;
@@ -14,9 +26,9 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--navi-background);
+            color: var(--navi-primary-dark);
         }
         
         .sidebar {
@@ -25,11 +37,11 @@
             top: 0;
             width: 280px;
             height: 100vh;
-            background: white;
-            border-right: 1px solid #e2e8f0;
-            padding: 2rem 0;
+            background: var(--navi-white);
+            border-right: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-xl) 0;
             z-index: 100;
-            transition: width 0.3s ease;
+            transition: width var(--navi-transition-slow);
         }
         
         .sidebar.collapsed {
@@ -38,24 +50,24 @@
         
         .sidebar-toggle {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #f1f5f9;
+            top: var(--navi-spacing-md);
+            right: var(--navi-spacing-md);
+            background: var(--navi-background);
             border: none;
-            border-radius: 6px;
-            padding: 0.5rem;
+            border-radius: var(--navi-radius-sm);
+            padding: var(--navi-spacing-sm);
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
         }
         
         .sidebar-toggle:hover {
-            background: #e2e8f0;
+            background: var(--navi-border);
         }
         
         .sidebar-header {
-            padding: 0 2rem;
-            margin-bottom: 2rem;
-            transition: padding 0.3s ease;
+            padding: 0 var(--navi-spacing-xl);
+            margin-bottom: var(--navi-spacing-xl);
+            transition: padding var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .sidebar-header {
@@ -68,7 +80,8 @@
             gap: 0.75rem;
             font-size: 1.5rem;
             font-weight: 700;
-            color: #2563eb;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
             transition: all 0.3s ease;
         }
         
@@ -80,14 +93,13 @@
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
             flex-shrink: 0;
+        }
+        
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
         
         .sidebar.collapsed .logo-icon {
@@ -105,12 +117,12 @@
         }
         
         .tenant-info {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: #f1f5f9;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            transition: all 0.3s ease;
+            margin-top: var(--navi-spacing-md);
+            padding: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
+            border-left: 4px solid var(--navi-accent-teal);
+            transition: all var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .tenant-info {
@@ -120,9 +132,9 @@
         
         .tenant-info h3 {
             font-size: 0.9rem;
-            color: #475569;
+            color: var(--navi-secondary-grey);
             margin-bottom: 0.25rem;
-            transition: all 0.3s ease;
+            transition: all var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .tenant-info h3 {
@@ -132,8 +144,8 @@
         
         .tenant-info p {
             font-size: 0.8rem;
-            color: #64748b;
-            transition: all 0.3s ease;
+            color: var(--navi-secondary-grey);
+            transition: all var(--navi-transition-slow);
         }
         
         .sidebar.collapsed .tenant-info p {
@@ -152,11 +164,11 @@
         .nav-link {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 2rem;
-            color: #64748b;
+            gap: var(--navi-spacing-sm);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-xl);
+            color: var(--navi-secondary-grey);
             text-decoration: none;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
             border-left: 3px solid transparent;
             position: relative;
         }
@@ -167,14 +179,14 @@
         }
         
         .nav-link:hover {
-            background: #f1f5f9;
-            color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
         }
         
         .nav-link.active {
-            background: #eff6ff;
-            color: #2563eb;
-            border-left-color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-left-color: var(--navi-accent-teal);
         }
         
         .nav-icon {
@@ -187,7 +199,7 @@
         .main-content {
             margin-left: 280px;
             min-height: 100vh;
-            transition: margin-left 0.3s ease;
+            transition: margin-left var(--navi-transition-slow);
         }
         
         .sidebar.collapsed + .main-content {
@@ -229,33 +241,52 @@
         }
         
         .btn-primary {
-            background: #2563eb;
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-lg);
+            border-radius: var(--navi-radius-md);
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
         }
         
         .btn-primary:hover {
-            background: #1d4ed8;
+            background: var(--navi-accent-teal-hover);
         }
         
         .btn-secondary {
-            background: #6b7280;
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: 8px !important;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
+            font-family: 'Roboto', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--navi-spacing-xs);
         }
         
         .btn-secondary:hover {
-            background: #4b5563;
+            background: var(--navi-accent-teal-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        }
+        
+        /* Forçar border-radius em todos os botões */
+        button {
+            border-radius: 8px !important;
+        }
+        
+        .btn-primary {
+            border-radius: 8px !important;
+        }
+        
+        .btn-secondary {
+            border-radius: 8px !important;
         }
         
         .card {
@@ -283,12 +314,12 @@
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
-            color: #2563eb;
+            color: var(--navi-accent-teal);
             margin-bottom: 0.5rem;
         }
         
         .stat-label {
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             font-size: 0.9rem;
         }
         
@@ -463,9 +494,9 @@
         
         <div class="sidebar-header">
             <div class="logo">
-                <svg class="logo-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
+                <div class="logo-icon">
+                    <img src="/assets/logo-navi-compact.svg" alt="Navigator">
+                </div>
                 <span class="nav-text">Navigator</span>
             </div>
             <div class="tenant-info">
@@ -476,43 +507,32 @@
         
         <ul class="nav-menu">
             <li class="nav-item">
-                <a href="dashboard.html" class="nav-link active" data-tooltip="Insights do Flowly">
-                    <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
+                <a href="dashboard.html" class="nav-link active" data-tooltip="Insights do Navî">
+                    <i data-feather="bar-chart-2" class="nav-icon"></i>
                     <span class="nav-text">Insights</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="funcionarios.html" class="nav-link" data-tooltip="Colaboradores">
-                    <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
+                    <i data-feather="users" class="nav-icon"></i>
                     <span class="nav-text">Colaboradores</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="admin-trilhas.html" class="nav-link" data-tooltip="Trilhas">
-                    <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
+                    <i data-feather="layers" class="nav-icon"></i>
                     <span class="nav-text">Trilhas</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
-                    <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
+                    <i data-feather="file-text" class="nav-icon"></i>
                     <span class="nav-text">Documentos</span>
                 </a>
             </li>
             <li class="nav-item">
                 <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
-                    <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
+                    <i data-feather="settings" class="nav-icon"></i>
                     <span class="nav-text">Configurações</span>
                 </a>
             </li>
@@ -523,7 +543,7 @@
     <main class="main-content">
         <!-- Top Bar -->
         <header class="top-bar">
-            <h1 id="pageTitle">Insights do Flowly</h1>
+            <h1 id="pageTitle">Insights do Navî</h1>
             <div>
                 <span id="currentTime"></span>
             </div>
@@ -541,7 +561,10 @@
                             <option value="30" selected>Últimos 30 dias</option>
                             <option value="90">Últimos 90 dias</option>
                         </select>
-                        <button class="btn-secondary" onclick="loadInsightsData()">🔄 Atualizar</button>
+                        <button class="btn-secondary" onclick="loadInsightsData()">
+                            <i data-feather="refresh-cw"></i>
+                            Atualizar
+                        </button>
                     </div>
                 </div>
 
@@ -866,7 +889,7 @@
             // Update page title
             const titles = {
                 'dashboard': 'Dashboard',
-                'insights': 'Insights do Flowly',
+                'insights': 'Insights do Navî',
                 'users': 'Colaboradores',
                 'documents': 'Documentos',
                 'settings': 'Configurações'
@@ -905,6 +928,11 @@
                 ]);
                 
                 console.log('✅ Insights carregados com sucesso!');
+                
+                // Atualizar Feather Icons após carregar dados
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
             } catch (error) {
                 console.error('❌ Erro ao carregar insights:', error);
             }
@@ -1543,6 +1571,11 @@
             // Placeholder for items per page
             console.log('Alterar itens por página...');
         }
+        
+        // Inicializar Feather Icons
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+        });
     </script>
 </body>
 </html>

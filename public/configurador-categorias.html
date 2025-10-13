@@ -4,16 +4,315 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Categorias de Documentos - Navigator</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon-navi.svg">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: #f8fafc; 
-            color: #1e293b; 
+            font-family: 'Roboto', sans-serif; 
+            background: var(--navi-background); 
+            color: var(--navi-primary-dark); 
         }
         
         .container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar Padronizada */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--navi-white);
+            border-right: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-xl) 0;
+            z-index: 100;
+            transition: width var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            top: var(--navi-spacing-md);
+            right: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border: none;
+            border-radius: var(--navi-radius-sm);
+            padding: var(--navi-spacing-sm);
+            cursor: pointer;
+            transition: all var(--navi-transition-base);
+        }
+        
+        .sidebar-toggle:hover {
+            background: var(--navi-border);
+        }
+        
+        .sidebar-header {
+            padding: 0 var(--navi-spacing-xl);
+            margin-bottom: var(--navi-spacing-xl);
+            transition: padding var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 1rem;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .logo {
+            font-size: 1rem;
+            justify-content: center;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+        
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .sidebar.collapsed .logo-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+        
+        .nav-text {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        
+        .tenant-info {
+            margin-top: var(--navi-spacing-md);
+            padding: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
+            border-left: 4px solid var(--navi-accent-teal);
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .tenant-info h3 {
+            font-size: 0.9rem;
+            color: var(--navi-secondary-grey);
+            margin-bottom: 0.25rem;
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info h3 {
+            font-size: 0.7rem;
+            text-align: center;
+        }
+        
+        .tenant-info p {
+            font-size: 0.8rem;
+            color: var(--navi-secondary-grey);
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info p {
+            display: none;
+        }
+        
+        .nav-menu {
+            list-style: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--navi-spacing-sm);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-xl);
+            color: var(--navi-secondary-grey);
+            text-decoration: none;
+            transition: all var(--navi-transition-base);
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            padding: 0.75rem 1rem;
+            justify-content: center;
+        }
+        
+        .nav-link:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+        }
+        
+        .nav-link.active {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-left-color: var(--navi-accent-teal);
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-left: 80px;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            background: var(--navi-white);
+            padding: var(--navi-spacing-lg);
+            border-bottom: 1px solid var(--navi-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .top-bar h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 24px;
+            color: var(--navi-primary-dark);
+            margin: 0;
+        }
+        
+        .top-bar span {
+            font-family: 'Roboto', sans-serif;
+            color: var(--navi-secondary-grey);
+            font-size: 14px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            transition: margin-left var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-left: 80px;
+        }
+        
+        .content {
+            padding: var(--navi-spacing-xl);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--navi-spacing-lg);
+        }
+        
+        .section-header h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 20px;
+            color: var(--navi-primary-dark);
+            margin: 0;
+        }
+        
+        .card {
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
+            padding: var(--navi-spacing-lg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--navi-border);
+        }
+        
+        /* Botões Padronizados */
+        .btn-secondary {
+            background: var(--navi-white);
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: 8px !important;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Roboto', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--navi-spacing-xs);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
+        }
+        
+        .btn-primary {
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
+            border: none;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: 8px !important;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Roboto', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--navi-spacing-xs);
+        }
+        
+        .btn-primary:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal) !important;
+            border: 1px solid var(--navi-accent-teal);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        }
+        
+        /* Forçar border-radius em todos os botões */
+        button {
+            border-radius: 8px !important;
+        }
         
         /* Sidebar */
         .sidebar { 
@@ -106,42 +405,6 @@
             align-items: center;
         }
 
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.2s;
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-secondary {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background: #e2e8f0;
-            color: #475569;
-        }
 
         /* Categories Section */
         .section {
@@ -188,31 +451,34 @@
         }
 
         .action-btn {
-            padding: 6px 12px;
+            padding: var(--navi-spacing-sm);
             border: none;
-            border-radius: 6px;
+            border-radius: var(--navi-radius-sm);
             font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            margin-right: 8px;
+            margin-right: var(--navi-spacing-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 32px;
+            transition: all var(--navi-transition-base);
+            background: transparent;
+            border: 1px solid var(--navi-border);
+            color: var(--navi-secondary-grey);
         }
 
-        .btn-edit {
-            background: #dbeafe;
-            color: #1d4ed8;
+        .action-btn.btn-edit:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
         }
 
-        .btn-edit:hover {
-            background: #bfdbfe;
-        }
-
-        .btn-delete {
+        .action-btn.btn-delete:hover {
             background: #fee2e2;
             color: #dc2626;
-        }
-
-        .btn-delete:hover {
-            background: #fecaca;
+            border-color: #dc2626;
         }
 
         /* Modal */
@@ -284,36 +550,6 @@
             margin-top: 24px;
         }
 
-        .btn-secondary {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background: #e2e8f0;
-            color: #475569;
-        }
-
-        .btn-primary {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
 
         .loading {
             text-align: center;
@@ -353,96 +589,98 @@
 <body>
     <div class="container">
         <!-- Sidebar -->
-        <nav class="sidebar">
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">←</span>
+        </button>
+        
+        <div class="sidebar-header">
             <div class="logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="display: inline-block; vertical-align: middle; margin-right: 12px; color: #3b82f6;">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                <h1 style="display: inline-block;">Navigator</h1>
+                <div class="logo-icon">
+                    <img src="/assets/logo-navi-compact.svg" alt="Navigator">
+                </div>
+                <span class="nav-text">Navigator</span>
             </div>
-            
-            <div class="nav">
-                <a href="dashboard.html" class="nav-item">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
-                
-                <a href="funcionarios.html" class="nav-item">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                    </svg>
-                    <span>Colaboradores</span>
-                </a>
-                
-                <a href="admin-trilhas.html" class="nav-item">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                    </svg>
-                    <span>Trilhas</span>
-                </a>
-                
-                <a href="documentos.html" class="nav-item">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <span>Documentos</span>
-                </a>
-
-                <a href="configurador.html" class="nav-item active">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span>Configurações</span>
-                </a>
+            <div class="tenant-info">
+                <h3 id="tenantName">Carregando...</h3>
+                <p id="tenantSubdomain">Carregando...</p>
             </div>
-        </nav>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Navî">
+                    <i data-feather="bar-chart-2" class="nav-icon"></i>
+                    <span class="nav-text">Insights</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="funcionarios.html" class="nav-link" data-tooltip="Colaboradores">
+                    <i data-feather="users" class="nav-icon"></i>
+                    <span class="nav-text">Colaboradores</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="admin-trilhas.html" class="nav-link" data-tooltip="Trilhas">
+                    <i data-feather="layers" class="nav-icon"></i>
+                    <span class="nav-text">Trilhas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
+                    <i data-feather="file-text" class="nav-icon"></i>
+                    <span class="nav-text">Documentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="configurador.html" class="nav-link active" data-tooltip="Configurações">
+                    <i data-feather="settings" class="nav-icon"></i>
+                    <span class="nav-text">Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
         <!-- Main Content -->
-        <main class="main">
-            <!-- Header -->
-            <header class="header">
-                <div class="header-content">
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <h1 id="pageTitle">Categorias de Documentos</h1>
                     <div>
-                        <h1>Categorias de Documentos</h1>
-                        <p>Gerencie as categorias para organização de documentos</p>
+                    <span id="currentTime"></span>
                     </div>
-                    <div class="header-actions">
+            </header>
+            
+            <!-- Content -->
+            <div class="content">
+                <!-- Categorias Section -->
+                <div class="section active">
+                    <div class="card">
+                        <div class="section-header">
+                            <h2>📂 Categorias de Documentos</h2>
+                            <div style="display: flex; gap: 0.5rem;">
                         <button class="btn-secondary" onclick="window.location.href='configurador.html'" title="Voltar para Configurações">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                            </svg>
+                                    <i data-feather="arrow-left"></i>
                             Voltar
                         </button>
                         <button class="btn-secondary" onclick="loadCategories()" title="Atualizar categorias">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
+                                    <i data-feather="refresh-cw"></i>
                             Atualizar
                         </button>
                         <button class="btn-primary" onclick="openAddModal()" title="Adicionar categoria">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                            </svg>
-                            Adicionar Categoria
+                                    <i data-feather="plus"></i>
+                                    Nova Categoria
                         </button>
                     </div>
                 </div>
-            </header>
 
-            <!-- Categories Section -->
-            <div class="section">
-                <div class="card">
-                    <h2>Lista de Categorias</h2>
-                    
-                    <!-- Categories Table -->
                     <div id="categoriesTableContainer">
                         <div class="loading">Carregando categorias...</div>
                     </div>
                 </div>
             </div>
+            </div>
+
         </main>
     </div>
 
@@ -471,6 +709,45 @@
     </div>
 
     <script>
+        // Sidebar functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            sidebar.classList.toggle('collapsed');
+            toggleIcon.textContent = sidebar.classList.contains('collapsed') ? '→' : '←';
+        }
+        
+        // Tenant info functionality
+        function loadTenantInfo() {
+            const tenantName = document.getElementById('tenantName');
+            const tenantSubdomain = document.getElementById('tenantSubdomain');
+            
+            // Get tenant from URL or use default
+            const tenant = getTenantFromUrl();
+            
+            tenantName.textContent = tenant.charAt(0).toUpperCase() + tenant.slice(1);
+            tenantSubdomain.textContent = `${tenant}.flowly.com`;
+        }
+        
+        function getTenantFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('tenant') || 'demo';
+        }
+        
+        function updateTime() {
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) {
+                const now = new Date();
+                timeElement.textContent = now.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                });
+            }
+        }
+        
+        // Initialize page
         // Global variables
         let currentEditingId = null;
 
@@ -507,7 +784,7 @@
             }
 
             let tableHTML = `
-                <table class="categories-table">
+                <table class="navi-table">
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -528,8 +805,12 @@
                         <td>${category.description || '-'}</td>
                         <td>${createdDate}</td>
                         <td>
-                            <button class="action-btn btn-edit" onclick="editCategory('${category.id}')">Editar</button>
-                            <button class="action-btn btn-delete" onclick="deleteCategory('${category.id}')">Excluir</button>
+                            <button class="action-btn btn-edit" onclick="editCategory('${category.id}')" title="Editar categoria">
+                                <i data-feather="edit-2"></i>
+                            </button>
+                            <button class="action-btn btn-delete" onclick="deleteCategory('${category.id}')" title="Excluir categoria">
+                                <i data-feather="trash-2"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -541,6 +822,11 @@
             `;
 
             container.innerHTML = tableHTML;
+            
+            // Initialize Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         }
 
         // Show error message
@@ -665,9 +951,20 @@
         // Load data when page loads
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página de categorias carregada');
+            loadTenantInfo();
+            updateTime();
+            setInterval(updateTime, 1000);
             loadCategories();
+            
+            // Initialize Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         });
     </script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
 </body>
 </html>
 

@@ -3,49 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestão de Trilhas - Flowly</title>
+    <title>Gestão de Trilhas - Navigator</title>
+    
+    <!-- Google Fonts - Brand Manual Navi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="/assets/favicon-navi.svg">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: #f8fafc; 
-            color: #1e293b; 
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            background: var(--navi-background); 
+            color: var(--navi-primary-dark); 
         }
         
         .container { display: flex; min-height: 100vh; }
         
         /* Sidebar */
-        .sidebar { 
-            width: 280px; 
-            background: white; 
-            border-right: 1px solid #e2e8f0; 
-            padding: 24px 0; 
-            position: fixed; 
-            height: 100vh; 
-            overflow-y: auto;
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--navi-white);
+            border-right: 1px solid var(--navi-border);
+            padding: var(--navi-spacing-xl) 0;
+            z-index: 100;
+            transition: width var(--navi-transition-slow);
         }
         
-        .logo { 
-            padding: 0 24px 32px; 
-            border-bottom: 1px solid #e2e8f0; 
-            margin-bottom: 24px; 
+        .sidebar.collapsed {
+            width: 80px;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed + .main-content {
+            margin-left: 80px;
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            top: var(--navi-spacing-md);
+            right: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border: none;
+            border-radius: var(--navi-radius-sm);
+            padding: var(--navi-spacing-sm);
+            cursor: pointer;
+            transition: all var(--navi-transition-base);
+        }
+        
+        .sidebar-toggle:hover {
+            background: var(--navi-border);
+        }
+        
+        .sidebar-header {
+            padding: 0 var(--navi-spacing-xl);
+            margin-bottom: var(--navi-spacing-xl);
+            transition: padding var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .sidebar-header {
+            padding: 0 1rem;
         }
         
         .logo {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
+            transition: all 0.3s ease;
         }
         
-        .logo svg {
-            color: #3b82f6;
+        .sidebar.collapsed .logo {
+            font-size: 1rem;
+            justify-content: center;
         }
         
-        .logo h1 { 
-            font-size: 24px; 
-            font-weight: 700; 
-            color: #3b82f6; 
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+        }
+        
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .sidebar.collapsed .logo-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+        }
+        
+        .nav-text {
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+        
+        .tenant-info {
+            margin-top: var(--navi-spacing-md);
+            padding: var(--navi-spacing-md);
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
+            border-left: 4px solid var(--navi-accent-teal);
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info {
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .tenant-info h3 {
+            font-size: 0.9rem;
+            color: var(--navi-secondary-grey);
+            margin-bottom: 0.25rem;
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info h3 {
+            font-size: 0.7rem;
+            text-align: center;
+        }
+        
+        .tenant-info p {
+            font-size: 0.8rem;
+            color: var(--navi-secondary-grey);
+            transition: all var(--navi-transition-slow);
+        }
+        
+        .sidebar.collapsed .tenant-info p {
+            display: none;
         }
         
         .nav-menu {
@@ -60,9 +172,54 @@
         .nav-link {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 2rem;
-            color: #64748b;
+            gap: var(--navi-spacing-sm);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-xl);
+            color: var(--navi-secondary-grey);
+            text-decoration: none;
+            transition: all var(--navi-transition-base);
+            border-left: 3px solid transparent;
+            position: relative;
+        }
+        
+        .sidebar.collapsed .nav-link {
+            padding: 0.75rem 1rem;
+            justify-content: center;
+        }
+        
+        .nav-link:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+        }
+        
+        .nav-link.active {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-left-color: var(--navi-accent-teal);
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        
+        .nav-menu {
+            list-style: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--navi-spacing-sm);
+            padding: var(--navi-spacing-sm) var(--navi-spacing-lg);
+            color: var(--navi-secondary-grey);
             text-decoration: none;
             transition: all 0.2s;
             border-left: 3px solid transparent;
@@ -70,14 +227,14 @@
         }
         
         .nav-link:hover {
-            background: #f1f5f9;
-            color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
         }
         
         .nav-link.active {
-            background: #eff6ff;
-            color: #2563eb;
-            border-left-color: #2563eb;
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-left-color: var(--navi-accent-teal);
         }
         
         .nav-icon {
@@ -88,55 +245,125 @@
         }
         
         /* Main content */
-        .main { margin-left: 280px; flex: 1; padding: 32px; }
+        .main { 
+            margin-left: 280px; 
+            flex: 1; 
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .top-bar h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--navi-primary-dark);
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        .top-bar span {
+            font-size: 0.875rem;
+            color: var(--navi-secondary-grey);
+            font-family: 'Roboto', sans-serif;
+        }
+        
         
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 32px;
+            margin-bottom: var(--navi-spacing-xl);
         }
         
-        .header h2 { font-size: 28px; font-weight: 700; }
+        .header h2 { 
+            font-size: 1.75rem; 
+            font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
+        }
         
         .btn {
-            padding: 12px 24px;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 8px !important;
+            font-size: 0.875rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--navi-spacing-xs);
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        /* Forçar border-radius em todos os botões */
+        button {
+            border-radius: 8px !important;
         }
         
         .btn-primary {
-            background: #3b82f6;
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
         }
         
         .btn-primary:hover {
-            background: #2563eb;
+            background: var(--navi-accent-teal-dark);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
         }
         
         .btn-secondary {
-            background: white;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
+            border: none;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: 8px !important;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Roboto', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--navi-spacing-xs);
         }
         
         .btn-secondary:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+            background: var(--navi-accent-teal-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
         }
         
         .btn-danger {
-            background: #ef4444;
-            color: white;
+            background: #dc3545;
+            color: var(--navi-white);
         }
         
         .btn-danger:hover {
@@ -144,12 +371,54 @@
         }
         
         .btn-success {
-            background: #10b981;
-            color: white;
+            background: var(--navi-success-green);
+            color: var(--navi-white);
         }
         
         .btn-success:hover {
             background: #059669;
+        }
+        
+        /* Action Buttons - Padrão Minimalista */
+        .action-btn {
+            padding: var(--navi-spacing-sm);
+            border: none;
+            border-radius: var(--navi-radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: var(--navi-spacing-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 32px;
+            transition: all var(--navi-transition-base);
+            background: transparent;
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-edit:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
+        }
+
+        .btn-delete:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .btn-view:hover {
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
         }
         
         /* Cards */
@@ -256,9 +525,9 @@
         }
         
         .modal-content {
-            background: white;
-            border-radius: 16px;
-            padding: 32px;
+            background: var(--navi-white);
+            border-radius: var(--navi-border-radius-lg);
+            padding: var(--navi-spacing-xl);
             max-width: 600px;
             width: 90%;
             max-height: 90vh;
@@ -281,19 +550,19 @@
             background: none;
             border: none;
             font-size: 24px;
-            color: #94a3b8;
+            color: var(--navi-secondary-grey);
             cursor: pointer;
             width: 32px;
             height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: var(--navi-border-radius);
         }
         
         .modal-close:hover {
-            background: #f1f5f9;
-            color: #64748b;
+            background: var(--navi-background);
+            color: var(--navi-primary-dark);
         }
         
         .form-group {
@@ -312,24 +581,54 @@
         .form-group textarea,
         .form-group select {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            padding: var(--navi-spacing-sm);
+            border: 1px solid var(--navi-border);
+            border-radius: var(--navi-border-radius);
             font-size: 14px;
             transition: all 0.2s;
+            font-family: 'Roboto', sans-serif;
         }
         
         .form-group input:focus,
         .form-group textarea:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--navi-accent-teal);
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
         }
         
         .form-group textarea {
             min-height: 100px;
             resize: vertical;
+        }
+        
+        /* Garantir border-radius nos botões do modal */
+        .form-actions .btn {
+            border-radius: 8px !important;
+        }
+        
+        .form-actions .btn-primary {
+            border-radius: 8px !important;
+        }
+        
+        .form-actions .btn-secondary {
+            border-radius: 8px !important;
+        }
+        
+        /* Garantir border-radius em todos os elementos do modal */
+        #modal-trilha input,
+        #modal-trilha textarea,
+        #modal-trilha select,
+        #modal-trilha button {
+            border-radius: 8px !important;
+        }
+        
+        #modal-trilha .multi-select-header {
+            border-radius: 8px !important;
+        }
+        
+        #modal-trilha .multi-select-options {
+            border-radius: 8px !important;
         }
         
         .form-row {
@@ -367,10 +666,10 @@
         }
         
         .conteudo-item {
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
+            background: var(--navi-background);
+            padding: var(--navi-spacing-md);
+            border-radius: var(--navi-border-radius);
+            margin-bottom: var(--navi-spacing-sm);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -383,7 +682,7 @@
         .conteudo-tipo {
             display: inline-block;
             padding: 4px 8px;
-            border-radius: 4px;
+            border-radius: var(--navi-border-radius);
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
@@ -413,22 +712,22 @@
         }
         
         .btn-icon {
-            background: white;
-            border: 1px solid #e2e8f0;
+            background: var(--navi-white);
+            border: 1px solid var(--navi-border);
             width: 36px;
             height: 36px;
-            border-radius: 8px;
+            border-radius: var(--navi-radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
         }
         
         .btn-icon:hover {
-            background: #f8fafc;
-            border-color: #3b82f6;
-            color: #3b82f6;
+            background: var(--navi-background);
+            border-color: var(--navi-accent-teal);
+            color: var(--navi-accent-teal);
         }
         
         .btn-icon.delete:hover {
@@ -471,12 +770,12 @@
         }
         
         .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: var(--navi-spacing-sm) var(--navi-spacing-md);
+            border-radius: var(--navi-border-radius);
+            margin-bottom: var(--navi-spacing-md);
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: var(--navi-spacing-sm);
         }
         
         .alert-success {
@@ -499,10 +798,10 @@
         
         .multi-select-header {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: white;
+            padding: var(--navi-spacing-sm);
+            border: 1px solid var(--navi-border);
+            border-radius: var(--navi-border-radius);
+            background: var(--navi-white);
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -511,13 +810,13 @@
         }
         
         .multi-select-header:hover {
-            border-color: #cbd5e1;
-            background: #f8fafc;
+            border-color: var(--navi-secondary-grey);
+            background: var(--navi-background);
         }
         
         .multi-select-header svg {
             transition: transform 0.2s;
-            color: #64748b;
+            color: var(--navi-secondary-grey);
         }
         
         .multi-select-header.active svg {
@@ -530,9 +829,9 @@
             left: 0;
             right: 0;
             margin-top: 4px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            background: var(--navi-white);
+            border: 1px solid var(--navi-border);
+            border-radius: var(--navi-border-radius);
             max-height: 250px;
             overflow-y: auto;
             z-index: 100;
@@ -578,79 +877,89 @@
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <span id="toggle-icon">←</span>
+        </button>
+        
+        <div class="sidebar-header">
             <div class="logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                <h1>Navigator</h1>
+                <div class="logo-icon">
+                    <img src="/assets/logo-navi-compact.svg" alt="Navigator">
+                </div>
+                <span class="nav-text">Navigator</span>
             </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Flowly">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                        <span class="nav-text">Insights</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="funcionarios.html" class="nav-link" data-tooltip="Colaboradores">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                        <span class="nav-text">Colaboradores</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="admin-trilhas.html" class="nav-link active" data-tooltip="Trilhas">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                        </svg>
-                        <span class="nav-text">Trilhas</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span class="nav-text">Documentos</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
-                        <svg class="nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span class="nav-text">Configurações</span>
-                    </a>
-                </li>
-            </ul>
-        </aside>
+            <div class="tenant-info">
+                <h3 id="tenantName">Carregando...</h3>
+                <p id="tenantSubdomain">Carregando...</p>
+            </div>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link" data-tooltip="Insights do Navî">
+                    <i data-feather="bar-chart-2" class="nav-icon"></i>
+                    <span class="nav-text">Insights</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="funcionarios.html" class="nav-link" data-tooltip="Colaboradores">
+                    <i data-feather="users" class="nav-icon"></i>
+                    <span class="nav-text">Colaboradores</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="admin-trilhas.html" class="nav-link active" data-tooltip="Trilhas">
+                    <i data-feather="layers" class="nav-icon"></i>
+                    <span class="nav-text">Trilhas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="documentos.html" class="nav-link" data-tooltip="Documentos">
+                    <i data-feather="file-text" class="nav-icon"></i>
+                    <span class="nav-text">Documentos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
+                    <i data-feather="settings" class="nav-icon"></i>
+                    <span class="nav-text">Configurações</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
 
         <!-- Main Content -->
         <main class="main">
-            <div class="header">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <h1 id="pageTitle">Trilhas de Onboarding</h1>
                 <div>
-                    <h2>Trilhas de Onboarding</h2>
-                    <p style="color: #64748b; margin-top: 8px;">Crie e gerencie trilhas de integração para novos colaboradores</p>
+                    <span id="currentTime"></span>
                 </div>
-                <button class="btn btn-primary" onclick="abrirModalNovaTrilha()">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Nova Trilha
-                </button>
-            </div>
+            </header>
+            
+            <!-- Content -->
+            <div class="content">
+                <!-- Trilhas Section -->
+                <div class="section active">
+                    <div class="section-header">
+                        <h2>Gerencie as trilhas de onboarding da empresa</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-secondary" onclick="abrirModalNovaTrilha()">
+                                <i data-feather="plus"></i>
+                                Nova Trilha
+                            </button>
+                        </div>
+                    </div>
 
             <div id="trilhas-container" class="trilhas-grid">
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Carregando trilhas...</p>
                 </div>
+            </div>
             </div>
         </main>
     </div>
@@ -898,7 +1207,7 @@
                         </div>
                         
                         ${trilha.segmentacao && trilha.segmentacao !== 'todos' ? `
-                            <div style="margin-top: 12px; padding: 8px 12px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; font-size: 13px; color: #92400e;">
+                            <div style="margin-top: 12px; padding: 8px 12px; background: #fef3c7; border: 1px solid #fcd34d; border-radius: var(--navi-border-radius); font-size: 13px; color: #92400e;">
                                 🎯 Segmentada: ${
                                     trilha.segmentacao === 'departamentos' ? 'Por Departamentos' :
                                     trilha.segmentacao === 'cargos' ? 'Por Cargos' :
@@ -908,21 +1217,20 @@
                         ` : ''}
                         
                         <div class="trilha-actions">
-                            <button class="btn btn-secondary btn-small" onclick="editarTrilha('${trilha.id}')">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Editar
+                            <button class="action-btn btn-edit" onclick="editarTrilha('${trilha.id}')" title="Editar">
+                                <i data-feather="edit-2"></i>
                             </button>
-                            <button class="btn btn-danger btn-small" onclick="deletarTrilha('${trilha.id}', '${trilha.nome}')">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                Deletar
+                            <button class="action-btn btn-delete" onclick="deletarTrilha('${trilha.id}', '${trilha.nome}')" title="Excluir">
+                                <i data-feather="trash-2"></i>
                             </button>
                         </div>
                     </div>
                 `).join('');
+                
+                // Inicializar Feather Icons após renderizar
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
                 
             } catch (error) {
                 console.error('Erro ao carregar trilhas:', error);
@@ -1365,6 +1673,69 @@
                 console.error('Erro ao salvar segmentação:', error);
                 return false;
             }
+        }
+    </script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        // Inicializar Feather Icons
+        feather.replace();
+        
+        // Atualizar ícones após mudanças dinâmicas
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+            
+            // Carregar informações do tenant
+            loadTenantInfo();
+            
+            // Atualizar tempo
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+        
+        // Load tenant info
+        async function loadTenantInfo() {
+            try {
+                const tenantSubdomain = getTenantFromUrl();
+                console.log('🔍 Buscando tenant:', tenantSubdomain);
+                
+                const response = await fetch(`${API_BASE}/api/tenants/${tenantSubdomain}`);
+                console.log('📡 Resposta da API:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const currentTenant = await response.json();
+                    console.log('✅ Tenant carregado:', currentTenant);
+                    document.getElementById('tenantName').textContent = currentTenant.name;
+                    document.getElementById('tenantSubdomain').textContent = `${currentTenant.subdomain}.flowly.com`;
+                } else {
+                    console.warn('⚠️ Tenant não encontrado, usando fallback');
+                    // Fallback para demo
+                    document.getElementById('tenantName').textContent = 'Empresa Demo';
+                    document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
+                }
+            } catch (error) {
+                console.error('❌ Erro ao carregar tenant:', error);
+                // Fallback para demo
+                document.getElementById('tenantName').textContent = 'Empresa Demo';
+                document.getElementById('tenantSubdomain').textContent = 'demo.flowly.com';
+            }
+        }
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR');
+        }
+        
+        // Get tenant from URL
+        function getTenantFromUrl() {
+            const hostname = window.location.hostname;
+            if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+                return 'demo';
+            }
+            const parts = hostname.split('.');
+            return parts.length > 1 ? parts[0] : 'demo';
         }
     </script>
 </body>

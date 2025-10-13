@@ -3,15 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes da Trilha - Flowly</title>
+    <title>Detalhes da Trilha - Navigator</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Brand Manual CSS -->
+    <link rel="stylesheet" href="/css/navi-brand.css">
+    <link rel="stylesheet" href="/css/navi-animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon-navi.svg">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Roboto', sans-serif; 
+            background: var(--navi-background);
             min-height: 100vh;
             padding: 24px;
+            color: var(--navi-primary-dark);
         }
         
         .container {
@@ -20,11 +32,11 @@
         }
         
         .back-button {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
+            background: var(--navi-white);
+            color: var(--navi-secondary-grey);
+            border: 1px solid var(--navi-border);
             padding: 12px 20px;
-            border-radius: 8px;
+            border-radius: 8px !important;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -32,43 +44,48 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            transition: all var(--navi-transition-base);
         }
         
         .back-button:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: var(--navi-accent-teal-light);
+            color: var(--navi-accent-teal);
+            border-color: var(--navi-accent-teal);
         }
         
         .header {
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
             padding: 32px;
             margin-bottom: 24px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .header h1 {
             font-size: 32px;
             font-weight: 700;
-            color: #1e293b;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--navi-primary-dark);
             margin-bottom: 12px;
         }
         
         .header p {
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             line-height: 1.6;
             font-size: 16px;
         }
         
         .progress-section {
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
             padding: 28px;
             margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .progress-bar {
             height: 12px;
-            background: #e2e8f0;
+            background: var(--navi-border);
             border-radius: 6px;
             overflow: hidden;
             margin-bottom: 12px;
@@ -76,47 +93,49 @@
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: var(--navi-accent-teal);
             transition: width 0.3s ease;
         }
         
         .progress-text {
             font-size: 14px;
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             text-align: center;
         }
         
         .conteudos-list {
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
             padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .conteudos-list h2 {
             font-size: 24px;
             font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
             margin-bottom: 24px;
-            color: #1e293b;
+            color: var(--navi-primary-dark);
         }
         
         .conteudo-item {
             display: flex;
             align-items: flex-start;
             padding: 20px;
-            background: #f8fafc;
-            border-radius: 12px;
+            background: var(--navi-background);
+            border-radius: var(--navi-radius-md);
             margin-bottom: 16px;
             border: 2px solid transparent;
-            transition: all 0.3s;
+            transition: all var(--navi-transition-base);
         }
         
         .conteudo-item.aceito {
             background: #f0fdf4;
-            border-color: #86efac;
+            border-color: var(--navi-success-green);
         }
         
         .conteudo-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         
         .conteudo-checkbox {
@@ -130,7 +149,7 @@
         .conteudo-icon {
             width: 48px;
             height: 48px;
-            border-radius: 12px;
+            border-radius: var(--navi-radius-md);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -139,7 +158,7 @@
             flex-shrink: 0;
         }
         
-        .icon-documento { background: #dbeafe; }
+        .icon-documento { background: var(--navi-accent-teal-light); }
         .icon-video { background: #fce7f3; }
         .icon-link { background: #d1fae5; }
         .icon-pdf { background: #fed7aa; }
@@ -151,12 +170,12 @@
         .conteudo-titulo {
             font-weight: 600;
             font-size: 18px;
-            color: #1e293b;
+            color: var(--navi-primary-dark);
             margin-bottom: 8px;
         }
         
         .conteudo-descricao {
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             font-size: 14px;
             margin-bottom: 12px;
             line-height: 1.5;
@@ -166,7 +185,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            color: #3b82f6;
+            color: var(--navi-accent-teal);
             text-decoration: none;
             font-weight: 600;
             font-size: 14px;
@@ -179,11 +198,11 @@
         .btn {
             padding: 16px 32px;
             border: none;
-            border-radius: 8px;
+            border-radius: 8px !important;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all var(--navi-transition-base);
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -192,13 +211,14 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: var(--navi-accent-teal);
+            color: var(--navi-white);
         }
         
         .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            background: var(--navi-accent-teal-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
         }
         
         .btn-primary:disabled {
@@ -207,31 +227,36 @@
         }
         
         .quiz-section {
-            background: white;
-            border-radius: 16px;
+            background: var(--navi-white);
+            border-radius: var(--navi-radius-lg);
             padding: 32px;
             text-align: center;
             margin-top: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         
         .quiz-section h3 {
             font-size: 24px;
             font-weight: 700;
+            font-family: 'Montserrat', sans-serif;
             margin-bottom: 12px;
+            color: var(--navi-primary-dark);
         }
         
         .quiz-section p {
-            color: #64748b;
+            color: var(--navi-secondary-grey);
             margin-bottom: 24px;
+        }
+
+        button {
+            border-radius: 8px !important;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <button class="back-button" onclick="window.location.href='/colaborador-trilhas.html?colaborador_id=' + COLABORADOR_ID">
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
+            <i data-feather="arrow-left"></i>
             Voltar
         </button>
         
@@ -276,6 +301,11 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             carregarTrilha();
+            
+            // Initialize Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         });
 
         async function carregarTrilha() {
@@ -332,14 +362,17 @@
                         <div class="conteudo-titulo">${conteudo.titulo}</div>
                         ${conteudo.descricao ? `<div class="conteudo-descricao">${conteudo.descricao}</div>` : ''}
                         <a href="${conteudo.url}" target="_blank" class="conteudo-link">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                            </svg>
+                            <i data-feather="external-link" style="width: 16px; height: 16px;"></i>
                             Acessar conteúdo
                         </a>
                     </div>
                 </div>
             `).join('');
+            
+            // Re-initialize Feather Icons
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         }
 
         async function marcarComoLido(conteudoId, checkbox) {
@@ -379,11 +412,8 @@
             window.location.href = `/colaborador-quiz.html?trilha_id=${TRILHA_ID}&colaborador_id=${COLABORADOR_ID}`;
         }
     </script>
+    
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
 </body>
 </html>
-
-
-
-
-
-
