@@ -21,3 +21,4 @@ CREATE INDEX IF NOT EXISTS idx_trilha_feedbacks_created_at ON trilha_feedbacks(c
 COMMENT ON TABLE trilha_feedbacks IS 'Feedbacks dos colaboradores sobre trilhas de onboarding';
 COMMENT ON COLUMN trilha_feedbacks.feedback IS 'Texto do feedback do colaborador';
 COMMENT ON COLUMN trilha_feedbacks.tipo_feedback IS 'Tipo do feedback: geral, dificuldade, sugestao, elogio';
+

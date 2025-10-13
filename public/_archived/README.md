@@ -69,3 +69,4 @@ Haendell Lopes
 ## 📝 **Motivo:**
 Limpeza e organização do frontend - múltiplas versões de teste não estavam mais sendo utilizadas.
 
+
