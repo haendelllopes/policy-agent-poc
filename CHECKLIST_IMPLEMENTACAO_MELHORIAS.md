@@ -21,9 +21,13 @@
 
 ## 🚧 **TAREFAS PENDENTES**
 
+> 📘 **GUIA DETALHADO:** Ver implementação completa com código, testes e troubleshooting em: [`GUIA_DETALHADO_IMPLEMENTACAO.md`](./GUIA_DETALHADO_IMPLEMENTACAO.md)
+
 ### 🎯 **PRIORIDADE MÁXIMA: FASE 4.5 - APRIMORAMENTO DE ANOTAÇÕES** (6-8h)
 
 **Objetivo:** Transformar anotações básicas em sistema inteligente com categorização automática, detecção de urgência, análise de padrões e anotações proativas.
+
+**📘 Documentação Completa:** [Seção 4.5 do Guia Detalhado](./GUIA_DETALHADO_IMPLEMENTACAO.md#45-aprimoramento-de-anotações)
 
 #### **4.5.1. Categorização Inteligente de Feedback** (3-4h)
 
