@@ -3159,5 +3159,484 @@ Deploy Vercel: ✅ Sem erros de CSS/SVG
 
 ---
 
-**🚀 Sistema pronto para próxima evolução!**
+## 🎯 **ROADMAP FUTURO - AGENTE PROATIVO E INTEGRAÇÕES**
+
+### **📋 Fase 4: Integrações com Ferramentas Externas** (20-30h)
+
+#### **4.1. Integração JIRA** (8-10h)
+- [ ] Criar API wrapper para JIRA Cloud
+- [ ] Endpoint: POST `/api/integrations/jira/create-user`
+  - [ ] Aceita: nome, email, departamento, cargo
+  - [ ] Decide perfil automaticamente (dev, gestor, viewer)
+  - [ ] Cria usuário no JIRA
+  - [ ] Adiciona a projetos relevantes
+  - [ ] Retorna credenciais
+- [ ] Endpoint: GET `/api/integrations/jira/check-user/:email`
+  - [ ] Verifica se usuário já existe
+  - [ ] Retorna status da conta
+- [ ] Ferramenta N8N: `criar_usuario_jira`
+- [ ] Ferramenta N8N: `verificar_usuario_jira`
+- [ ] Testes de integração
+
+**Benefício:** Colaborador recebe conta JIRA automaticamente ao completar trilha de TI
+
+---
+
+#### **4.2. Integração Google Calendar** (6-8h)
+- [ ] Configurar OAuth2 para Google Calendar
+- [ ] Endpoint: POST `/api/integrations/calendar/schedule-meeting`
+  - [ ] Aceita: participantes, data/hora, título, descrição
+  - [ ] Verifica disponibilidade automática
+  - [ ] Cria evento no Calendar
+  - [ ] Envia convites
+- [ ] Endpoint: GET `/api/integrations/calendar/availability/:userId`
+  - [ ] Busca horários livres do gestor
+  - [ ] Retorna slots disponíveis
+- [ ] Endpoint: POST `/api/integrations/calendar/schedule-1on1`
+  - [ ] Agenda 1:1 colaborador + gestor
+  - [ ] Encontra melhor horário automaticamente
+- [ ] Ferramenta N8N: `agendar_meeting`
+- [ ] Ferramenta N8N: `marcar_1on1_gestor`
+- [ ] Ferramenta N8N: `verificar_disponibilidade`
+- [ ] Testes de integração
+
+**Benefício:** Agente agenda reuniões automaticamente quando necessário
+
+---
+
+#### **4.3. Integração Slack/Teams** (4-6h)
+- [ ] Endpoint: POST `/api/integrations/slack/add-to-channel`
+  - [ ] Adiciona colaborador a canais relevantes
+  - [ ] Baseado em departamento/cargo
+- [ ] Endpoint: POST `/api/integrations/slack/send-welcome`
+  - [ ] Envia mensagem de boas-vindas no canal do time
+- [ ] Endpoint: POST `/api/integrations/slack/notify-manager`
+  - [ ] Notifica gestor sobre novo colaborador
+- [ ] Ferramenta N8N: `adicionar_canal_slack`
+- [ ] Ferramenta N8N: `notificar_gestor_slack`
+- [ ] Testes de integração
+
+**Benefício:** Colaborador é automaticamente integrado aos canais do time
+
+---
+
+### **📋 Fase 4.5: Aprimoramento de Anotações com GPT-4o** (6-8h)
+
+#### **4.5.1. Categorização Inteligente de Feedback** (3-4h)
+- [ ] Atualizar nó "Detectar feedback" para usar GPT-4o
+- [ ] Substituir regex por análise semântica
+- [ ] Classificação automática mais precisa:
+  - [ ] Tipo de feedback (dificuldade, sugestão, elogio, problema técnico)
+  - [ ] Urgência (baixa, média, alta, crítica)
+  - [ ] Categoria afetada (trilha, sistema, RH, conteúdo)
+  - [ ] Sentimento contextual (não só palavras-chave)
+- [ ] Tags mais ricas e específicas
+- [ ] Exemplo de melhoria:
+  ```javascript
+  // ANTES (Gemini):
+  Mensagem: "A trilha é longa mas está ok"
+  Tags: ["feedback", "automatico"]
+  
+  // DEPOIS (GPT-4o):
+  Mensagem: "A trilha é longa mas está ok"
+  Tags: ["trilha-longa", "feedback-construtivo", "nao-bloqueante", "sugestao-melhoria"]
+  Tipo: "sugestao_colaborador"
+  Urgência: "baixa"
+  Categoria: "conteudo"
+  ```
+
+#### **4.5.2. Detecção de Urgência Automática** (2-3h)
+- [ ] Endpoint: POST `/api/agente/anotacoes/analisar-urgencia`
+  - [ ] GPT-4 analisa contexto da mensagem
+  - [ ] Identifica se requer ação imediata
+  - [ ] Retorna: {urgente: true/false, motivo: "...", acao_sugerida: "..."}
+- [ ] Workflow N8N: Nó "Analisar Urgência"
+  - [ ] Se urgente → Notifica admin imediatamente
+  - [ ] Se urgente + sentimento negativo → Escalona para RH
+  - [ ] Se urgente + problema técnico → Cria ticket para TI
+- [ ] Exemplos:
+  ```
+  "Já faz 3 dias que não consigo acessar o sistema"
+  → Urgência: CRÍTICA
+  → Ação: Criar ticket TI + Notificar admin
+  
+  "A trilha está um pouco longa"
+  → Urgência: BAIXA
+  → Ação: Apenas salvar anotação
+  ```
+
+#### **4.5.3. Análise de Padrões com GPT-4o** (3-4h)
+- [ ] Workflow N8N agendado (cron: diariamente às 9h)
+- [ ] Nó: Buscar anotações dos últimos 7 dias
+- [ ] Nó: GPT-4 analisa padrões:
+  ```javascript
+  Entrada: 100 últimas anotações
+  
+  GPT-4 identifica:
+  - 15 reclamações sobre "Trilha de Compliance"
+  - Pattern: "muito longa" (8x), "complexa" (7x)
+  - Sentimento médio: negativo (0.72)
+  - Impacto: 30% dos colaboradores
+  
+  GPT-4 gera:
+  {
+    "titulo": "Dividir Trilha de Compliance em 2 módulos",
+    "descricao": "15 colaboradores relataram que a trilha é muito longa e complexa. Sugestão: dividir em 'Compliance Básico' (conceitos) e 'Compliance Avançado' (aplicação prática).",
+    "categoria": "conteudo",
+    "prioridade": "alta",
+    "impacto_estimado": "muito_alto",
+    "esforco_estimado": "medio",
+    "evidencias": ["15 reclamações", "sentimento médio negativo", "30% afetados"]
+  }
+  ```
+- [ ] Nó: Salvar melhoria em `onboarding_improvements`
+- [ ] Nó: Notificar admins sobre nova sugestão
+- [ ] Nó: Marcar anotações como `gerou_melhoria = true`
+
+#### **4.5.4. Anotações Proativas (Auto-geradas)** (2-3h)
+- [ ] GPT-4 cria anotações sem mensagem explícita do colaborador
+- [ ] Baseado em padrões de comportamento:
+  ```javascript
+  // Exemplo 1: Inatividade
+  if (diasSemInteracao >= 5 && trilhaIncompleta) {
+    GPT-4 cria anotação:
+    {
+      tipo: "padrao_identificado",
+      titulo: "Colaborador inativo há 5 dias com trilha incompleta",
+      anotacao: "João está há 5 dias sem interagir. Última atividade: Trilha de Compliance 40% concluída. Pode indicar dificuldade ou falta de tempo.",
+      tags: ["inatividade", "risco-evasao", "trilha-incompleta"],
+      urgencia: "media"
+    }
+  }
+  
+  // Exemplo 2: Progresso excepcional
+  if (trilhasConcluidas >= 5 && diasOnboarding <= 7) {
+    GPT-4 cria anotação:
+    {
+      tipo: "padrao_identificado",
+      titulo: "Colaborador com progresso excepcional",
+      anotacao: "Maria completou 5 trilhas em apenas 7 dias. Performance acima da média. Possível candidato a mentor.",
+      tags: ["alto-desempenho", "engajado", "mentor-potencial"],
+      urgencia: "baixa"
+    }
+  }
+  ```
+
+---
+
+### **📋 Fase 5: Agente Proativo e Monitoramento** (15-20h)
+
+#### **5.1. Sistema de Monitoramento Proativo** (8-10h)
+
+**Backend - Endpoints de Monitoramento:**
+- [ ] Endpoint: GET `/api/agente/monitoramento/:userId/gaps`
+  - [ ] Identifica ações pendentes (JIRA, trilhas, etc.)
+  - [ ] Retorna lista de gaps com prioridade
+  - [ ] Sugere ações automáticas
+  
+- [ ] Endpoint: GET `/api/agente/monitoramento/:userId/timeline`
+  - [ ] Retorna linha do tempo do onboarding
+  - [ ] Identifica atrasos
+  - [ ] Sugere intervenções
+  
+- [ ] Endpoint: POST `/api/agente/acoes-proativas/executar`
+  - [ ] Executa ação proativa (criar JIRA, agendar 1:1, etc.)
+  - [ ] Registra no histórico
+  - [ ] Notifica colaborador
+
+**N8N - Workflow Proativo:**
+- [ ] Criar workflow agendado (cron: diariamente às 9h)
+- [ ] Nó: Buscar colaboradores em onboarding ativo
+- [ ] Nó: Para cada colaborador, verificar gaps
+- [ ] Nó: GPT-4 decide se deve agir ou aguardar
+- [ ] Nó: Executar ações proativas (se necessário)
+- [ ] Nó: Enviar mensagem proativa ao colaborador
+- [ ] Nó: Registrar ação no histórico
+
+**Exemplos de Ações Proativas:**
+```javascript
+// Dia 3 sem JIRA → Criar automaticamente
+if (diasOnboarding >= 3 && !temJira && cargo === 'Desenvolvedor') {
+  await criarUsuarioJira();
+  await notificarColaborador("Criei sua conta JIRA! 🎉");
+}
+
+// Dia 5 sem concluir trilha obrigatória → Lembrete
+if (diasOnboarding >= 5 && trilhaObrigatoriaIncompleta) {
+  await enviarLembrete("Oi! Percebi que você ainda não finalizou a trilha de Compliance. Precisa de ajuda?");
+}
+
+// Dia 7 sem interação → Check-in proativo
+if (diasSemInteracao >= 7) {
+  await agendarCheckInRH();
+  await notificarColaborador("Há 7 dias sem conversar! Tudo bem? Agendei um café virtual com o RH para sexta 😊");
+}
+```
+
+---
+
+#### **5.2. Sistema de Decisão Autônoma** (4-6h)
+
+**Regras de Decisão (GPT-4 analisa e decide):**
+
+- [ ] **Criar Regra: JIRA**
+  ```
+  SE: cargo IN ['Desenvolvedor', 'QA', 'DevOps', 'Product Manager']
+  E: dias_onboarding >= 3
+  E: NOT tem_jira
+  ENTÃO: CRIAR automaticamente (não perguntar)
+  SENÃO: PERGUNTAR antes de criar
+  ```
+
+- [ ] **Criar Regra: 1:1 com Gestor**
+  ```
+  SE: dias_onboarding >= 7
+  E: NOT teve_1on1
+  E: sentimento IN ['negativo', 'muito_negativo']
+  ENTÃO: AGENDAR automaticamente (urgente)
+  
+  SE: dias_onboarding >= 10
+  E: NOT teve_1on1
+  ENTÃO: AGENDAR automaticamente (padrão)
+  
+  SENÃO: SUGERIR ao colaborador
+  ```
+
+- [ ] **Criar Regra: Slack Channels**
+  ```
+  SE: completou_trilha_boas_vindas
+  E: NOT adicionado_canais_time
+  ENTÃO: ADICIONAR automaticamente
+  ```
+
+- [ ] **Criar Regra: Escalonamento para RH**
+  ```
+  SE: sentimento === 'muito_negativo'
+  E: historico_sentimentos_negativos >= 3
+  ENTÃO: ESCALONAR para RH + AGENDAR 1:1 urgente
+  ```
+
+**Implementação:**
+- [ ] Criar arquivo `src/services/proactive-agent-rules.js`
+- [ ] Função: `shouldTakeAction(contexto, acao)`
+- [ ] GPT-4 analisa contexto e decide
+- [ ] Retorna: {should_act: true/false, reasoning: "..."}
+
+---
+
+#### **5.3. Mensagens Proativas (Exemplos)** (2-3h)
+
+**Templates de mensagens proativas:**
+
+- [ ] **Gap de JIRA detectado:**
+  ```
+  "Oi! 👋 Percebi que você está há {{ dias }} dias no onboarding 
+  e ainda não tinha conta no JIRA. Já criei para você! 
+  Vai receber email de ativação em breve. ✅"
+  ```
+
+- [ ] **Trilha atrasada:**
+  ```
+  "Oi! Notei que a trilha '{{ nome_trilha }}' está pendente há 
+  {{ dias }} dias. Está com alguma dificuldade? Posso ajudar? 🤝"
+  ```
+
+- [ ] **Check-in positivo:**
+  ```
+  "Parabéns! 🎉 Você completou {{ n }} trilhas em apenas {{ dias }} dias! 
+  Está indo muito bem! Quer sugestões de próximas trilhas?"
+  ```
+
+- [ ] **Escalonamento para RH:**
+  ```
+  "Percebi que você está enfrentando algumas dificuldades 💙 
+  Agendei um café virtual com a Ana do RH para amanhã às 10h 
+  para conversarem e encontrarem soluções juntos. Tudo bem?"
+  ```
+
+---
+
+### **📋 Fase 6: Analytics e Insights Avançados** (10-12h)
+
+#### **6.1. Dashboard de Proatividade** (4-5h)
+- [ ] Card: Total de ações proativas executadas
+- [ ] Card: Taxa de sucesso das ações (aceitas vs rejeitadas)
+- [ ] Gráfico: Ações proativas por tipo
+- [ ] Gráfico: Gaps mais comuns (JIRA, 1:1, trilhas)
+- [ ] Lista: Últimas ações proativas tomadas
+- [ ] Filtros: Por departamento, cargo, período
+
+#### **6.2. Score de Autonomia do Agente** (3-4h)
+- [ ] Métrica: % de problemas resolvidos sem intervenção humana
+- [ ] Métrica: Tempo médio para resolver gap
+- [ ] Métrica: Satisfação após ação proativa (feedback)
+- [ ] Gráfico: Evolução da autonomia ao longo do tempo
+
+#### **6.3. Alertas Inteligentes** (3-4h)
+- [ ] Alerta: Colaborador com múltiplos gaps (ação necessária)
+- [ ] Alerta: Ação proativa falhou (revisão)
+- [ ] Alerta: Padrão de gaps detectado (processo precisa melhorar)
+- [ ] Notificações por email para admins
+
+---
+
+### **📋 Fase 7: Integrações Adicionais** (Variável)
+
+#### **7.1. GitHub/GitLab** (6-8h)
+- [ ] Criar repositórios para novos devs
+- [ ] Adicionar a times e projetos
+- [ ] Configurar permissões
+
+#### **7.2. SSO/Active Directory** (8-10h)
+- [ ] Criar usuários no AD
+- [ ] Configurar grupos e permissões
+- [ ] Provisionar acessos
+
+#### **7.3. Ferramentas de Produtividade** (4-6h cada)
+- [ ] Notion: Criar workspace
+- [ ] Trello/Asana: Adicionar a boards
+- [ ] Zoom: Criar conta e agendar onboarding
+- [ ] DocuSign: Enviar documentos para assinatura
+
+---
+
+## 🎯 **EXEMPLOS DE FLUXOS PROATIVOS COMPLETOS:**
+
+### **Exemplo 1: Desenvolvedor novo**
+```
+DIA 1: Boas-vindas + Trilha de Cultura
+  ↓
+DIA 3: 
+  ✅ PROATIVO: Cria conta JIRA automaticamente
+  ✅ PROATIVO: Adiciona ao canal #time-dev no Slack
+  ✅ PROATIVO: Cria repositório pessoal no GitHub
+  💬 "Oi! Criei suas contas: JIRA, Slack (#time-dev) e GitHub. 
+      Você está pronto para começar! 🚀"
+  ↓
+DIA 5:
+  ✅ PROATIVO: Agenda 1:1 com Tech Lead
+  💬 "Agendei um 1:1 com seu Tech Lead para sexta às 14h. 
+      Vai ser ótimo para tirar dúvidas técnicas! 👨‍💻"
+  ↓
+DIA 7:
+  ✅ PROATIVO: Verifica se todas as trilhas técnicas foram iniciadas
+  💬 "Percebi que você ainda não começou a trilha de Arquitetura. 
+      É importante! Quer que eu te inscreva agora?"
+```
+
+---
+
+### **Exemplo 2: Colaborador com dificuldade**
+```
+DIA 3: Colaborador reclama "Essa trilha está muito difícil 😞"
+  ↓
+AGENTE ANALISA:
+  - Sentimento: muito_negativo
+  - Histórico: 3 reclamações sobre mesma trilha
+  - Contexto: Já tentou 2x e não concluiu
+  ↓
+DECISÃO AUTÔNOMA:
+  ✅ ESCALONAR para RH (sem perguntar)
+  ✅ AGENDAR 1:1 urgente
+  ✅ SUGERIR trilha alternativa
+  ↓
+💬 "Entendo sua frustração 💙 Marquei um 1:1 urgente com o RH 
+    para amanhã às 10h. Enquanto isso, que tal tentar a trilha 
+    'Compliance Simplificado'? É mais didática e vai te ajudar!"
+```
+
+---
+
+### **Exemplo 3: Monitoramento silencioso**
+```
+[Cron Job diário - 9h da manhã]
+
+Para cada colaborador em onboarding:
+  ↓
+GPT-4 ANALISA:
+  - Dias desde início: 5
+  - Trilhas concluídas: 2/5
+  - Última interação: há 3 dias
+  - Tem JIRA: ❌
+  - Teve 1:1: ❌
+  - Sentimento médio: neutro
+  ↓
+GPT-4 DECIDE:
+  🎯 PRIORIDADE 1: Criar JIRA (cargo: dev)
+  🎯 PRIORIDADE 2: Lembrar trilhas pendentes
+  🎯 PRIORIDADE 3: Agendar 1:1 (dia 7)
+  ↓
+EXECUTA AUTOMATICAMENTE:
+  ✅ Cria JIRA
+  📱 Envia: "Bom dia! Criei sua conta JIRA. Aproveita para 
+      terminar as 3 trilhas pendentes também! 😊"
+```
+
+---
+
+## 🛠️ **FERRAMENTAS N8N NECESSÁRIAS (Futuras):**
+
+### **Categoria: Contas e Acessos**
+1. `criar_usuario_jira` - Criar conta JIRA
+2. `verificar_usuario_jira` - Verificar se tem JIRA
+3. `criar_repositorio_github` - Criar repo no GitHub
+4. `adicionar_slack_channel` - Adicionar a canais Slack
+5. `provisionar_sso` - Criar usuário SSO/AD
+
+### **Categoria: Agendamentos**
+6. `agendar_meeting` - Agendar reunião genérica
+7. `marcar_1on1_gestor` - Agendar 1:1 com gestor
+8. `verificar_disponibilidade` - Checar agenda livre
+9. `cancelar_meeting` - Cancelar agendamento
+
+### **Categoria: Monitoramento**
+10. `verificar_gaps_colaborador` - Identificar gaps (JIRA, trilhas, etc.)
+11. `analisar_progresso_onboarding` - Análise completa do progresso
+12. `identificar_riscos` - Detectar colaborador em risco de evasão
+
+### **Categoria: Ações Administrativas**
+13. `solicitar_equipamento` - Abrir chamado para TI (notebook, etc.)
+14. `enviar_documento_assinatura` - DocuSign
+15. `notificar_rh` - Escalonar problema para RH
+
+---
+
+## 📊 **MÉTRICAS DE PROATIVIDADE (Futuras):**
+
+### **Dashboard de Autonomia do Agente:**
+- [ ] **Taxa de Resolução Autônoma:** % de problemas resolvidos sem ajuda humana
+- [ ] **Tempo Médio de Resolução:** Quanto tempo leva para resolver um gap
+- [ ] **Ações Proativas por Dia:** Quantas ações o agente toma por conta própria
+- [ ] **Taxa de Aceitação:** % de ações proativas aceitas pelo colaborador
+- [ ] **Satisfação Pós-Ação:** NPS após ação proativa
+- [ ] **Gaps Mais Comuns:** Ranking de problemas identificados
+- [ ] **ROI de Proatividade:** Tempo economizado da equipe de RH
+
+---
+
+## 🎯 **BENEFÍCIOS ESPERADOS:**
+
+### **Para o Colaborador:**
+- ✨ Onboarding **70% mais rápido** (menos fricção)
+- ✨ **90% menos perguntas** repetitivas
+- ✨ Sensação de ser **cuidado** pela empresa
+- ✨ Menos frustrações (problemas resolvidos antes de acontecer)
+
+### **Para o RH:**
+- ✨ **80% menos trabalho manual** (JIRA, agendamentos, etc.)
+- ✨ **Identificação precoce** de problemas
+- ✨ **Métricas claras** de efetividade
+- ✨ Foco em casos complexos (agente resolve o simples)
+
+### **Para a Empresa:**
+- ✨ **Diferencial competitivo** (onboarding classe mundial)
+- ✨ **Retenção melhorada** (colaborador engajado desde o dia 1)
+- ✨ **Redução de custos** (automação de tarefas repetitivas)
+- ✨ **Escalabilidade** (1000 colaboradores com mesmo esforço)
+
+---
+
+**Última atualização:** 14 de outubro de 2025  
+**Status:** 📝 Roadmap definido | ⏳ Aguardando Fase 3 completa  
+**Responsável:** Haendell Lopes
 
