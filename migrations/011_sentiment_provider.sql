@@ -140,3 +140,5 @@ ALTER TABLE colaborador_sentimentos DROP COLUMN IF EXISTS provider;
 ALTER TABLE colaborador_sentimentos DROP COLUMN IF EXISTS raw_analysis;
 */
 
+
+

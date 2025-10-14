@@ -1892,12 +1892,23 @@ app.post('/documents/categorization-result', async (req, res) => {
     const {
       documentId,
       tenantId,
+      // Campos básicos (compatibilidade com versão antiga)
       suggestedCategory,
       subcategories = [],
       tags = [],
       summary = '',
       confidence = 0,
-      processedAt
+      processedAt,
+      // NOVOS CAMPOS do Information Extractor
+      categoria_principal,
+      tipo_documento,
+      nivel_acesso,
+      departamentos_relevantes = [],
+      palavras_chave = [],
+      vigencia,
+      autoria,
+      versao,
+      referencias = []
     } = req.body;
 
     // Validar dados obrigatórios
@@ -1905,31 +1916,82 @@ app.post('/documents/categorization-result', async (req, res) => {
       return res.status(400).json({ error: 'documentId e tenantId são obrigatórios' });
     }
 
+    // Usar categoria_principal se disponível, senão usar suggestedCategory (compatibilidade)
+    const categoryToUse = categoria_principal || suggestedCategory;
+    
+    // Construir metadata estruturada
+    const metadata = {
+      // Campos básicos (sempre presentes)
+      subcategories,
+      tags,
+      summary,
+      confidence,
+      processedAt: processedAt || new Date().toISOString(),
+      aiProcessed: true,
+      
+      // NOVOS campos do Information Extractor (se disponíveis)
+      tipo_documento: tipo_documento || null,
+      nivel_acesso: nivel_acesso || 'Interno',
+      departamentos_relevantes: departamentos_relevantes || [],
+      palavras_chave: palavras_chave || [],
+      vigencia: vigencia || null,
+      autoria: autoria || null,
+      versao: versao || null,
+      referencias: referencias || [],
+      
+      // Metadata de processamento
+      extractor_version: tipo_documento ? 'information_extractor_v1' : 'ai_agent_legacy',
+      extracted_at: new Date().toISOString()
+    };
+
+    // Calcular confidence_score (0-100)
+    const confidenceScore = Math.round((confidence || 0) * 100);
+
     // Use PostgreSQL if available, otherwise SQLite
     if (await usePostgres()) {
-      // PostgreSQL - Atualizar documento com categorização
+      // PostgreSQL - Atualizar documento com categorização completa
       const result = await query(
-        'UPDATE documents SET category = $1 WHERE id = $2 AND tenant_id = $3',
-        [suggestedCategory, documentId, tenantId]
+        `UPDATE documents 
+         SET 
+           category = $1,
+           ai_classification = $1,
+           ai_summary = $2,
+           ai_tags = $3,
+           metadata = $4,
+           confidence_score = $5,
+           ai_categorized = true,
+           updated_at = NOW()
+         WHERE id = $6 AND tenant_id = $7
+         RETURNING id, title, category, confidence_score, ai_categorized_at`,
+        [
+          categoryToUse,
+          summary,
+          JSON.stringify(tags),
+          JSON.stringify(metadata),
+          confidenceScore,
+          documentId,
+          tenantId
+        ]
       );
 
       if (result.rowCount === 0) {
         return res.status(404).json({ error: 'Documento não encontrado' });
       }
 
-      // Inserir tags e subcategorias (vamos criar uma tabela para isso)
-      // Por enquanto, vamos salvar como JSON em um campo adicional
-      await query(
-        'UPDATE documents SET metadata = $1 WHERE id = $2',
-        [JSON.stringify({
-          subcategories,
-          tags,
-          summary,
-          confidence,
-          processedAt,
-          aiProcessed: true
-        }), documentId]
-      );
+      console.log('✅ Categorização salva com sucesso (PostgreSQL):', {
+        documentId,
+        category: categoryToUse,
+        confidence_score: confidenceScore,
+        fields_count: Object.keys(metadata).length
+      });
+
+      res.status(200).json({ 
+        success: true, 
+        message: 'Categorização salva com sucesso',
+        document: result.rows[0],
+        metadata: metadata,
+        extractor_version: metadata.extractor_version
+      });
 
     } else {
       // SQLite fallback
@@ -1942,47 +2004,44 @@ app.post('/documents/categorization-result', async (req, res) => {
         }
 
         // Atualizar documento
-        runExec(db, 'UPDATE documents SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?', 
-          [suggestedCategory, documentId, tenantId]);
+        runExec(db, 
+          'UPDATE documents SET category = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?', 
+          [categoryToUse, documentId, tenantId]
+        );
 
-        // Salvar metadados (precisamos adicionar coluna metadata na migração)
-        runExec(db, 'UPDATE documents SET metadata = ? WHERE id = ?', 
-          [JSON.stringify({
-            subcategories,
-            tags,
-            summary,
-            confidence,
-            processedAt,
-            aiProcessed: true
-          }), documentId]);
+        // Salvar metadados completos
+        runExec(db, 
+          'UPDATE documents SET metadata = ? WHERE id = ?', 
+          [JSON.stringify(metadata), documentId]
+        );
 
         persistDatabase(SQL, db);
+        
+        console.log('✅ Categorização salva com sucesso (SQLite):', {
+          documentId,
+          category: categoryToUse,
+          fields_count: Object.keys(metadata).length
+        });
+
+        res.status(200).json({ 
+          success: true, 
+          message: 'Categorização salva com sucesso',
+          documentId,
+          category: categoryToUse,
+          metadata: metadata
+        });
+        
       } finally {
         db.close();
       }
     }
 
-    console.log('Categorização salva com sucesso:', {
-      documentId,
-      suggestedCategory,
-      subcategories,
-      tags,
-      confidence
-    });
-
-    res.status(200).json({ 
-      success: true, 
-      message: 'Categorização salva com sucesso',
-      documentId,
-      suggestedCategory,
-      subcategories,
-      tags,
-      confidence
-    });
-
   } catch (error) {
-    console.error('Erro ao processar categorização:', error);
-    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+    console.error('❌ Erro ao processar categorização:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor', 
+      details: error.message 
+    });
   }
 });
 
