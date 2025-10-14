@@ -3222,105 +3222,325 @@ Deploy Vercel: ✅ Sem erros de CSS/SVG
 
 ### **📋 Fase 4.5: Aprimoramento de Anotações com GPT-4o** (6-8h)
 
-#### **4.5.1. Categorização Inteligente de Feedback** (3-4h)
-- [ ] Atualizar nó "Detectar feedback" para usar GPT-4o
-- [ ] Substituir regex por análise semântica
-- [ ] Classificação automática mais precisa:
-  - [ ] Tipo de feedback (dificuldade, sugestão, elogio, problema técnico)
-  - [ ] Urgência (baixa, média, alta, crítica)
-  - [ ] Categoria afetada (trilha, sistema, RH, conteúdo)
-  - [ ] Sentimento contextual (não só palavras-chave)
-- [ ] Tags mais ricas e específicas
-- [ ] Exemplo de melhoria:
-  ```javascript
-  // ANTES (Gemini):
-  Mensagem: "A trilha é longa mas está ok"
-  Tags: ["feedback", "automatico"]
-  
-  // DEPOIS (GPT-4o):
-  Mensagem: "A trilha é longa mas está ok"
-  Tags: ["trilha-longa", "feedback-construtivo", "nao-bloqueante", "sugestao-melhoria"]
-  Tipo: "sugestao_colaborador"
-  Urgência: "baixa"
-  Categoria: "conteudo"
-  ```
+> **📄 Documentação Completa:** `FASE_4.5_APRIMORAMENTO_ANOTACOES.md`  
+> **🎯 Objetivo:** Transformar sistema de anotações de BÁSICO (regex) para INTELIGENTE (GPT-4o)  
+> **📊 Impacto:** Categorização +200%, Urgência automática, Análise de padrões diária, Anotações proativas 4x/dia
 
-#### **4.5.2. Detecção de Urgência Automática** (2-3h)
-- [ ] Endpoint: POST `/api/agente/anotacoes/analisar-urgencia`
-  - [ ] GPT-4 analisa contexto da mensagem
-  - [ ] Identifica se requer ação imediata
-  - [ ] Retorna: {urgente: true/false, motivo: "...", acao_sugerida: "..."}
-- [ ] Workflow N8N: Nó "Analisar Urgência"
-  - [ ] Se urgente → Notifica admin imediatamente
-  - [ ] Se urgente + sentimento negativo → Escalona para RH
-  - [ ] Se urgente + problema técnico → Cria ticket para TI
-- [ ] Exemplos:
-  ```
-  "Já faz 3 dias que não consigo acessar o sistema"
-  → Urgência: CRÍTICA
-  → Ação: Criar ticket TI + Notificar admin
-  
-  "A trilha está um pouco longa"
-  → Urgência: BAIXA
-  → Ação: Apenas salvar anotação
-  ```
+---
 
-#### **4.5.3. Análise de Padrões com GPT-4o** (3-4h)
-- [ ] Workflow N8N agendado (cron: diariamente às 9h)
-- [ ] Nó: Buscar anotações dos últimos 7 dias
-- [ ] Nó: GPT-4 analisa padrões:
-  ```javascript
-  Entrada: 100 últimas anotações
-  
-  GPT-4 identifica:
-  - 15 reclamações sobre "Trilha de Compliance"
-  - Pattern: "muito longa" (8x), "complexa" (7x)
-  - Sentimento médio: negativo (0.72)
-  - Impacto: 30% dos colaboradores
-  
-  GPT-4 gera:
-  {
-    "titulo": "Dividir Trilha de Compliance em 2 módulos",
-    "descricao": "15 colaboradores relataram que a trilha é muito longa e complexa. Sugestão: dividir em 'Compliance Básico' (conceitos) e 'Compliance Avançado' (aplicação prática).",
-    "categoria": "conteudo",
-    "prioridade": "alta",
-    "impacto_estimado": "muito_alto",
-    "esforco_estimado": "medio",
-    "evidencias": ["15 reclamações", "sentimento médio negativo", "30% afetados"]
-  }
-  ```
-- [ ] Nó: Salvar melhoria em `onboarding_improvements`
-- [ ] Nó: Notificar admins sobre nova sugestão
-- [ ] Nó: Marcar anotações como `gerou_melhoria = true`
+#### **🔍 4.5.1. Categorização Inteligente de Feedback** (3-4h)
 
-#### **4.5.4. Anotações Proativas (Auto-geradas)** (2-3h)
-- [ ] GPT-4 cria anotações sem mensagem explícita do colaborador
-- [ ] Baseado em padrões de comportamento:
-  ```javascript
-  // Exemplo 1: Inatividade
-  if (diasSemInteracao >= 5 && trilhaIncompleta) {
-    GPT-4 cria anotação:
-    {
-      tipo: "padrao_identificado",
-      titulo: "Colaborador inativo há 5 dias com trilha incompleta",
-      anotacao: "João está há 5 dias sem interagir. Última atividade: Trilha de Compliance 40% concluída. Pode indicar dificuldade ou falta de tempo.",
-      tags: ["inatividade", "risco-evasao", "trilha-incompleta"],
-      urgencia: "media"
-    }
-  }
+##### **Subtarefa 1.1: Criar Code Node "Analisar Feedback com GPT-4o"** (1.5h)
+- [ ] **N8N - Adicionar Code Node**
+  - [ ] Posição: APÓS `Tem feedback?` (TRUE branch), ANTES `💾 Salvar Anotação`
+  - [ ] Nome do nó: `Analisar Feedback com GPT-4o`
+  - [ ] Tipo: Code (JavaScript)
   
-  // Exemplo 2: Progresso excepcional
-  if (trilhasConcluidas >= 5 && diasOnboarding <= 7) {
-    GPT-4 cria anotação:
-    {
-      tipo: "padrao_identificado",
-      titulo: "Colaborador com progresso excepcional",
-      anotacao: "Maria completou 5 trilhas em apenas 7 dias. Performance acima da média. Possível candidato a mentor.",
-      tags: ["alto-desempenho", "engajado", "mentor-potencial"],
-      urgencia: "baixa"
-    }
-  }
-  ```
+- [ ] **Implementar código (ver doc linhas 50-200)**
+  - [ ] Importar axios: `const axios = require('axios')`
+  - [ ] Extrair dados: mensagem, sentimento, intensidade, from, tenantId
+  - [ ] Configurar OpenAI API Key (substituir `sk-proj-...`)
+  - [ ] Configurar modelo: `gpt-4o-mini`
+  - [ ] Configurar parâmetros: temp=0.3, max_tokens=500
+  - [ ] Implementar prompt de análise semântica
+  - [ ] Parser de resposta JSON (com tratamento de erro)
+  - [ ] Fallback em caso de erro
+  
+- [ ] **Validar saída do nó**
+  - [ ] ✅ Retorna: tipo, urgencia, categoria, subcategoria
+  - [ ] ✅ Retorna: tags (array 5+), sentimento_contexto
+  - [ ] ✅ Retorna: acao_sugerida, impacto_estimado, titulo_sugerido
+  - [ ] ✅ Metadata: analisado_em, modelo_usado, versao_analise
+
+##### **Subtarefa 1.2: Atualizar nó "💾 Salvar Anotação"** (0.5h)
+- [ ] **Atualizar HTTP Request Body**
+  - [ ] Adicionar campo: `"tipo": "{{ $json.tipo }}"`
+  - [ ] Adicionar campo: `"urgencia": "{{ $json.urgencia }}"`
+  - [ ] Adicionar campo: `"categoria": "{{ $json.categoria }}"`
+  - [ ] Adicionar campo: `"subcategoria": "{{ $json.subcategoria }}"`
+  - [ ] Atualizar campo: `"tags": {{ JSON.stringify($json.tags) }}`
+  - [ ] Adicionar campo: `"sentimento_contexto": "{{ $json.sentimento_contexto }}"`
+  - [ ] Adicionar campo: `"acao_sugerida": "{{ $json.acao_sugerida }}"`
+  - [ ] Adicionar campo: `"impacto_estimado": "{{ $json.impacto_estimado }}"`
+  - [ ] Adicionar campo: `"titulo": "{{ $json.titulo_sugerido }}"`
+  - [ ] Adicionar metadata completa
+
+##### **Subtarefa 1.3: Atualizar Backend (se necessário)** (0.5h)
+- [ ] **Arquivo: `src/routes/agente-anotacoes.js`**
+  - [ ] Verificar se aceita novos campos (urgencia, categoria, etc.)
+  - [ ] Se NÃO: adicionar campos ao body parser
+  - [ ] Atualizar INSERT query se necessário
+  - [ ] Armazenar novos campos em `contexto` (JSONB)
+
+##### **Subtarefa 1.4: Testes de Categorização** (0.5h)
+- [ ] **Teste 1: Feedback Construtivo**
+  - [ ] Input: "A trilha é longa mas está ok"
+  - [ ] ✅ tipo = "sugestao_colaborador"
+  - [ ] ✅ urgencia = "baixa"
+  - [ ] ✅ tags incluem: "trilha-longa", "feedback-construtivo"
+  
+- [ ] **Teste 2: Problema Urgente**
+  - [ ] Input: "Não consigo acessar o sistema há 3 dias!"
+  - [ ] ✅ tipo = "problema_tecnico"
+  - [ ] ✅ urgencia = "critica"
+  - [ ] ✅ acao_sugerida = "Escalar para TI imediatamente"
+  
+- [ ] **Teste 3: Elogio**
+  - [ ] Input: "Adorei a trilha de boas-vindas! Muito dinâmica 🎉"
+  - [ ] ✅ tipo = "sentimento_trilha"
+  - [ ] ✅ sentimento_contexto = "muito_positivo"
+
+---
+
+#### **🚨 4.5.2. Detecção de Urgência Automática** (2-3h)
+
+##### **Subtarefa 2.1: Adicionar IF Node "🚨 Analisar Urgência"** (0.5h)
+- [ ] **N8N - Adicionar IF Node (Switch)**
+  - [ ] Posição: APÓS `💾 Salvar Anotação`
+  - [ ] Nome: `🚨 Analisar Urgência`
+  - [ ] Tipo: Switch (4 condições)
+  
+- [ ] **Configurar 4 condições**
+  - [ ] Condição 1: `{{ $json.urgencia }}` == "critica"
+  - [ ] Condição 2: `{{ $json.urgencia }}` == "alta"
+  - [ ] Condição 3: `{{ $json.urgencia }}` == "media"
+  - [ ] Else: urgencia == "baixa" (continua normal)
+
+##### **Subtarefa 2.2: Branch CRÍTICA - Notificar + Ticket** (1h)
+- [ ] **Nó 1: HTTP Request "Notificar Admin"**
+  - [ ] URL: `{{ $('BACKEND_URL').item.json.url }}/api/webhooks/alerta-urgencia-critica`
+  - [ ] Method: POST
+  - [ ] Body: anotacao_id, tipo, urgencia, categoria, mensagem, acao_sugerida
+  
+- [ ] **Nó 2: Code Node "Preparar Ticket"**
+  - [ ] Se categoria == "tecnico" → ticket TI
+  - [ ] Se categoria == "rh" → ticket RH
+  - [ ] Montar ticketData com título, urgencia, prioridade
+  
+- [ ] **Nó 3: HTTP Request "Criar Ticket"**
+  - [ ] URL: `{{ $('BACKEND_URL').item.json.url }}/api/tickets`
+  - [ ] Method: POST
+  - [ ] Body: título, descrição, urgencia, categoria, prioridade
+
+##### **Subtarefa 2.3: Criar Endpoint Backend** (0.5h)
+- [ ] **Arquivo: `src/routes/webhooks.js`**
+  - [ ] Adicionar rota: POST `/api/webhooks/alerta-urgencia-critica`
+  - [ ] Buscar admins ativos
+  - [ ] Criar notificações no sistema
+  - [ ] Enviar emails (se configurado)
+  - [ ] Retornar: success, notified (count)
+
+##### **Subtarefa 2.4: Criar Endpoint Tickets (se não existir)** (0.5h)
+- [ ] **Arquivo: `src/routes/tickets.js` (criar se necessário)**
+  - [ ] Rota: POST `/api/tickets`
+  - [ ] Validar: titulo, descricao, categoria, urgencia
+  - [ ] Inserir em tabela `tickets`
+  - [ ] Notificar responsável (TI/RH)
+  - [ ] Retornar ticket criado
+
+##### **Subtarefa 2.5: Testes de Urgência** (0.5h)
+- [ ] **Teste Urgência CRÍTICA**
+  - [ ] Input: "Sistema travado há 2 dias, não consigo trabalhar!"
+  - [ ] ✅ Detecta urgencia = "critica"
+  - [ ] ✅ Envia alerta para admins
+  - [ ] ✅ Cria ticket TI
+  
+- [ ] **Teste Urgência BAIXA**
+  - [ ] Input: "A trilha está um pouco longa"
+  - [ ] ✅ Detecta urgencia = "baixa"
+  - [ ] ✅ NÃO notifica admins
+  - [ ] ✅ Continua fluxo normal
+
+---
+
+#### **📈 4.5.3. Análise de Padrões com GPT-4o** (3-4h)
+
+##### **Subtarefa 3.1: Criar Workflow "Análise Diária de Padrões"** (0.5h)
+- [ ] **N8N - Novo Workflow**
+  - [ ] Nome: `Análise Diária de Padrões`
+  - [ ] Descrição: Analisa anotações e gera melhorias automaticamente
+
+##### **Subtarefa 3.2: Configurar Cron Trigger** (0.25h)
+- [ ] **Adicionar Schedule Trigger**
+  - [ ] Tipo: Cron
+  - [ ] Expressão: `0 9 * * *` (todo dia às 9h)
+  - [ ] Fuso horário: America/Sao_Paulo
+
+##### **Subtarefa 3.3: Buscar Anotações (HTTP Request)** (0.25h)
+- [ ] **Adicionar HTTP Request**
+  - [ ] Nome: `Buscar Anotações (7 dias)`
+  - [ ] URL: `{{ $('BACKEND_URL').item.json.url }}/api/agente/anotacoes/ultimos-dias?dias=7&limit=100`
+  - [ ] Method: GET
+
+##### **Subtarefa 3.4: Preparar Dados (Code Node)** (0.5h)
+- [ ] **Code Node: "Preparar Dados para GPT-4"**
+  - [ ] Agrupar por categoria
+  - [ ] Agrupar por tipo
+  - [ ] Agrupar por urgência
+  - [ ] Criar resumo estruturado
+  - [ ] Limitar a 20 anotações completas (para não exceder tokens)
+
+##### **Subtarefa 3.5: GPT-4 Análise (HTTP Request)** (1h)
+- [ ] **HTTP Request OpenAI**
+  - [ ] URL: `https://api.openai.com/v1/chat/completions`
+  - [ ] Model: `gpt-4o`
+  - [ ] Temperature: 0.5
+  - [ ] Max tokens: 2000
+  - [ ] Prompt: Analisar padrões e gerar melhorias (JSON)
+
+##### **Subtarefa 3.6: Processar Resposta (Code Node)** (0.5h)
+- [ ] **Code Node: "Processar Resposta GPT-4"**
+  - [ ] Parser JSON da resposta
+  - [ ] Extrair melhorias_sugeridas
+  - [ ] Adicionar metadata: gerado_por, data_analise, periodo_analise
+
+##### **Subtarefa 3.7: Salvar Melhorias (HTTP Request)** (0.5h)
+- [ ] **HTTP Request: "Salvar Melhorias"**
+  - [ ] URL: `{{ $('BACKEND_URL').item.json.url }}/api/melhorias`
+  - [ ] Method: POST
+  - [ ] Body: titulo, descricao, categoria, prioridade, evidencias
+
+##### **Subtarefa 3.8: Endpoint Backend Melhorias** (0.5h)
+- [ ] **Arquivo: `src/routes/melhorias.js` (criar)**
+  - [ ] POST `/api/melhorias`
+  - [ ] Validar campos
+  - [ ] Inserir em `onboarding_improvements`
+  - [ ] Marcar anotações como `gerou_melhoria = true`
+  - [ ] Notificar admins
+
+##### **Subtarefa 3.9: Teste Completo** (0.5h)
+- [ ] **Cenário: 15 reclamações sobre "Trilha Compliance longa"**
+  - [ ] ✅ GPT-4 identifica padrão
+  - [ ] ✅ Gera melhoria: "Dividir em 2 módulos"
+  - [ ] ✅ Salva no banco
+  - [ ] ✅ Admins são notificados
+
+---
+
+#### **🤖 4.5.4. Anotações Proativas (Auto-geradas)** (2-3h)
+
+##### **Subtarefa 4.1: Criar Workflow "Monitoramento Proativo"** (0.5h)
+- [ ] **N8N - Novo Workflow**
+  - [ ] Nome: `Monitoramento Proativo`
+  - [ ] Descrição: Detecta padrões de comportamento e gera anotações
+
+##### **Subtarefa 4.2: Configurar Cron Trigger (4x/dia)** (0.25h)
+- [ ] **Schedule Trigger**
+  - [ ] Cron: `0 9,12,15,18 * * *` (9h, 12h, 15h, 18h)
+  - [ ] Fuso: America/Sao_Paulo
+
+##### **Subtarefa 4.3: Buscar Colaboradores Ativos** (0.25h)
+- [ ] **HTTP Request**
+  - [ ] URL: `{{ $('BACKEND_URL').item.json.url }}/api/colaboradores/ativos?onboarding_ativo=true`
+  - [ ] Method: GET
+
+##### **Subtarefa 4.4: Analisar Comportamento (Code Node)** (1h)
+- [ ] **Code Node: "Analisar Comportamento"**
+  - [ ] Loop por cada colaborador
+  - [ ] **Padrão 1: Inatividade** (dias_sem_interacao >= 5)
+  - [ ] **Padrão 2: Progresso Excepcional** (5+ trilhas em 7 dias)
+  - [ ] **Padrão 3: Baixo Engajamento** (3+ iniciadas, 0 concluídas)
+  - [ ] **Padrão 4: Dificuldade Recorrente** (3+ msgs negativas)
+  - [ ] **Padrão 5: Risco de Evasão** (combo: inatividade + negativo + incompleto)
+  - [ ] Gerar array de anotacoesProativas
+
+##### **Subtarefa 4.5: Loop - Enriquecer com GPT-4** (0.5h)
+- [ ] **HTTP Request OpenAI (para cada anotação)**
+  - [ ] Model: `gpt-4o-mini`
+  - [ ] Prompt: Enriquecer anotação com insights
+  - [ ] Retornar: tags, insights, acoes_especificas, prioridade_revisao
+
+##### **Subtarefa 4.6: Salvar Anotações Proativas** (0.25h)
+- [ ] **HTTP Request**
+  - [ ] URL: `{{ $('BACKEND_URL').item.json.url }}/api/agente/anotacoes/proativa`
+  - [ ] Method: POST
+  - [ ] Body: colaborador_id, tipo, padrao, tags, insights, gerado_automaticamente=true
+
+##### **Subtarefa 4.7: Endpoint Backend Anotações Proativas** (0.5h)
+- [ ] **Arquivo: `src/routes/agente-anotacoes.js`**
+  - [ ] POST `/api/agente/anotacoes/proativa`
+  - [ ] Validar campos
+  - [ ] Inserir com flag `gerado_automaticamente = true`
+  - [ ] Se urgencia == "critica" → notificar imediatamente
+
+##### **Subtarefa 4.8: Testes de Padrões** (0.5h)
+- [ ] **Teste Padrão 1: Inatividade**
+  - [ ] Colaborador: 8 dias sem interação, trilha 35% completa
+  - [ ] ✅ Detecta padrão "risco_evasao"
+  - [ ] ✅ Urgência = "critica"
+  - [ ] ✅ Ação: "Contato urgente do gestor"
+  
+- [ ] **Teste Padrão 2: Progresso Excepcional**
+  - [ ] Colaborador: 5 trilhas em 7 dias
+  - [ ] ✅ Detecta padrão "progresso_excepcional"
+  - [ ] ✅ Ação: "Considerar como mentor"
+
+---
+
+### **📊 CRITÉRIOS DE ACEITE GERAIS (Fase 4.5)**
+
+- [ ] **Performance**
+  - [ ] Latência GPT-4o-mini < 1s (categorização)
+  - [ ] Latência GPT-4 < 3s (análise de padrões)
+  
+- [ ] **Qualidade**
+  - [ ] 90%+ de acurácia na categorização
+  - [ ] 95%+ de acurácia na detecção de urgência
+  
+- [ ] **Automação**
+  - [ ] 100% automático (sem intervenção manual)
+  - [ ] Alertas enviados em < 1 min para urgência crítica
+  
+- [ ] **Documentação**
+  - [ ] Workflow v4.5.0 exportado e versionado
+  - [ ] README atualizado com novas funcionalidades
+  - [ ] Exemplos de uso documentados
+
+---
+
+### **🎯 ORDEM DE IMPLEMENTAÇÃO RECOMENDADA**
+
+**DIA 1 (3-4h):**
+1. ✅ 4.5.1 - Categorização Inteligente (maior impacto imediato)
+   - Subtarefas 1.1 → 1.2 → 1.3 → 1.4
+
+**DIA 2 (2-3h):**
+2. ✅ 4.5.2 - Detecção de Urgência (crítico para produção)
+   - Subtarefas 2.1 → 2.2 → 2.3 → 2.4 → 2.5
+
+**DIA 3 (3-4h):**
+3. ✅ 4.5.3 - Análise de Padrões (estratégico)
+   - Subtarefas 3.1 → 3.9
+
+**DIA 4 (2-3h):**
+4. ✅ 4.5.4 - Anotações Proativas (inovador)
+   - Subtarefas 4.1 → 4.8
+
+---
+
+### **📝 RESUMO DE ENTREGÁVEIS**
+
+**N8N (Workflows):**
+- [ ] Workflow principal atualizado (4.5.1 + 4.5.2)
+- [ ] Workflow "Análise Diária de Padrões" (4.5.3)
+- [ ] Workflow "Monitoramento Proativo" (4.5.4)
+
+**Backend (Endpoints):**
+- [ ] POST `/api/webhooks/alerta-urgencia-critica`
+- [ ] POST `/api/tickets` (se não existir)
+- [ ] POST `/api/melhorias`
+- [ ] POST `/api/agente/anotacoes/proativa`
+- [ ] GET `/api/agente/anotacoes/ultimos-dias`
+- [ ] GET `/api/colaboradores/ativos`
+
+**Banco de Dados:**
+- [ ] Nenhuma migração nova (usar tabelas existentes)
+- [ ] Atualizar `contexto` (JSONB) em `agente_anotacoes` se necessário
+
+**Documentação:**
+- [ ] Workflow v4.5.0 exportado
+- [ ] README atualizado
+- [ ] Testes documentados
 
 ---
 
