@@ -43,7 +43,13 @@ router.post('/', authenticate, async (req, res) => {
       context = '', 
       trilhaId = null,
       momentoOnboarding = null,
-      diaOnboarding = null 
+      diaOnboarding = null,
+      // NOVOS CAMPOS para Sentiment Analysis do N8N
+      sentimento = null,
+      intensidade = null,
+      fatores_detectados = null,
+      raw_analysis = null,
+      provider = null
     } = req.body;
 
     if (!message) {
@@ -82,26 +88,43 @@ router.post('/', authenticate, async (req, res) => {
       console.log(`📞 Lookup: Phone ${phone} → User ID ${colaboradorId}`);
     }
 
-    // 1. Analisar sentimento com OpenAI (ou Gemini como fallback)
+    // Verificar se a análise já foi feita no N8N (dados pré-analisados)
     let sentimentAnalysis;
+    let providerUsed;
     
-    if (openaiSentimentService.isConfigured()) {
-      sentimentAnalysis = await openaiSentimentService.analyzeSentiment(message, context);
-      console.log('✅ Análise realizada com OpenAI');
-    } else if (geminiService.isConfigured()) {
-      sentimentAnalysis = await geminiService.analyzeSentiment(message, context);
-      console.log('✅ Análise realizada com Gemini');
+    if (sentimento && intensidade !== null) {
+      // Dados já analisados pelo N8N Sentiment Analysis
+      sentimentAnalysis = {
+        sentimento,
+        intensidade,
+        fatores_detectados: fatores_detectados || {}
+      };
+      providerUsed = provider || 'n8n_sentiment_analysis';
+      console.log('✅ Usando análise pré-processada do N8N');
     } else {
-      sentimentAnalysis = await geminiService.analyzeSentiment(message, context);
-      console.log('⚠️  Análise realizada com fallback');
+      // Fallback: Analisar sentimento com OpenAI/Gemini (comportamento antigo)
+      if (openaiSentimentService.isConfigured()) {
+        sentimentAnalysis = await openaiSentimentService.analyzeSentiment(message, context);
+        providerUsed = 'backend_openai';
+        console.log('✅ Análise realizada com OpenAI (backend)');
+      } else if (geminiService.isConfigured()) {
+        sentimentAnalysis = await geminiService.analyzeSentiment(message, context);
+        providerUsed = 'backend_gemini';
+        console.log('✅ Análise realizada com Gemini (backend)');
+      } else {
+        sentimentAnalysis = await geminiService.analyzeSentiment(message, context);
+        providerUsed = 'backend_fallback';
+        console.log('⚠️  Análise realizada com fallback (backend)');
+      }
     }
     
-    // 2. Registrar no banco de dados
+    // 2. Registrar no banco de dados (com novos campos)
     const result = await query(
       `INSERT INTO colaborador_sentimentos (
         tenant_id, colaborador_id, sentimento, intensidade, origem, 
-        mensagem_analisada, fatores_detectados, trilha_id, momento_onboarding, dia_onboarding
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        mensagem_analisada, fatores_detectados, trilha_id, momento_onboarding, dia_onboarding,
+        provider, raw_analysis
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *`,
       [
         req.tenantId,
@@ -113,7 +136,9 @@ router.post('/', authenticate, async (req, res) => {
         JSON.stringify(sentimentAnalysis.fatores_detectados),
         trilhaId,
         momentoOnboarding,
-        diaOnboarding
+        diaOnboarding,
+        providerUsed,
+        raw_analysis ? JSON.stringify(raw_analysis) : null
       ]
     );
 
@@ -121,6 +146,7 @@ router.post('/', authenticate, async (req, res) => {
     res.json({
       success: true,
       sentiment: sentimentAnalysis,
+      provider: providerUsed,
       record: result.rows[0],
       timestamp: new Date().toISOString()
     });
