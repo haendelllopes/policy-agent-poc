@@ -161,10 +161,6 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static('public'));
 
-// Fallback para servir CSS e assets via Express (para Vercel)
-app.use('/css', express.static(path.join(__dirname, '../public/css')));
-app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
-
 // Página inicial do dashboard (redireciona para dashboard.html)
 app.get('/inicio', (req, res) => {
   res.redirect('/dashboard.html' + (req.url.includes('?') ? '?' + req.url.split('?')[1] : ''));
