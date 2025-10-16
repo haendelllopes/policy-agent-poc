@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../db-pg');
+const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
 
 // Middleware para autenticação (mock por enquanto)
 const authenticate = async (req, res, next) => {
@@ -36,23 +37,28 @@ router.get('/history/:colaboradorId', authenticate, async (req, res) => {
     let userId = colaboradorId;
     
     if (!colaboradorId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-      // É telefone, fazer lookup
-      const phoneNormalized = colaboradorId.replace(/\D/g, '');
+      // É telefone, fazer lookup com normalização
+      const phoneNormalized = normalizePhoneForWhatsApp(colaboradorId);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
       const userLookup = await query(
-        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2 LIMIT 1`,
-        [`%${phoneNormalized}`, `%${colaboradorId}`]
+        `SELECT id FROM users WHERE 
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $1 OR
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2 LIMIT 1`,
+        [phoneNormalized, phoneWithBrazilDigit]
       );
       
       if (userLookup.rows.length === 0) {
         return res.status(404).json({ 
           error: 'Colaborador não encontrado',
-          colaboradorId: colaboradorId
+          colaboradorId: colaboradorId,
+          phoneNormalized,
+          phoneWithBrazilDigit
         });
       }
       
       userId = userLookup.rows[0].id;
-      console.log(`📞 Lookup: ${colaboradorId} → ${userId}`);
+      console.log(`📞 Lookup: ${colaboradorId} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → ${userId}`);
     }
 
     // Buscar histórico
@@ -142,22 +148,27 @@ router.post('/history', authenticate, async (req, res) => {
     let userId = user_id;
     
     if (!user_id && phone) {
-      const phoneNormalized = phone.replace(/\D/g, '');
+      const phoneNormalized = normalizePhoneForWhatsApp(phone);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
       const userLookup = await query(
-        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2 LIMIT 1`,
-        [`%${phoneNormalized}`, `%${phone}`]
+        `SELECT id FROM users WHERE 
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $1 OR
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2 LIMIT 1`,
+        [phoneNormalized, phoneWithBrazilDigit]
       );
       
       if (userLookup.rows.length === 0) {
         return res.status(404).json({ 
           error: 'Usuário não encontrado',
-          phone: phone
+          phone: phone,
+          phoneNormalized,
+          phoneWithBrazilDigit
         });
       }
       
       userId = userLookup.rows[0].id;
-      console.log(`📞 Lookup: ${phone} → ${userId}`);
+      console.log(`📞 Lookup: ${phone} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → ${userId}`);
     }
 
     // Inserir mensagens no histórico
@@ -229,16 +240,21 @@ router.delete('/history/:colaboradorId', authenticate, async (req, res) => {
     let userId = colaboradorId;
     
     if (!colaboradorId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-      const phoneNormalized = colaboradorId.replace(/\D/g, '');
+      const phoneNormalized = normalizePhoneForWhatsApp(colaboradorId);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
       const userLookup = await query(
-        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2 LIMIT 1`,
-        [`%${phoneNormalized}`, `%${colaboradorId}`]
+        `SELECT id FROM users WHERE 
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $1 OR
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2 LIMIT 1`,
+        [phoneNormalized, phoneWithBrazilDigit]
       );
       
       if (userLookup.rows.length === 0) {
         return res.status(404).json({ 
-          error: 'Colaborador não encontrado' 
+          error: 'Colaborador não encontrado',
+          phoneNormalized,
+          phoneWithBrazilDigit
         });
       }
       

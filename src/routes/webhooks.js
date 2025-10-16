@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../db-pg');
+const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
 
 // POST /api/webhooks/alerta-sentimento-negativo
 router.post('/alerta-sentimento-negativo', async (req, res) => {
@@ -27,24 +28,29 @@ router.post('/alerta-sentimento-negativo', async (req, res) => {
     let userId = colaborador_id;
     
     if (!colaborador_id && phone) {
-      // Normalizar phone (remover caracteres não numéricos)
-      const phoneNormalized = phone.replace(/\D/g, '');
+      // Normalizar phone e tentar com/sem 9º dígito brasileiro
+      const phoneNormalized = normalizePhoneForWhatsApp(phone);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
       const userLookup = await query(
-        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2`,
-        [`%${phoneNormalized}`, `%${phone}`]
+        `SELECT id FROM users WHERE 
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $1 OR
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2`,
+        [phoneNormalized, phoneWithBrazilDigit]
       );
       
       if (userLookup.rows.length === 0) {
         return res.status(404).json({ 
           error: 'Usuário não encontrado com este telefone',
           phone: phone,
-          hint: 'Verifique se o usuário existe no sistema'
+          phoneNormalized,
+          phoneWithBrazilDigit,
+          hint: 'Verifique se o usuário existe no sistema e o número está correto'
         });
       }
       
       userId = userLookup.rows[0].id;
-      console.log(`📞 Lookup: Phone ${phone} → User ID ${userId}`);
+      console.log(`📞 Lookup: Phone ${phone} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → User ID ${userId}`);
     }
 
     // 1. Buscar dados do colaborador

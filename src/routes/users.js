@@ -123,12 +123,12 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { getTenantBySubdomain, normalizePhone, normalizePhoneForWhatsApp, usePostgres, openDatabase, runQuery, runExec, persistDatabase } = req.app.locals;
+    const { getTenantBySubdomain, normalizePhone, normalizePhoneForWhatsApp, addBrazilianNinthDigit, usePostgres, openDatabase, runQuery, runExec, persistDatabase } = req.app.locals;
     
     const schema = z.object({
       name: z.string().min(1),
       email: z.string().email(),
-      phone: z.string().min(1),
+      phone: z.string().min(10).max(15).regex(/^[\+\d\s\-\(\)]+$/, 'Telefone inválido'),
       position: z.string().optional(), // DEPRECATED: manter por compatibilidade
       department: z.string().optional(), // DEPRECATED: manter por compatibilidade
       position_id: z.string().uuid().optional(), // NOVO: usar FK
@@ -140,8 +140,12 @@ router.post('/', async (req, res) => {
     const parse = schema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
 
-    const normalizedPhone = normalizePhone(parse.data.phone);
-    const whatsappPhone = normalizePhoneForWhatsApp(parse.data.phone);
+    // Normalizar telefone e adicionar 9º dígito brasileiro se necessário
+    let phoneToSave = normalizePhoneForWhatsApp(parse.data.phone); // Remove formatação
+    phoneToSave = addBrazilianNinthDigit(phoneToSave); // Adiciona 9 se necessário
+    
+    const normalizedPhone = normalizePhone(phoneToSave);
+    const whatsappPhone = normalizePhoneForWhatsApp(phoneToSave);
 
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {

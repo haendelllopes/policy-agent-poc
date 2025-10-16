@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../db-pg');
+const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
 
 /**
  * GET /api/agent/trilhas/disponiveis/:colaboradorId
@@ -15,34 +16,31 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
 
     // Se colaboradorId é um telefone (contém apenas números), buscar o usuário em todos os tenants
     if (/^\d+$/.test(colaboradorId)) {
-      // É um telefone, normalizar e buscar o usuário correspondente em todos os tenants
-      let phoneVariations = [
-        colaboradorId,                    // 556291708483
-        `+${colaboradorId}`,             // +556291708483
-        `55${colaboradorId}`,            // 55556291708483
-        `+55${colaboradorId}`            // +55556291708483
-      ];
+      // É um telefone, normalizar e buscar
+      const phoneNormalized = normalizePhoneForWhatsApp(colaboradorId);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
-      let userResult = null;
-      for (const phone of phoneVariations) {
-        userResult = await query(`
-          SELECT u.id, u.tenant_id FROM users u
-          WHERE u.phone = $1 AND u.status = 'active'
-          LIMIT 1
-        `, [phone]);
-        
-        if (userResult.rows.length > 0) {
-          userId = userResult.rows[0].id;
-          tenantId = userResult.rows[0].tenant_id;
-          console.log(`📞 Lookup: Phone ${colaboradorId} → User ID ${userId} (format: ${phone}) → Tenant ${tenantId}`);
-          break;
-        }
+      const userResult = await query(`
+        SELECT u.id, u.tenant_id FROM users u
+        WHERE u.status = 'active' AND (
+          REPLACE(REPLACE(REPLACE(u.phone, '+', ''), '-', ''), ' ', '') = $1 OR
+          REPLACE(REPLACE(REPLACE(u.phone, '+', ''), '-', ''), ' ', '') = $2
+        )
+        LIMIT 1
+      `, [phoneNormalized, phoneWithBrazilDigit]);
+      
+      if (userResult.rows.length === 0) {
+        console.log(`❌ Phone ${colaboradorId} not found (tried: ${phoneNormalized}, ${phoneWithBrazilDigit})`);
+        return res.status(404).json({ 
+          error: 'Colaborador não encontrado',
+          phoneNormalized,
+          phoneWithBrazilDigit
+        });
       }
       
-      if (!userResult || userResult.rows.length === 0) {
-        console.log(`❌ Phone ${colaboradorId} not found in any format across all tenants`);
-        return res.status(404).json({ error: 'Colaborador não encontrado' });
-      }
+      userId = userResult.rows[0].id;
+      tenantId = userResult.rows[0].tenant_id;
+      console.log(`📞 Lookup: Phone ${colaboradorId} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → User ID ${userId} → Tenant ${tenantId}`);
     } else {
       // Se é UUID, buscar o tenant do usuário
       const userResult = await query(`
@@ -124,33 +122,29 @@ router.post('/iniciar', async (req, res) => {
     // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
     let userId = colaborador_id;
     if (/^\d+$/.test(colaborador_id)) {
-      // É um telefone, normalizar e buscar o usuário correspondente
-      let phoneVariations = [
-        colaborador_id,                    // 556291708483
-        `+${colaborador_id}`,             // +556291708483
-        `55${colaborador_id}`,            // 55556291708483
-        `+55${colaborador_id}`            // +55556291708483
-      ];
+      // É um telefone, normalizar e buscar
+      const phoneNormalized = normalizePhoneForWhatsApp(colaborador_id);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
-      let userResult = null;
-      for (const phone of phoneVariations) {
-        userResult = await query(`
-          SELECT id FROM users 
-          WHERE phone = $1 AND tenant_id = $2 AND status = 'active'
-        `, [phone, tenant.id]);
-        
-        if (userResult.rows.length > 0) {
-          console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userResult.rows[0].id} (format: ${phone})`);
-          break;
-        }
-      }
+      const userResult = await query(`
+        SELECT id FROM users 
+        WHERE tenant_id = $1 AND status = 'active' AND (
+          REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2 OR
+          REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $3
+        )
+      `, [tenant.id, phoneNormalized, phoneWithBrazilDigit]);
       
-      if (!userResult || userResult.rows.length === 0) {
-        console.log(`❌ Phone ${colaborador_id} not found in any format`);
-        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      if (userResult.rows.length === 0) {
+        console.log(`❌ Phone ${colaborador_id} not found (tried: ${phoneNormalized}, ${phoneWithBrazilDigit})`);
+        return res.status(404).json({ 
+          error: 'Colaborador não encontrado',
+          phoneNormalized,
+          phoneWithBrazilDigit
+        });
       }
       
       userId = userResult.rows[0].id;
+      console.log(`📞 Lookup: Phone ${colaborador_id} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → User ID ${userId}`);
     }
 
     // Verificar se a trilha existe e está ativa
@@ -271,34 +265,31 @@ router.post('/feedback', async (req, res) => {
 
     // Se colaborador_id é um telefone (contém apenas números), buscar o usuário em todos os tenants
     if (/^\d+$/.test(colaborador_id)) {
-      // É um telefone, normalizar e buscar o usuário correspondente em todos os tenants
-      let phoneVariations = [
-        colaborador_id,                    // 556291708483
-        `+${colaborador_id}`,             // +556291708483
-        `55${colaborador_id}`,            // 55556291708483
-        `+55${colaborador_id}`            // +55556291708483
-      ];
+      // É um telefone, normalizar e buscar
+      const phoneNormalized = normalizePhoneForWhatsApp(colaborador_id);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
-      let userResult = null;
-      for (const phone of phoneVariations) {
-        userResult = await query(`
-          SELECT u.id, u.tenant_id FROM users u
-          WHERE u.phone = $1 AND u.status = 'active'
-          LIMIT 1
-        `, [phone]);
-        
-        if (userResult.rows.length > 0) {
-          userId = userResult.rows[0].id;
-          tenantId = userResult.rows[0].tenant_id;
-          console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userId} (format: ${phone}) → Tenant ${tenantId}`);
-          break;
-        }
+      const userResult = await query(`
+        SELECT u.id, u.tenant_id FROM users u
+        WHERE u.status = 'active' AND (
+          REPLACE(REPLACE(REPLACE(u.phone, '+', ''), '-', ''), ' ', '') = $1 OR
+          REPLACE(REPLACE(REPLACE(u.phone, '+', ''), '-', ''), ' ', '') = $2
+        )
+        LIMIT 1
+      `, [phoneNormalized, phoneWithBrazilDigit]);
+      
+      if (userResult.rows.length === 0) {
+        console.log(`❌ Phone ${colaborador_id} not found (tried: ${phoneNormalized}, ${phoneWithBrazilDigit})`);
+        return res.status(404).json({ 
+          error: 'Colaborador não encontrado',
+          phoneNormalized,
+          phoneWithBrazilDigit
+        });
       }
       
-      if (!userResult || userResult.rows.length === 0) {
-        console.log(`❌ Phone ${colaborador_id} not found in any format across all tenants`);
-        return res.status(404).json({ error: 'Colaborador não encontrado' });
-      }
+      userId = userResult.rows[0].id;
+      tenantId = userResult.rows[0].tenant_id;
+      console.log(`📞 Lookup: Phone ${colaborador_id} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → User ID ${userId} → Tenant ${tenantId}`);
     } else {
       // Se é UUID, buscar o tenant do usuário
       const userResult = await query(`

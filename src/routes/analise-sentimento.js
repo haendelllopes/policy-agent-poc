@@ -3,6 +3,7 @@ const router = express.Router();
 const geminiService = require('../services/geminiService');
 const openaiSentimentService = require('../services/openaiSentimentService');
 const { query } = require('../db-pg');
+const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
 
 // Middleware para autenticação (mock por enquanto)
 const authenticate = async (req, res, next) => {
@@ -68,24 +69,29 @@ router.post('/', authenticate, async (req, res) => {
     let colaboradorId = userId;
     
     if (!userId && phone) {
-      // Normalizar phone (remover caracteres não numéricos)
-      const phoneNormalized = phone.replace(/\D/g, '');
+      // Normalizar phone e tentar com/sem 9º dígito brasileiro
+      const phoneNormalized = normalizePhoneForWhatsApp(phone); // Remove tudo, fica só números
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
       
       const userLookup = await query(
-        `SELECT id FROM users WHERE phone LIKE $1 OR phone LIKE $2`,
-        [`%${phoneNormalized}`, `%${phone}`]
+        `SELECT id FROM users WHERE 
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $1 OR
+         REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2`,
+        [phoneNormalized, phoneWithBrazilDigit]
       );
       
       if (userLookup.rows.length === 0) {
         return res.status(404).json({ 
           error: 'Usuário não encontrado com este telefone',
           phone: phone,
-          hint: 'Verifique se o usuário existe no sistema'
+          phoneNormalized,
+          phoneWithBrazilDigit,
+          hint: 'Verifique se o usuário existe no sistema e o número está correto'
         });
       }
       
       colaboradorId = userLookup.rows[0].id;
-      console.log(`📞 Lookup: Phone ${phone} → User ID ${colaboradorId}`);
+      console.log(`📞 Lookup: Phone ${phone} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → User ID ${colaboradorId}`);
     }
 
     // Verificar se a análise já foi feita no N8N (dados pré-analisados)

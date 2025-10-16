@@ -1466,8 +1466,26 @@ a:hover {
                     </div>
                     
                     <div class="form-group">
-                        <label for="userPhone">Telefone Celular *</label>
-                        <input type="tel" id="userPhone" name="phone" required placeholder="(DD) 99999-9999">
+                        <label style="font-weight: 600; margin-bottom: 8px; display: block;">Telefone Celular * (WhatsApp)</label>
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            <div style="flex: 0 0 140px;">
+                                <select id="userPhoneCountry" name="phone_country" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
+                                    <option value="55">🇧🇷 Brasil +55</option>
+                                    <option value="57">🇨🇴 Colômbia +57</option>
+                                    <option value="54">🇦🇷 Argentina +54</option>
+                                    <option value="56">🇨🇱 Chile +56</option>
+                                    <option value="51">🇵🇪 Peru +51</option>
+                                </select>
+                            </div>
+                            <div style="flex: 0 0 80px;">
+                                <input type="tel" id="userPhoneDDD" name="phone_ddd" required placeholder="DDD" maxlength="3" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="tel" id="userPhoneNumber" name="phone_number" required placeholder="Número" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
+                            </div>
+                        </div>
+                        <small id="phonePreview" style="color: #64748b; display: block; margin-top: 6px; font-size: 13px;"></small>
+                        <small id="phoneHint" style="color: #0ea5e9; display: block; margin-top: 4px; font-size: 13px;">Brasil: 2 dígitos DDD + 9 dígitos (ex: 62 991708483)</small>
                     </div>
                 </div>
                 
@@ -1749,29 +1767,99 @@ a:hover {
             }
         }
 
-        // Phone mask
-        function applyPhoneMask(input) {
-            let value = input.value.replace(/\D/g, '');
-            if (value.length > 0) {
-                if (value.length <= 2) {
-                    value = `(${value}`;
-                } else if (value.length <= 7) {
-                    value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-                } else {
-                    value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7, 11)}`;
-                }
+        // Phone validation and formatting
+        const phoneCountrySelect = document.getElementById('userPhoneCountry');
+        const phoneDDDInput = document.getElementById('userPhoneDDD');
+        const phoneNumberInput = document.getElementById('userPhoneNumber');
+        const phonePreview = document.getElementById('phonePreview');
+        const phoneHint = document.getElementById('phoneHint');
+
+        // Atualizar hint conforme país selecionado
+        phoneCountrySelect.addEventListener('change', function() {
+            const country = this.value;
+            const hints = {
+                '55': 'Brasil: 2 dígitos DDD + 9 dígitos (ex: 62 991708483)',
+                '57': 'Colômbia: 3 dígitos área + 7 dígitos (ex: 301 6639375)',
+                '54': 'Argentina: 2-4 dígitos área + 6-8 dígitos',
+                '56': 'Chile: 1 dígito área + 8 dígitos',
+                '51': 'Peru: 1 dígito área + 7-8 dígitos'
+            };
+            phoneHint.textContent = hints[country] || 'Digite o código de área e número';
+            updatePhonePreview();
+        });
+
+        // Atualizar preview em tempo real
+        [phoneDDDInput, phoneNumberInput].forEach(input => {
+            input.addEventListener('input', function() {
+                // Permitir apenas números
+                this.value = this.value.replace(/\D/g, '');
+                updatePhonePreview();
+            });
+        });
+
+        function updatePhonePreview() {
+            const country = phoneCountrySelect.value;
+            const ddd = phoneDDDInput.value;
+            const number = phoneNumberInput.value;
+            
+            if (ddd && number) {
+                phonePreview.textContent = `📱 Formato final: +${country} ${ddd} ${number}`;
+                phonePreview.style.color = '#0ea5e9';
+            } else {
+                phonePreview.textContent = '';
             }
-            input.value = value;
         }
 
-        function formatPhoneForDatabase(phone) {
-            const numbers = phone.replace(/\D/g, '');
-            if (numbers.length === 11) {
-                return `55${numbers}`;
-            } else if (numbers.length === 10) {
-                return `55${numbers}`;
+        function formatPhoneForDatabase(country, ddd, number) {
+            // Remove qualquer caractere não numérico
+            const cleanDDD = ddd.replace(/\D/g, '');
+            let cleanNumber = number.replace(/\D/g, '');
+            
+            // Para Brasil: adicionar 9 se necessário
+            if (country === '55') {
+                // Se DDD tem 2 dígitos e número tem 8 dígitos, adicionar 9 na frente
+                if (cleanDDD.length === 2 && cleanNumber.length === 8 && !cleanNumber.startsWith('9')) {
+                    cleanNumber = '9' + cleanNumber;
+                    console.log(`🇧🇷 Adicionado 9º dígito: ${cleanNumber}`);
+                }
             }
-            return numbers;
+            
+            // Retornar formato: código país + DDD + número (ex: 5562991708483 ou 573016639375)
+            return country + cleanDDD + cleanNumber;
+        }
+
+        function validatePhone(country, ddd, number) {
+            const cleanDDD = ddd.replace(/\D/g, '');
+            const cleanNumber = number.replace(/\D/g, '');
+            
+            // Validações por país
+            if (country === '55') {
+                // Brasil: DDD 2 dígitos, número 8 ou 9 dígitos
+                if (cleanDDD.length !== 2) {
+                    return 'DDD do Brasil deve ter 2 dígitos (ex: 62, 11, 21)';
+                }
+                if (cleanNumber.length < 8 || cleanNumber.length > 9) {
+                    return 'Número brasileiro deve ter 8 ou 9 dígitos';
+                }
+            } else if (country === '57') {
+                // Colômbia: área 3 dígitos, número 7 dígitos
+                if (cleanDDD.length !== 3) {
+                    return 'Código de área da Colômbia deve ter 3 dígitos (ex: 301, 310)';
+                }
+                if (cleanNumber.length !== 7) {
+                    return 'Número colombiano deve ter 7 dígitos';
+                }
+            } else {
+                // Validação básica para outros países
+                if (cleanDDD.length < 1 || cleanDDD.length > 4) {
+                    return 'Código de área inválido';
+                }
+                if (cleanNumber.length < 6 || cleanNumber.length > 9) {
+                    return 'Número de telefone inválido';
+                }
+            }
+            
+            return null; // Válido
         }
 
         // Form submission
@@ -1781,10 +1869,21 @@ a:hover {
             const formData = new FormData(e.target);
             const isAdmin = document.getElementById('userIsAdmin').checked;
             
+            const phoneCountry = formData.get('phone_country');
+            const phoneDDD = formData.get('phone_ddd');
+            const phoneNumber = formData.get('phone_number');
+            
+            // Validar telefone antes de submeter
+            const phoneError = validatePhone(phoneCountry, phoneDDD, phoneNumber);
+            if (phoneError) {
+                alert(`❌ Telefone inválido: ${phoneError}`);
+                return;
+            }
+            
             const data = {
                 name: formData.get('name'),
                 email: formData.get('email'),
-                phone: formatPhoneForDatabase(formData.get('phone')),
+                phone: formatPhoneForDatabase(phoneCountry, phoneDDD, phoneNumber),
                 position: formData.get('position'),
                 department: formData.get('department'),
                 role: isAdmin ? 'admin' : 'colaborador',
@@ -1798,10 +1897,7 @@ a:hover {
                 return;
             }
 
-            if (data.phone.length < 10) {
-                alert('Por favor, insira um telefone válido.');
-                return;
-            }
+            console.log('📞 Telefone formatado:', data.phone);
 
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
             const formEl = document.getElementById('addUserForm');

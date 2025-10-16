@@ -734,43 +734,51 @@ app.get('/api/tenants/:subdomain', async (req, res) => {
 
 // Função para normalizar telefone brasileiro
 function normalizePhone(phone) {
-  if (!phone) return phone;
+  if (!phone) return null;
   
-  // Remove espaços, parênteses e hífens
-  let cleanPhone = phone.replace(/[\s\(\)\-]/g, '');
+  // Remove caracteres especiais, mantém apenas dígitos e +
+  let clean = phone.replace(/[\s\-\(\)]/g, '');
   
-  // Se não começar com +, adiciona +55
-  if (!cleanPhone.startsWith('+')) {
-    // Se começar com 55, adiciona +
-    if (cleanPhone.startsWith('55')) {
-      cleanPhone = '+' + cleanPhone;
-    } else {
-      // Se não começar com 55, adiciona +55
-      cleanPhone = '+55' + cleanPhone;
-    }
+  // Garante que começa com +
+  if (!clean.startsWith('+')) {
+    clean = '+' + clean;
   }
   
-  return cleanPhone;
+  return clean;
 }
 
 // Função para normalizar telefone para WhatsApp (sem +)
 function normalizePhoneForWhatsApp(phone) {
+  if (!phone) return null;
+  
+  // Remove tudo exceto dígitos
+  let clean = phone.replace(/\D/g, '');
+  
+  // Retorna apenas números (WhatsApp Business API não usa +)
+  return clean;
+}
+
+// Adiciona o 9º dígito para números brasileiros que não o possuem
+function addBrazilianNinthDigit(phone) {
   if (!phone) return phone;
   
-  // Remove espaços, parênteses e hífens
-  let cleanPhone = phone.replace(/[\s\(\)\-]/g, '');
+  let clean = phone.replace(/\D/g, '');
   
-  // Remove o + se existir
-  if (cleanPhone.startsWith('+')) {
-    cleanPhone = cleanPhone.substring(1);
+  // Verifica se é Brasil (código 55)
+  if (clean.startsWith('55')) {
+    let withoutCountry = clean.substring(2);
+    
+    if (withoutCountry.length === 10) {
+      let ddd = withoutCountry.substring(0, 2);
+      let numero = withoutCountry.substring(2);
+      
+      if (numero.length === 8 && !numero.startsWith('9')) {
+        return '55' + ddd + '9' + numero;
+      }
+    }
   }
   
-  // Se não começar com 55, adiciona 55
-  if (!cleanPhone.startsWith('55')) {
-    cleanPhone = '55' + cleanPhone;
-  }
-  
-  return cleanPhone;
+  return clean;
 }
 
 // Endpoint para criar usuários (colaboradores)
@@ -779,7 +787,7 @@ app.post('/api/users', async (req, res) => {
     const schema = z.object({
       name: z.string().min(1),
       email: z.string().email(),
-      phone: z.string().min(1),
+      phone: z.string().min(10).max(15).regex(/^[\+\d\s\-\(\)]+$/, 'Telefone inválido'),
       position: z.string().optional(), // DEPRECATED: manter por compatibilidade
       department: z.string().optional(), // DEPRECATED: manter por compatibilidade
       position_id: z.string().uuid().optional(), // NOVO: usar FK
@@ -792,11 +800,15 @@ app.post('/api/users', async (req, res) => {
     const parse = schema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
 
+    // Normalizar telefone e adicionar 9º dígito brasileiro se necessário
+    let phoneToSave = normalizePhoneForWhatsApp(parse.data.phone); // Remove formatação
+    phoneToSave = addBrazilianNinthDigit(phoneToSave); // Adiciona 9 se necessário
+    
     // Normalizar telefone para banco (com +)
-    const normalizedPhone = normalizePhone(parse.data.phone);
+    const normalizedPhone = normalizePhone(phoneToSave);
     
     // Normalizar telefone para WhatsApp (sem +)
-    const whatsappPhone = normalizePhoneForWhatsApp(parse.data.phone);
+    const whatsappPhone = normalizePhoneForWhatsApp(phoneToSave);
 
     // Buscar tenant pelo subdomain
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
@@ -2572,7 +2584,12 @@ const agentTrilhasRoutes = require('./routes/agent-trilhas');
 const conversationsRoutes = require('./routes/conversations');
 
 // Importar helpers
-const { normalizePhone: normalizePhoneHelper, normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper } = require('./utils/helpers');
+const { 
+  normalizePhone: normalizePhoneHelper, 
+  normalizePhoneForWhatsApp: normalizePhoneForWhatsAppHelper,
+  addBrazilianNinthDigit: addBrazilianNinthDigitHelper,
+  getPhoneVariations: getPhoneVariationsHelper
+} = require('./utils/helpers');
 
 // Disponibilizar funções compartilhadas para as rotas via app.locals
 app.locals.getTenantBySubdomain = getTenantBySubdomain;
@@ -2581,6 +2598,8 @@ app.locals.getDemoData = getDemoData;
 app.locals.getCachedData = getCachedData;
 app.locals.normalizePhone = normalizePhoneHelper;
 app.locals.normalizePhoneForWhatsApp = normalizePhoneForWhatsAppHelper;
+app.locals.addBrazilianNinthDigit = addBrazilianNinthDigitHelper;
+app.locals.getPhoneVariations = getPhoneVariationsHelper;
 app.locals.openDatabase = openDatabase;
 app.locals.runQuery = runQuery;
 app.locals.runExec = runExec;
