@@ -1470,11 +1470,11 @@ a:hover {
                         <div style="display: flex; gap: 8px; align-items: flex-start;">
                             <div style="flex: 0 0 140px;">
                                 <select id="userPhoneCountry" name="phone_country" required style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;">
-                                    <option value="55">🇧🇷 Brasil +55</option>
-                                    <option value="57">🇨🇴 Colômbia +57</option>
-                                    <option value="54">🇦🇷 Argentina +54</option>
-                                    <option value="56">🇨🇱 Chile +56</option>
-                                    <option value="51">🇵🇪 Peru +51</option>
+                                    <option value="55">🇧🇷 +55</option>
+                                    <option value="57">🇨🇴 +57</option>
+                                    <option value="54">🇦🇷 +54</option>
+                                    <option value="56">🇨🇱 +56</option>
+                                    <option value="51">🇵🇪 +51</option>
                                 </select>
                             </div>
                             <div style="flex: 0 0 80px;">
@@ -1949,11 +1949,6 @@ a:hover {
             }
         });
 
-        // Phone mask setup
-        document.getElementById('userPhone').addEventListener('input', function(e) {
-            applyPhoneMask(e.target);
-        });
-
         // Edit user
         async function editUser(userId) {
             try {
@@ -1975,7 +1970,49 @@ a:hover {
                 await populatePositionDropdown(user.position || '');
                 await populateDepartmentDropdown(user.department || '');
                 document.getElementById('userStartDate').value = user.start_date || '';
-                document.getElementById('userPhone').value = user.phone ? user.phone.replace(/^55/, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3') : '';
+                
+                // Extrair telefone em 3 partes (país, DDD, número)
+                const phone = user.phone || '';
+                const cleanPhone = phone.replace(/\D/g, ''); // Remove tudo exceto números
+                
+                let countryCode = '55', ddd = '', number = '';
+                
+                if (cleanPhone.length > 0) {
+                    if (cleanPhone.startsWith('55')) {
+                        // Brasil: 55 + 2 dígitos DDD + 9 dígitos
+                        countryCode = '55';
+                        ddd = cleanPhone.substring(2, 4);
+                        number = cleanPhone.substring(4);
+                    } else if (cleanPhone.startsWith('57')) {
+                        // Colômbia: 57 + 3 dígitos área + 7 dígitos
+                        countryCode = '57';
+                        ddd = cleanPhone.substring(2, 5);
+                        number = cleanPhone.substring(5);
+                    } else if (cleanPhone.startsWith('54')) {
+                        countryCode = '54';
+                        ddd = cleanPhone.substring(2, 4);
+                        number = cleanPhone.substring(4);
+                    } else if (cleanPhone.startsWith('56')) {
+                        countryCode = '56';
+                        ddd = cleanPhone.substring(2, 3);
+                        number = cleanPhone.substring(3);
+                    } else if (cleanPhone.startsWith('51')) {
+                        countryCode = '51';
+                        ddd = cleanPhone.substring(2, 3);
+                        number = cleanPhone.substring(3);
+                    } else {
+                        // Detectar automaticamente
+                        countryCode = cleanPhone.substring(0, 2);
+                        ddd = cleanPhone.substring(2, 4);
+                        number = cleanPhone.substring(4);
+                    }
+                }
+                
+                document.getElementById('userPhoneCountry').value = countryCode;
+                document.getElementById('userPhoneDDD').value = ddd;
+                document.getElementById('userPhoneNumber').value = number;
+                updatePhonePreview(); // Atualizar preview
+                
                 document.getElementById('userStatus').value = user.status || 'active';
                 document.getElementById('userIsAdmin').checked = user.role === 'admin';
                 
