@@ -20,41 +20,16 @@
 
 ---
 
-## 🎨 **BRAND MANUAL NAVI - IMPLEMENTAÇÃO CONCLUÍDA** ✅
-
-**Status:** 100% COMPLETO - Funcionando em produção  
-**Data de Conclusão:** 15 de outubro de 2025  
-**Tempo Total:** 3 horas (estimado 8-10h no planejamento original)
-
-### **Conquistas Alcançadas:**
-- ✅ **4.771 linhas de código CSS removidas** (~87% de redução)
-- ✅ **12 páginas HTML otimizadas** com Brand Manual aplicado
-- ✅ **2 arquivos CSS centralizados** (navi-brand.css + navi-animations.css)
-- ✅ **100% aderência ao Brand Manual oficial** do Navigator
-- ✅ **Paleta de cores profissional:** Teal (#17A2B8) + Dark Grey (#343A40)
-- ✅ **Tipografia premium:** Montserrat (títulos) + Roboto (corpo)
-- ✅ **Feather Icons implementado** (substituindo Heroicons)
-- ✅ **Logos SVG criados:** logo-navi.svg, logo-navi-compact.svg, favicon-navi.svg
-- ✅ **Animações e hover effects profissionais**
-- ✅ **Deploy em produção funcionando:** https://navigator-gules.vercel.app
-
-### **Problema Resolvido:**
-- ❌ **Problema:** CSS 404 no Vercel após implementação
-- ✅ **Solução:** Fallback via Express temporário + configuração correta do Vercel
-- ✅ **Resultado:** CSS servindo corretamente em produção
-
-### **Arquivos Criados/Modificados:**
-- `public/css/navi-brand.css` (8.610 bytes, 367 linhas)
-- `public/css/navi-animations.css` (5.535 bytes, 334 linhas)
-- `public/assets/logo-navi.svg` + `logo-navi-compact.svg` + `favicon-navi.svg`
-- 12 páginas HTML atualizadas com imports CSS e caminhos relativos
-- `src/server.js` - Fallback temporário removido após estabilização
+## 🎨 **BRAND MANUAL NAVI** ✅ (Movido para Histórico)
+Ver detalhes completos em: [`HISTORICO_IMPLEMENTACOES.md`](./HISTORICO_IMPLEMENTACOES.md)
 
 ---
 
 ## 🚧 **TAREFAS PENDENTES**
 
 > 📘 **GUIA DETALHADO:** Ver implementação completa com código, testes e troubleshooting em: [`GUIA_DETALHADO_IMPLEMENTACAO.md`](./GUIA_DETALHADO_IMPLEMENTACAO.md)
+
+ 
 
 ### 🎯 **PRIORIDADE MÁXIMA: FASE 4.5 - APRIMORAMENTO DE ANOTAÇÕES** (6-8h)
 
@@ -227,6 +202,173 @@
   - [ ] Verificar anotação de reconhecimento
 
 ---
+
+### 🚀 **EVOLUTION API - WHATSAPP ILIMITADO GRATUITO** (8-10h)
+
+**Objetivo:** Implementar Evolution API para testes em massa sem custos, mantendo WhatsApp Business para produção.
+
+**📘 Documentação Completa:** [`EVOLUTION_API_SETUP.md`](./EVOLUTION_API_SETUP.md) e [`N8N_EVOLUTION_INTEGRATION.md`](./N8N_EVOLUTION_INTEGRATION.md)
+
+#### **EVOLUTION.1. Instalação e Configuração** (3-4h)
+
+##### Subtarefa 1.1: Setup Evolution API (1.5h)
+- [ ] **Instalar Evolution API via Docker**
+  - [ ] Criar arquivo `docker-compose.evolution.yml`
+  - [ ] Configurar variáveis de ambiente
+  - [ ] Executar `docker-compose up -d`
+  - [ ] Verificar saúde da API (`/manager/health`)
+  
+- [ ] **Configurar instância WhatsApp**
+  - [ ] Criar instância `navigator-whatsapp`
+  - [ ] Obter QR Code para conectar WhatsApp
+  - [ ] Conectar WhatsApp pessoal para testes
+  - [ ] Verificar status de conexão
+
+##### Subtarefa 1.2: Script de Automação (1h)
+- [ ] **Executar script automatizado**
+  - [ ] Usar `scripts/evolution-setup.sh`
+  - [ ] Configurar API Key: `navigator-evolution-key-2025-secure`
+  - [ ] Testar envio de mensagem inicial
+  - [ ] Salvar QR Code em `qr-code-navigator.png`
+
+##### Subtarefa 1.3: Configuração de Segurança (0.5h)
+- [ ] **Configurar variáveis de ambiente**
+  - [ ] Adicionar `EVOLUTION_API_URL` ao `.env`
+  - [ ] Adicionar `EVOLUTION_API_KEY` ao `.env`
+  - [ ] Configurar firewall (se necessário)
+  - [ ] Testar acesso externo (opcional)
+
+#### **EVOLUTION.2. Integração com N8N** (3-4h)
+
+##### Subtarefa 2.1: Configurar Credencial N8N (0.5h)
+- [ ] **Adicionar credencial Evolution API**
+  - [ ] Acessar N8N: Settings → Credentials
+  - [ ] Criar "HTTP Header Auth"
+  - [ ] Nome: "Evolution API Navigator"
+  - [ ] Header: `apikey` = `navigator-evolution-key-2025-secure`
+
+##### Subtarefa 2.2: Implementar Dual Channel (2h)
+- [ ] **Adicionar node Evolution API no workflow**
+  - [ ] Criar node "HTTP Request" para Evolution API
+  - [ ] URL: `http://localhost:8080/message/sendText/navigator-whatsapp`
+  - [ ] Configurar autenticação via credencial
+  - [ ] Testar envio de mensagem
+
+- [ ] **Implementar lógica de escolha**
+  - [ ] Code Node: "Choose Channel"
+  - [ ] Lógica: Se tenant=demo OU número de teste → Evolution API
+  - [ ] Caso contrário → WhatsApp Business (atual)
+  - [ ] Testar ambos os fluxos
+
+##### Subtarefa 2.3: Webhook para Receber Mensagens (1h)
+- [ ] **Configurar webhook Evolution API**
+  - [ ] Webhook URL: `https://hndll.app.n8n.cloud/webhook/evolution-webhook`
+  - [ ] Eventos: `MESSAGES_UPSERT`, `CONNECTION_UPDATE`
+  - [ ] Criar node "Evolution Webhook Receiver" no N8N
+  - [ ] Processar mensagens recebidas
+
+##### Subtarefa 2.4: Fallback Inteligente (0.5h)
+- [ ] **Implementar fallback automático**
+  - [ ] Tentar Evolution API primeiro
+  - [ ] Se falhar → usar WhatsApp Business
+  - [ ] Log de fallbacks para monitoramento
+  - [ ] Testar cenários de falha
+
+#### **EVOLUTION.3. Testes e Validação** (1-2h)
+
+##### Subtarefa 3.1: Testes Básicos (0.5h)
+- [ ] **Teste 1: Envio via Evolution API**
+  - [ ] Enviar mensagem para número de teste
+  - [ ] Verificar recebimento no WhatsApp
+  - [ ] Validar logs do N8N
+
+- [ ] **Teste 2: Recebimento de mensagem**
+  - [ ] Enviar mensagem do WhatsApp para Evolution API
+  - [ ] Verificar processamento no N8N
+  - [ ] Validar resposta automática
+
+##### Subtarefa 3.2: Testes de Integração (1h)
+- [ ] **Teste 3: Fluxo completo**
+  - [ ] Colaborador inicia trilha
+  - [ ] Backend dispara webhook
+  - [ ] N8N processa e envia via Evolution API
+  - [ ] Colaborador recebe e responde
+  - [ ] Sistema processa resposta
+
+- [ ] **Teste 4: Fallback**
+  - [ ] Simular falha da Evolution API
+  - [ ] Verificar uso do WhatsApp Business
+  - [ ] Confirmar entrega da mensagem
+
+##### Subtarefa 3.3: Testes em Massa (0.5h)
+- [ ] **Teste 5: Múltiplos usuários**
+  - [ ] Adicionar 5-10 números de teste
+  - [ ] Enviar mensagens simultâneas
+  - [ ] Verificar performance e entrega
+  - [ ] Monitorar logs de erro
+
+#### **EVOLUTION.4. Monitoramento e Produção** (1h)
+
+##### Subtarefa 4.1: Dashboard e Métricas (0.5h)
+- [ ] **Configurar monitoramento**
+  - [ ] Dashboard Evolution API: `http://localhost:8080/dashboard`
+  - [ ] Métricas de mensagens enviadas/recebidas
+  - [ ] Status de conexão WhatsApp
+  - [ ] Logs de erro e fallbacks
+
+##### Subtarefa 4.2: Documentação Final (0.5h)
+- [ ] **Documentar implementação**
+  - [ ] Atualizar README com Evolution API
+  - [ ] Criar guia de troubleshooting
+  - [ ] Documentar comandos de manutenção
+  - [ ] Criar procedimentos de backup/restore
+
+---
+
+### 🔧 **NOVOS ITENS REPORTADOS EM TESTES (17/out/2025)**
+
+#### **Prioridade P0 — Correções críticas no fluxo atual**
+- [ ] **Agente AI com contexto do colaborador**
+  - [ ] Incluir no contexto do agente: `nome`, `gestor` e `buddy`
+  - [ ] Permitir responder perguntas como "qual é meu nome?", "quem é meu gestor?"
+- [ ] **Isolamento por tenantId em todas as consultas**
+  - [ ] Garantir `tenantId` em insights, colaboradores, documentos e trilhas
+  - [ ] Evitar vazamento de dados entre empresas
+- [ ] **Trilhas por tenant no agente**
+  - [ ] As recomendações/listagens do agente devem filtrar pelo `tenantId` do colaborador
+- [ ] **Ordenação de trilhas por prioridade**
+  - [ ] Listar trilhas em ordem crescente de `ordem` (maior prioridade primeiro)
+- [ ] **Fluxo de finalizar/reativar trilha via agente**
+  - [ ] Finalizar trilha (status → `concluida`)
+  - [ ] Reativar trilha (status → `aguardando`)
+- [ ] **Edição de colaborador: `data_admissao`**
+  - [ ] Preencher `data_admissao` no GET de edição
+  - [ ] Evitar salvar `NULL` indevidamente
+- [ ] **Formulário de colaborador: Gestor e Buddy**
+  - [ ] Adicionar selects para escolher gestor e buddy entre usuários do tenant
+- [ ] **Melhorar a entrega do link do painel do colaborador**
+  - [ ] Mensagem formatada/curta com link clicável (WhatsApp/Telegram)
+
+#### **Prioridade P1 — Aprimoramentos funcionais**
+- [ ] **Middleware `requireTenant`**
+  - [ ] Padronizar/forçar `tenantId` em rotas sensíveis
+- [ ] **Endpoint `GET /api/users`**
+  - [ ] Listar usuários do tenant (popular selects de Gestor/Buddy)
+- [ ] **Endpoint `GET /api/agent/colaborador/:id`**
+  - [ ] Retornar nome, gestor, buddy, cargo, departamento, data_admissao
+- [ ] **Endpoint `POST /api/trilhas/full`**
+  - [ ] Criar trilha e conteúdos em uma transação única
+- [ ] **Validação de prioridade de trilhas**
+  - [ ] Tornar `ordem` obrigatório no formulário/admin de trilhas
+- [ ] **Testes de negação de acesso entre tenants**
+  - [ ] Garantir bloqueio de acesso cruzado (403/404)
+
+#### **Prioridade P2 — UX e documentação**
+- [ ] **Unificar UI de criação de trilha**
+  - [ ] Criar trilha e adicionar conteúdos no mesmo formulário (manter opção de editar depois)
+- [ ] **Documentação**
+  - [ ] Atualizar este checklist com status dos novos itens
+  - [ ] Atualizar README e docs do N8N (novas ferramentas e contexto)
 
 ### 📋 **FASE 1 ANTIGA: Trilhas Inteligentes por Cargo/Departamento** (4-6h)
 
@@ -630,21 +772,33 @@
 
 ## 🎯 **PRÓXIMOS PASSOS RECOMENDADOS**
 
-### **🔥 PRIORIDADE 1 (AGORA): Fase 4.5** (6-8h)
+### **🔥 PRIORIDADE 1 (AGORA): Evolution API** (8-10h)
+```
+✅ Solução imediata para testes em massa
+✅ Zero custos para mensagens
+✅ Mantém WhatsApp Business funcionando
+✅ Documentação completa pronta
+✅ Scripts automatizados criados
+
+DIA 1 (3-4h): EVOLUTION.1 - Instalação e Configuração
+DIA 2 (3-4h): EVOLUTION.2 - Integração com N8N
+DIA 3 (1-2h): EVOLUTION.3 - Testes e Validação
+```
+
+### **⚡ PRIORIDADE 2 (DEPOIS): Fase 4.5** (6-8h)
 ```
 ✅ Sistema básico já funciona
 ✅ Vai de BÁSICO → INTELIGENTE
 ✅ Alto impacto imediato
 ✅ Documentação completa pronta
-✅ Tudo planejado
 
-DIA 1 (3-4h): 4.5.1 - Categorização Inteligente
-DIA 2 (2-3h): 4.5.2 - Detecção de Urgência
-DIA 3 (3-4h): 4.5.3 - Análise de Padrões
-DIA 4 (2-3h): 4.5.4 - Anotações Proativas
+DIA 4 (3-4h): 4.5.1 - Categorização Inteligente
+DIA 5 (2-3h): 4.5.2 - Detecção de Urgência
+DIA 6 (3-4h): 4.5.3 - Análise de Padrões
+DIA 7 (2-3h): 4.5.4 - Anotações Proativas
 ```
 
-### **⚡ PRIORIDADE 2 (DEPOIS): Testes + Produção** (10-14h)
+### **🚀 PRIORIDADE 3 (DEPOIS): Testes + Produção** (10-14h)
 ```
 - Testes de integração completos
 - Preparação para produção
@@ -671,11 +825,12 @@ DIA 4 (2-3h): 4.5.4 - Anotações Proativas
 ## 📈 **ESTATÍSTICAS ATUAIS**
 
 ```
-Total de tarefas no checklist: ~750
+Total de tarefas no checklist: ~790
 Tarefas completas (Fases 1-3 + Brand Manual): 75 tarefas ✅
-Tarefas pendentes: 675 tarefas 📋
+Tarefas pendentes: 715 tarefas 📋
 
 Distribuição das pendentes:
+- Evolution API (nova): 40 tarefas (8-10h)
 - Fase 4.5 (próxima): 28 tarefas (6-8h)
 - Testes + Produção: 38 tarefas (10-14h)
 - Melhorias opcionais: ~200 tarefas (30-40h)
@@ -684,5 +839,5 @@ Distribuição das pendentes:
 
 ---
 
-*Última atualização: 15 de outubro de 2025*  
-*Status: 3 Fases + Brand Manual Concluídas ✅ | Fase 4.5 Pendente 🚧*
+*Última atualização: 17 de outubro de 2025*  
+*Status: 3 Fases + Brand Manual Concluídas ✅ | Evolution API + Fase 4.5 Pendentes 🚧*

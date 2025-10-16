@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../db-pg');
 const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
+const axios = require('axios');
 
 // POST /api/webhooks/alerta-sentimento-negativo
 router.post('/alerta-sentimento-negativo', async (req, res) => {
@@ -207,6 +208,86 @@ router.get('/alertas-ativos/:tenantId', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar alertas ativos:', error);
     res.status(500).json({ error: 'Erro ao buscar alertas' });
+  }
+});
+
+// POST /api/webhooks/evolution/send-message
+router.post('/evolution/send-message', async (req, res) => {
+  try {
+    const { 
+      phone, 
+      message, 
+      instance = process.env.EVOLUTION_INSTANCE_NAME || 'navigator-whatsapp' 
+    } = req.body;
+
+    if (!phone || !message) {
+      return res.status(400).json({ 
+        error: 'phone e message são obrigatórios' 
+      });
+    }
+
+    // Normalizar telefone (remover caracteres especiais)
+    const phoneNormalized = phone.replace(/\D/g, '');
+
+    console.log(`📱 Enviando mensagem via Evolution API para ${phoneNormalized}`);
+
+    const response = await axios.post(
+      `${process.env.EVOLUTION_API_URL}/message/sendText/${instance}`,
+      {
+        number: phoneNormalized,
+        text: message
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': process.env.EVOLUTION_API_KEY
+        },
+        timeout: 10000
+      }
+    );
+
+    console.log('✅ Mensagem enviada com sucesso via Evolution API');
+
+    res.json({ 
+      success: true, 
+      data: response.data,
+      phone: phoneNormalized 
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao enviar mensagem via Evolution API:', error.message);
+    res.status(500).json({ 
+      error: 'Erro ao enviar mensagem',
+      details: error.message,
+      apiUrl: process.env.EVOLUTION_API_URL
+    });
+  }
+});
+
+// GET /api/webhooks/evolution/status
+router.get('/evolution/status', async (req, res) => {
+  try {
+    const instance = req.query.instance || process.env.EVOLUTION_INSTANCE_NAME;
+    
+    const response = await axios.get(
+      `${process.env.EVOLUTION_API_URL}/instance/connectionState/${instance}`,
+      {
+        headers: {
+          'apikey': process.env.EVOLUTION_API_KEY
+        }
+      }
+    );
+
+    res.json({ 
+      success: true, 
+      status: response.data 
+    });
+
+  } catch (error) {
+    res.status(500).json({ 
+      error: 'Erro ao verificar status',
+      details: error.message 
+    });
   }
 });
 

@@ -12,6 +12,7 @@ Flowly é uma plataforma SaaS que automatiza o processo de onboarding de colabor
 - 👥 **Gestão de Colaboradores** - Cadastro e acompanhamento de funcionários
 - 🏢 **Multi-tenant** - Suporte a múltiplas empresas
 - 🔗 **Integração n8n** - Webhook automático para automação
+- 📱 **Evolution API** - WhatsApp ilimitado e gratuito via Render
 
 ## 🚀 Como usar
 
@@ -125,6 +126,35 @@ POST /search/policy
 ## 📝 Licença
 
 ISC
+
+## 📱 Evolution API - WhatsApp Ilimitado
+
+O Flowly usa a Evolution API hospedada no Render para enviar mensagens WhatsApp de forma gratuita e ilimitada.
+
+### Configuração
+- **API URL:** https://navigator-evolution-api.onrender.com
+- **Documentação:** Ver [EVOLUTION_API_CONFIG.md](./EVOLUTION_API_CONFIG.md)
+- **Deploy:** Configurado via `render.evolution.yaml` e `Dockerfile.evolution`
+
+### Vantagens
+- ✅ **Gratuito** - Sem custos de mensagem
+- ✅ **Ilimitado** - Sem limites de envio
+- ✅ **Brasileiro** - Suporte em português
+- ✅ **Auto-hospedado** - Controle total dos dados
+- ✅ **Webhooks** - Integração fácil com N8N
+
+### Endpoints Backend
+```bash
+# Enviar mensagem
+POST /api/webhooks/evolution/send-message
+{
+  "phone": "+5562999404760",
+  "message": "Mensagem de teste"
+}
+
+# Verificar status
+GET /api/webhooks/evolution/status
+```
 
 ## 🤝 Contribuição
 
