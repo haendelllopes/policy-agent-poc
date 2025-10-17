@@ -1,0 +1,16 @@
+# Evolution API - Variáveis de Ambiente
+# Adicionar ao arquivo .env do backend Navigator
+
+# Evolution API Configuration
+EVOLUTION_API_URL=https://navigator-evolution-api.onrender.com
+EVOLUTION_API_KEY=SUBSTITUIR_PELA_API_KEY_DO_RENDER
+EVOLUTION_INSTANCE_NAME=navigator-whatsapp
+
+# Webhook URLs
+EVOLUTION_WEBHOOK_URL=https://hndll.app.n8n.cloud/webhook/evolution-webhook
+
+# Instruções:
+# 1. Após deploy no Render, copie a API_KEY gerada
+# 2. Substitua SUBSTITUIR_PELA_API_KEY_DO_RENDER pela chave real
+# 3. Adicione estas linhas ao arquivo .env do backend
+# 4. Reinicie o servidor backend
