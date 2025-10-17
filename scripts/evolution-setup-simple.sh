@@ -1,11 +1,12 @@
 #!/bin/bash
 
-# 🚀 Evolution API Setup Script para Navigator
+# 🚀 Evolution API Setup Simples - Navigator
 # Data: 17 de outubro de 2025
+# Versão: Simplificada para evitar erros de build
 
 set -e
 
-echo "🚀 Configurando Evolution API para Navigator..."
+echo "🚀 Configurando Evolution API (Versão Simplificada)..."
 
 # Cores para output
 RED='\033[0;31m'
@@ -18,7 +19,6 @@ NC='\033[0m' # No Color
 EVOLUTION_URL="http://localhost:8080"
 API_KEY="navigator-evolution-key-2025-secure"
 INSTANCE_NAME="navigator-whatsapp"
-WEBHOOK_URL="https://hndll.app.n8n.cloud/webhook/evolution-webhook"
 
 echo -e "${BLUE}📋 Verificando pré-requisitos...${NC}"
 
@@ -36,33 +36,32 @@ fi
 
 echo -e "${GREEN}✅ Docker e Docker Compose encontrados${NC}"
 
-# Verificar se curl está disponível
-if ! command -v curl &> /dev/null; then
-    echo -e "${RED}❌ curl não está instalado. Instale o curl primeiro.${NC}"
-    exit 1
-fi
+echo -e "${BLUE}🐳 Parando containers existentes...${NC}"
 
-echo -e "${GREEN}✅ curl encontrado${NC}"
+# Parar containers existentes se houver
+docker-compose -f docker-compose.evolution-simple.yml down 2>/dev/null || true
+
+echo -e "${BLUE}🐳 Baixando imagem oficial Evolution API...${NC}"
+
+# Baixar imagem oficial primeiro
+docker pull evolutionapi/evolution-api:1.0.0
 
 echo -e "${BLUE}🐳 Iniciando Evolution API...${NC}"
 
-# Parar containers existentes se houver
-docker-compose -f docker-compose.evolution.yml down 2>/dev/null || true
-
-# Iniciar Evolution API
-docker-compose -f docker-compose.evolution.yml up -d
+# Iniciar Evolution API (versão simples)
+docker-compose -f docker-compose.evolution-simple.yml up -d
 
 echo -e "${YELLOW}⏳ Aguardando Evolution API inicializar...${NC}"
 
 # Aguardar API estar disponível
-for i in {1..30}; do
+for i in {1..60}; do
     if curl -s "$EVOLUTION_URL/manager/health" > /dev/null 2>&1; then
         echo -e "${GREEN}✅ Evolution API está rodando${NC}"
         break
     fi
     
-    if [ $i -eq 30 ]; then
-        echo -e "${RED}❌ Evolution API não iniciou em 30 segundos${NC}"
+    if [ $i -eq 60 ]; then
+        echo -e "${RED}❌ Evolution API não iniciou em 60 segundos${NC}"
         echo -e "${YELLOW}Verifique os logs: docker-compose -f docker-compose.evolution.yml logs${NC}"
         exit 1
     fi
@@ -80,7 +79,7 @@ CREATE_RESPONSE=$(curl -s -X POST "$EVOLUTION_URL/instance/create" \
     "instanceName": "'$INSTANCE_NAME'",
     "qrcode": true,
     "integration": "WHATSAPP-BAILEYS",
-    "webhook": "'$WEBHOOK_URL'",
+    "webhook": "https://hndll.app.n8n.cloud/webhook/evolution-webhook",
     "webhookByEvents": false,
     "events": ["MESSAGES_UPSERT", "CONNECTION_UPDATE"],
     "rejectCall": true,
@@ -171,7 +170,6 @@ echo -e "${BLUE}📊 Informações da instalação:${NC}"
 echo -e "${GREEN}• Evolution API URL: $EVOLUTION_URL${NC}"
 echo -e "${GREEN}• Instância: $INSTANCE_NAME${NC}"
 echo -e "${GREEN}• API Key: $API_KEY${NC}"
-echo -e "${GREEN}• Webhook: $WEBHOOK_URL${NC}"
 echo -e "${GREEN}• QR Code: qr-code-navigator.png${NC}"
 
 echo -e "${BLUE}🔧 Próximos passos:${NC}"
@@ -180,6 +178,3 @@ echo -e "${YELLOW}2. Testar integração completa${NC}"
 echo -e "${YELLOW}3. Adicionar usuários de teste${NC}"
 
 echo -e "${GREEN}🎉 Evolution API configurada com sucesso!${NC}"
-
-
-

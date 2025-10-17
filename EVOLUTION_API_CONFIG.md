@@ -179,3 +179,5 @@ EVOLUTION_API_URL=https://navigator-evolution-api.onrender.com
 EVOLUTION_API_KEY=SUA-API-KEY-DO-RENDER
 EVOLUTION_INSTANCE_NAME=navigator-whatsapp
 ```
+
+

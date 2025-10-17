@@ -1,17 +1,35 @@
 services:
+  # Evolution API
   - type: web
-    name: flowly
-    env: node
+    name: evolution-api-navigator
+    env: docker
+    dockerfilePath: ./evolution-api/Dockerfile
     plan: free
-    buildCommand: npm install
-    startCommand: node src/server.js
-    autoDeploy: true
     envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 10000
-      - key: OPENAI_API_KEY
-        value: changeme
+      - key: SERVER_URL
+        value: https://evolution-api-navigator.onrender.com
+      - key: AUTHENTICATION_API_KEY
+        value: navigator-evolution-key-2025-secure
+      - key: LOG_LEVEL
+        value: ERROR
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: DATABASE_PROVIDER
+        value: postgresql
+      - key: DATABASE_CONNECTION_URI
+        fromDatabase:
+          name: evolution-postgres
+          property: connectionString
+      - key: WEBHOOK_GLOBAL_URL
+        value: https://hndll.app.n8n.cloud/webhook/evolution-incoming
+      - key: WEBHOOK_GLOBAL_ENABLED
+        value: "true"
+      - key: WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS
+        value: "false"
 
-
+  # PostgreSQL Database
+  - type: pserv
+    name: evolution-postgres
+    plan: free
+    databaseName: evolution_db
+    user: evolution_user

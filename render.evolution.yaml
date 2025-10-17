@@ -19,3 +19,5 @@ services:
         value: https://hndll.app.n8n.cloud/webhook/evolution-webhook
       - key: WEBHOOK_GLOBAL_ENABLED
         value: true
+
+
