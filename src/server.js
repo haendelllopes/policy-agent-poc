@@ -1363,6 +1363,79 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// Endpoint para buscar usuário por telefone (para N8N)
+app.post('/api/users/lookup-by-phone', async (req, res) => {
+  try {
+    const { phone } = req.body;
+    
+    if (!phone) {
+      return res.status(400).json({ error: 'Campo obrigatório: phone' });
+    }
+
+    // Buscar tenant pelo subdomain
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    // Normalizar telefone e adicionar 9º dígito brasileiro se necessário
+    let phoneToFind = normalizePhoneForWhatsApp(phone); // Remove formatação
+    phoneToFind = addBrazilianNinthDigit(phoneToFind); // Adiciona 9 se necessário
+    
+    // Normalizar telefone para banco (com +)
+    const normalizedPhone = normalizePhone(phoneToFind);
+    
+    // Normalizar telefone para WhatsApp (sem +)
+    const whatsappPhone = normalizePhoneForWhatsApp(phoneToFind);
+
+    let user;
+    if (await usePostgres()) {
+      // PostgreSQL - buscar por ambos os formatos de telefone
+      const result = await query(
+        'SELECT id, name, email, phone FROM users WHERE tenant_id = $1 AND (phone = $2 OR phone = $3) LIMIT 1',
+        [tenant.id, normalizedPhone, whatsappPhone]
+      );
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+      
+      user = result.rows[0];
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const result = runQuery(
+          db,
+          'SELECT id, name, email, phone FROM users WHERE tenant_id = ? AND (phone = ? OR phone = ?) LIMIT 1',
+          [tenant.id, normalizedPhone, whatsappPhone]
+        );
+        
+        if (result.length === 0) {
+          return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+        
+        user = result[0];
+      } finally {
+        closeDatabase(db);
+      }
+    }
+
+    // Por enquanto, trilha_id sempre null (pode ser implementado depois)
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      trilha_id: null
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar usuário por telefone:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
   try {
     const { title, category, department, description } = req.body;
