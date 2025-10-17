@@ -1,11 +1,37 @@
-FROM evolutionapi/evolution-api:latest
+# Evolution API Dockerfile
+FROM node:18-alpine
 
+# Instalar dependências do sistema
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    musl-dev \
+    giflib-dev \
+    pixman-dev \
+    pangomm-dev \
+    libjpeg-turbo-dev \
+    freetype-dev
+
+# Criar diretório da aplicação
+WORKDIR /evolution
+
+# Instalar Evolution API via npm
+RUN npm install -g @evolution-api/api
+
+# Configurar variáveis de ambiente
 ENV SERVER_URL=https://navigator-evolution-api.onrender.com
 ENV LOG_LEVEL=ERROR
 ENV CORS_ORIGIN=*
+ENV PORT=8080
 
+# Expor porta
 EXPOSE 8080
 
-CMD ["node", "/evolution/dist/src/main.js"]
+# Comando para iniciar
+CMD ["evolution-api", "start"]
 
 
