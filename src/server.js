@@ -1186,7 +1186,9 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Endpoint para excluir usuário
+// Endpoint para excluir usuário - COMENTADO (função duplicada)
+// A função DELETE está implementada em src/routes/users.js
+/*
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
@@ -1271,6 +1273,7 @@ app.delete('/api/users/:id', async (req, res) => {
     res.status(500).json({ error: { formErrors: ['Erro interno do servidor'] } });
   }
 });
+*/
 
 // Endpoint de teste para verificar consistência
 app.get('/test-consistency/:userId', async (req, res) => {
