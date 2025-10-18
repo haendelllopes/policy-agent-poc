@@ -418,6 +418,14 @@ router.put('/:id', async (req, res) => {
       ]);
       
       console.log('✅ UPDATE executado. Resultado:', updateResult.rows[0]);
+      
+      // Verificar se realmente foi salvo
+      const verificacao = await query(`
+        SELECT id, name, gestor_id, buddy_id 
+        FROM users 
+        WHERE id = $1
+      `, [userId]);
+      console.log('🔍 Verificação pós-UPDATE:', verificacao.rows[0]);
     } else {
       const { db } = await openDatabase();
       try {
