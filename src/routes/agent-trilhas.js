@@ -101,6 +101,90 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
 });
 
 /**
+ * GET /api/agent/colaborador/:colaboradorId
+ * Busca informações completas do colaborador para o agente conversacional
+ * Aceita UUID ou telefone como colaboradorId
+ */
+router.get('/colaborador/:colaboradorId', async (req, res) => {
+  try {
+    const colaboradorId = req.params.colaboradorId;
+    let userId = colaboradorId;
+    let tenantId = null;
+
+    // Se colaboradorId é telefone (só números), normalizar e buscar usuário
+    if (/^\d+$/.test(colaboradorId)) {
+      const phoneNormalized = normalizePhoneForWhatsApp(colaboradorId);
+      const phoneWithBrazilDigit = addBrazilianNinthDigit(phoneNormalized);
+      
+      const userResult = await query(`
+        SELECT u.id, u.tenant_id FROM users u
+        WHERE u.status = 'active' AND (
+          REPLACE(REPLACE(REPLACE(u.phone, '+', ''), '-', ''), ' ', '') = $1 OR
+          REPLACE(REPLACE(REPLACE(u.phone, '+', ''), '-', ''), ' ', '') = $2
+        )
+        LIMIT 1
+      `, [phoneNormalized, phoneWithBrazilDigit]);
+      
+      if (userResult.rows.length === 0) {
+        console.log(`❌ Colaborador não encontrado: ${colaboradorId}`);
+        return res.status(404).json({ 
+          error: 'Colaborador não encontrado',
+          phoneNormalized,
+          phoneWithBrazilDigit
+        });
+      }
+      
+      userId = userResult.rows[0].id;
+      tenantId = userResult.rows[0].tenant_id;
+      console.log(`📞 Colaborador encontrado: ${colaboradorId} → ${userId}`);
+    } else {
+      // Se é UUID, buscar tenant do usuário
+      const userResult = await query(`
+        SELECT tenant_id FROM users WHERE id = $1 AND status = 'active'
+      `, [colaboradorId]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Colaborador não encontrado' });
+      }
+      
+      tenantId = userResult.rows[0].tenant_id;
+    }
+
+    // Buscar dados completos do colaborador com JOINs
+    const result = await query(`
+      SELECT 
+        u.id,
+        u.name as nome,
+        u.email,
+        u.phone as telefone,
+        u.data_admissao,
+        p.name as cargo,
+        d.name as departamento,
+        gestor.name as gestor_nome,
+        buddy.name as buddy_nome,
+        u.created_at,
+        u.status
+      FROM users u
+      LEFT JOIN positions p ON p.id = u.position_id
+      LEFT JOIN departments d ON d.id = u.department_id
+      LEFT JOIN users gestor ON gestor.id = u.gestor_id
+      LEFT JOIN users buddy ON buddy.id = u.buddy_id
+      WHERE u.id = $1 AND u.tenant_id = $2 AND u.status = 'active'
+    `, [userId, tenantId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Colaborador não encontrado' });
+    }
+
+    console.log(`✅ Dados do colaborador retornados: ${result.rows[0].nome}`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Erro ao buscar colaborador:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
  * POST /api/agent/trilhas/iniciar
  * Inicia uma trilha via agente
  * Aceita tanto UUID quanto número de telefone no colaborador_id
