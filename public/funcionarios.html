@@ -1971,8 +1971,10 @@ a:hover {
 
             // Debug: log dos dados sendo enviados
             console.log('📤 Dados sendo enviados:', data);
-            console.log('🎯 Gestor ID:', data.gestor_id);
-            console.log('🎯 Buddy ID:', data.buddy_id);
+            console.log('🎯 Gestor ID:', data.gestor_id, 'Tipo:', typeof data.gestor_id);
+            console.log('🎯 Buddy ID:', data.buddy_id, 'Tipo:', typeof data.buddy_id);
+            console.log('📋 FormData gestor_id:', formData.get('gestor_id'));
+            console.log('📋 FormData buddy_id:', formData.get('buddy_id'));
 
             // Basic validation
             if (!data.name || !data.email || !data.phone || !data.position) {
