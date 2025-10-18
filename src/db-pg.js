@@ -920,5 +920,12 @@ module.exports = {
   getDocumentsByTenant,
   getChunksByDocument,
   closePool,
-  getPool: () => pool
+  getPool: () => {
+    if (!pool) {
+      console.log('⚠️ Pool não está inicializado, retornando null');
+      return null;
+    }
+    console.log('✅ Pool disponível:', !!pool);
+    return pool;
+  }
 };
