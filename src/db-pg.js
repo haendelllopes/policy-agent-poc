@@ -925,7 +925,19 @@ module.exports = {
       console.log('⚠️ Pool não está inicializado, retornando null');
       return null;
     }
-    console.log('✅ Pool disponível:', !!pool);
+    
+    // Verificar se o pool está realmente funcional
+    try {
+      if (pool.totalCount === undefined || pool.idleCount === undefined) {
+        console.log('⚠️ Pool em estado inconsistente, retornando null');
+        return null;
+      }
+    } catch (error) {
+      console.log('⚠️ Erro ao verificar pool:', error.message);
+      return null;
+    }
+    
+    console.log('✅ Pool disponível e funcional:', !!pool);
     return pool;
   }
 };
