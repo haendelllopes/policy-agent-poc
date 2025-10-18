@@ -1564,14 +1564,14 @@ a:hover {
         // Load users
         async function loadUsers() {
             const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
-            console.log('Carregando colaboradores para tenant:', tenant);
+            console.log('🔄 Carregando colaboradores para tenant:', tenant);
             
             try {
                 const response = await fetchData(`/api/users?tenant=${tenant}`);
                 allUsers = response;
                 filteredUsers = [...allUsers];
                 
-                console.log('Colaboradores carregados:', allUsers.length);
+                console.log('✅ Colaboradores carregados:', allUsers.length);
                 renderUsers();
                 populateDepartmentFilter();
             } catch (error) {
@@ -2145,6 +2145,7 @@ a:hover {
                 });
 
                 if (response.ok) {
+                    console.log('✅ Usuário excluído com sucesso, atualizando grid...');
                     loadUsers();
                 } else {
                     const result = await response.json();
