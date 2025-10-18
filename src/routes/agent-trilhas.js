@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../db-pg');
 const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
+const { requireTenant } = require('../middlewares/requireTenant');
 
 /**
  * GET /api/agent/trilhas/disponiveis/:colaboradorId
  * Lista trilhas disponíveis para um colaborador específico
  * Aceita tanto UUID quanto número de telefone
  */
-router.get('/disponiveis/:colaboradorId', async (req, res) => {
+router.get('/disponiveis/:colaboradorId', requireTenant, async (req, res) => {
   try {
     const colaboradorId = req.params.colaboradorId;
     let userId = colaboradorId;
@@ -105,7 +106,7 @@ router.get('/disponiveis/:colaboradorId', async (req, res) => {
  * Busca informações completas do colaborador para o agente conversacional
  * Aceita UUID ou telefone como colaboradorId
  */
-router.get('/colaborador/:colaboradorId', async (req, res) => {
+router.get('/colaborador/:colaboradorId', requireTenant, async (req, res) => {
   try {
     const colaboradorId = req.params.colaboradorId;
     let userId = colaboradorId;
@@ -189,7 +190,7 @@ router.get('/colaborador/:colaboradorId', async (req, res) => {
  * Inicia uma trilha via agente
  * Aceita tanto UUID quanto número de telefone no colaborador_id
  */
-router.post('/iniciar', async (req, res) => {
+router.post('/iniciar', requireTenant, async (req, res) => {
   try {
     const { getTenantBySubdomain } = req.app.locals;
     const { colaborador_id, trilha_id } = req.body;
@@ -336,7 +337,7 @@ router.post('/iniciar', async (req, res) => {
  * Recebe feedback sobre uma trilha
  * Aceita tanto UUID quanto número de telefone no colaborador_id
  */
-router.post('/feedback', async (req, res) => {
+router.post('/feedback', requireTenant, async (req, res) => {
   try {
     const { colaborador_id, trilha_id, feedback, tipo_feedback } = req.body;
     
