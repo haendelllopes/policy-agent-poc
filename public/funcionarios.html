@@ -1988,9 +1988,17 @@ a:hover {
             const formEl = document.getElementById('addUserForm');
             const editingId = formEl.dataset.editingUserId;
             
+            // Debug: log do editingId
+            console.log('🔍 EditingId:', editingId);
+            console.log('🔍 FormEl dataset:', formEl.dataset);
+            
             try {
                 const url = editingId ? `/api/users/${editingId}?tenant=${tenant}` : `/api/users?tenant=${tenant}`;
                 const method = editingId ? 'PUT' : 'POST';
+                
+                // Debug: log da URL e método
+                console.log('🌐 URL:', url);
+                console.log('🔧 Método:', method);
                 const response = await fetch(url, {
                     method,
                     headers: {
