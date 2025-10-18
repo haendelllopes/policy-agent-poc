@@ -70,10 +70,20 @@ async function initializePool() {
         if (process.env.DATABASE_URL) {
           console.log('Vercel detectado - usando DATABASE_URL');
           console.log('DATABASE_URL disponível:', !!process.env.DATABASE_URL);
+          console.log('DATABASE_URL tipo:', typeof process.env.DATABASE_URL);
+          console.log('DATABASE_URL length:', process.env.DATABASE_URL?.length);
           console.log('Usando DATABASE_URL:', process.env.DATABASE_URL.substring(0, 50) + '...');
+          
+          // Verificar se a string de conexão é válida
+          if (!process.env.DATABASE_URL || typeof process.env.DATABASE_URL !== 'string') {
+            console.error('❌ DATABASE_URL inválida:', process.env.DATABASE_URL);
+            throw new Error('DATABASE_URL inválida');
+          }
+          
           try {
             pool = createPool(process.env.DATABASE_URL);
             console.log('✅ Pool criado com DATABASE_URL');
+            console.log('Pool config:', pool.options);
           } catch (error) {
             console.error('❌ Erro ao criar pool com DATABASE_URL:', error);
             throw error;
