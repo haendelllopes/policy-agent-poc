@@ -9,6 +9,7 @@ console.log('PGUSER:', process.env.PGUSER ? '✅ Configurada' : '❌ Não config
 console.log('PGPASSWORD:', process.env.PGPASSWORD ? '✅ Configurada' : '❌ Não configurada');
 if (process.env.DATABASE_URL) {
   console.log('DATABASE_URL (primeiros 50 chars):', process.env.DATABASE_URL.substring(0, 50) + '...');
+  console.log('DATABASE_URL completa:', process.env.DATABASE_URL);
 }
 console.log('=====================================');
 
