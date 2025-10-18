@@ -1757,13 +1757,13 @@ a:hover {
                     // Option para Gestor
                     const optionGestor = document.createElement('option');
                     optionGestor.value = user.id;
-                    optionGestor.textContent = `${user.name} (${user.email})`;
+                    optionGestor.textContent = user.name;
                     selectGestor.appendChild(optionGestor);
                     
                     // Option para Buddy
                     const optionBuddy = document.createElement('option');
                     optionBuddy.value = user.id;
-                    optionBuddy.textContent = `${user.name} (${user.email})`;
+                    optionBuddy.textContent = user.name;
                     selectBuddy.appendChild(optionBuddy);
                 });
                 
