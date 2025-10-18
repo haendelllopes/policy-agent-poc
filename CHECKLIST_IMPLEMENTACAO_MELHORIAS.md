@@ -37,63 +37,23 @@ Ver detalhes completos em: [`HISTORICO_IMPLEMENTACOES.md`](./HISTORICO_IMPLEMENT
 
 **📘 Documentação Completa:** [Seção 4.5 do Guia Detalhado](./GUIA_DETALHADO_IMPLEMENTACAO.md#45-aprimoramento-de-anotações)
 
-#### **4.5.1. Categorização Inteligente de Feedback** (3-4h)
+#### **4.5.1. Categorização Inteligente de Feedback** ✅ **IMPLEMENTADO**
 
-##### Subtarefa 1.1: Criar Code Node "Analisar Feedback com GPT-4o" (1.5h)
-- [ ] **N8N - Adicionar Code Node**
-  - [ ] Posição: APÓS `Tem feedback?` (TRUE branch), ANTES `💾 Salvar Anotação`
-  - [ ] Nome do nó: `Analisar Feedback com GPT-4o`
-  - [ ] Tipo: Code (JavaScript)
-  
-- [ ] **Implementar código (ver doc linhas 50-200)**
-  - [ ] Importar axios: `const axios = require('axios')`
-  - [ ] Extrair dados: mensagem, sentimento, intensidade, from, tenantId
-  - [ ] Configurar OpenAI API Key (substituir `sk-proj-...`)
-  - [ ] Configurar modelo: `gpt-4o-mini`
-  - [ ] Configurar parâmetros: temp=0.3, max_tokens=500
-  - [ ] Implementar prompt de análise semântica
-  - [ ] Parser de resposta JSON (com tratamento de erro)
-  - [ ] Fallback em caso de erro
-  
-- [ ] **Validar saída do nó**
-  - [ ] ✅ Retorna: tipo, urgencia, categoria, subcategoria
-  - [ ] ✅ Retorna: tags (array 5+), sentimento_contexto
-  - [ ] ✅ Retorna: acao_sugerida, impacto_estimado, titulo_sugerido
-  - [ ] ✅ Metadata: analisado_em, modelo_usado, versao_analise
+**Status:** ✅ **CONCLUÍDO** - Já implementado no workflow N8N
+- ✅ Code Node "Analisar Feedback com GPT-4o" existe e funciona
+- ✅ Nó "💾 Salvar Anotação" com campos expandidos
+- ✅ Análise semântica com GPT-4o-mini funcionando
+- ✅ Retorna: tipo, urgencia, categoria, subcategoria, tags, sentimento_contexto
+- ✅ Metadata completa: analisado_em, modelo_usado, versao_analise
+- ✅ Testes funcionando com dados reais do workflow
 
-##### Subtarefa 1.2: Atualizar nó "💾 Salvar Anotação" (1h)
-- [ ] **Expandir campos aceitos**
-  - [ ] Adicionar 9 novos campos ao JSON body
-  - [ ] Atualizar referências para usar dados do Code Node anterior
-  - [ ] Validar que todos os campos são enviados corretamente
-  
-- [ ] **Atualizar Backend (se necessário)**
-  - [ ] Verificar se endpoint `/api/agente/anotacoes` aceita novos campos
-  - [ ] Se não aceitar, atualizar INSERT query na tabela `agente_anotacoes`
-  - [ ] Adicionar colunas: `tipo`, `urgencia`, `categoria`, `subcategoria`, `tags`, `sentimento_contexto`, `acao_sugerida`, `impacto_estimado`, `titulo_sugerido`
+#### **4.5.2. Detecção de Urgência Automática** (1h) 🚧 **PENDENTE**
 
-##### Subtarefa 1.3: Testes de Categorização (0.5h)
-- [ ] **Teste 1: Feedback Construtivo**
-  - [ ] Mensagem: "A trilha de compliance está muito longa, poderia ser dividida em módulos menores"
-  - [ ] Verificar: tipo=melhoria, urgencia=media, categoria=trilha, tags=["compliance", "melhoria", "estrutura"]
-  
-- [ ] **Teste 2: Problema Urgente**
-  - [ ] Mensagem: "Não consigo acessar o sistema há 2 dias, isso está atrasando meu onboarding"
-  - [ ] Verificar: tipo=problema, urgencia=alta, categoria=tecnico, tags=["acesso", "problema", "urgente"]
-  
-- [ ] **Teste 3: Elogio**
-  - [ ] Mensagem: "Adorei a trilha de boas-vindas, muito bem estruturada e interativa"
-  - [ ] Verificar: tipo=elogio, urgencia=baixa, categoria=trilha, tags=["elogio", "boas-vindas", "satisfacao"]
-
-#### **4.5.2. Detecção de Urgência Automática** (2-3h)
-
-##### Subtarefa 2.1: Criar Lógica de Urgência no N8N (1h)
-- [ ] **Adicionar IF Node "🚨 Analisar Urgência"**
-  - [ ] Posição: APÓS Code Node "Analisar Feedback", ANTES `💾 Salvar Anotação`
-  - [ ] Condição 1: `urgencia === 'critica'` → Branch "CRÍTICA"
-  - [ ] Condição 2: `urgencia === 'alta'` → Branch "ALTA"
-  - [ ] Condição 3: `urgencia === 'media'` → Branch "MÉDIA"
-  - [ ] Condição 4: `urgencia === 'baixa'` → Branch "BAIXA"
+**Status:** 🚧 **PENDENTE** - Precisa implementar lógica de urgência
+- ❌ Falta IF Node "🚨 Analisar Urgência" após "Analisar Feedback com GPT-4o"
+- ❌ Falta branch para urgência CRÍTICA (notificar admin + criar ticket)
+- ❌ Falta branch para urgência ALTA (notificar admin)
+- ❌ Falta endpoints backend para alertas de urgência
   
 - [ ] **Branch CRÍTICA - Notificação Imediata**
   - [ ] HTTP Request "Notificar Admin"
@@ -132,16 +92,14 @@ Ver detalhes completos em: [`HISTORICO_IMPLEMENTACOES.md`](./HISTORICO_IMPLEMENT
   - [ ] Verificar que não cria ticket automático
   - [ ] Verificar que salva anotação normalmente
 
-#### **4.5.3. Análise de Padrões com GPT-4o** (3-4h)
+#### **4.5.3. Análise de Padrões com GPT-4o** (1-2h) 🚧 **PENDENTE**
 
-##### Subtarefa 3.1: Criar Workflow de Análise Diária (2h)
-- [ ] **Criar Workflow "Análise Diária de Padrões"**
-  - [ ] Cron Trigger: "0 9 * * *" (9h da manhã, diário)
-  - [ ] Nó: Buscar Anotações dos Últimos 7 dias
-  - [ ] Nó: Preparar Dados (Code Node)
-  - [ ] Nó: GPT-4 Análise (HTTP Request)
-  - [ ] Nó: Processar Resposta (Code Node)
-  - [ ] Nó: Salvar Melhorias (HTTP Request)
+**Status:** 🚧 **PENDENTE** - Workflow separado para análise diária
+- ❌ Falta criar workflow "Análise Diária de Padrões" separado
+- ❌ Falta Cron Trigger diário (9h da manhã)
+- ❌ Falta buscar anotações dos últimos 7 dias
+- ❌ Falta GPT-4 analisar padrões e gerar melhorias
+- ❌ Falta salvar melhorias no banco de dados
   
 - [ ] **Code Node "Preparar Dados"**
   - [ ] Agrupar anotações por tipo, categoria, sentimento
@@ -169,15 +127,14 @@ Ver detalhes completos em: [`HISTORICO_IMPLEMENTACOES.md`](./HISTORICO_IMPLEMENT
   - [ ] Verificar salvamento de melhorias
   - [ ] Verificar notificações
 
-#### **4.5.4. Anotações Proativas (Auto-geradas)** (2-3h)
+#### **4.5.4. Anotações Proativas (Auto-geradas)** ✅ **IMPLEMENTADO PARCIALMENTE**
 
-##### Subtarefa 4.1: Workflow de Monitoramento (1.5h)
-- [ ] **Criar Workflow "Monitoramento Proativo"**
-  - [ ] Cron Trigger: "0 */6 * * *" (4x por dia)
-  - [ ] Nó: Buscar Colaboradores Ativos
-  - [ ] Nó: Analisar Comportamento (5 padrões)
-  - [ ] Nó: Enriquecer com GPT-4 (Loop)
-  - [ ] Nó: Salvar Anotações Proativas
+**Status:** ✅ **IMPLEMENTADO PARCIALMENTE** - Sistema de alertas já existe
+- ✅ Alerta RH automático para sentimentos muito negativos já funciona
+- ✅ Detecção de padrões negativos já implementada
+- ❌ Falta workflow separado para monitoramento proativo (4x/dia)
+- ❌ Falta detectar padrões: inatividade, progresso excepcional, risco evasão
+- ❌ Falta gerar anotações proativas automaticamente
   
 - [ ] **Code Node "Analisar Comportamento"**
   - [ ] Padrão 1: Inatividade (5+ dias sem interação)
@@ -203,151 +160,74 @@ Ver detalhes completos em: [`HISTORICO_IMPLEMENTACOES.md`](./HISTORICO_IMPLEMENT
 
 ---
 
-### 🚀 **EVOLUTION API - WHATSAPP ILIMITADO GRATUITO** (8-10h)
+### ❌ **EVOLUTION API - DESCONTINUADA**
 
-**Objetivo:** Implementar Evolution API para testes em massa sem custos, mantendo WhatsApp Business para produção.
+**Status:** Descarta devido à complexidade de implementação  
+**Data:** 17 de outubro de 2025  
+**Motivo:** Complexidade técnica vs benefício não justificou o esforço
 
-**📘 Documentação Completa:** [`EVOLUTION_API_SETUP.md`](./EVOLUTION_API_SETUP.md) e [`N8N_EVOLUTION_INTEGRATION.md`](./N8N_EVOLUTION_INTEGRATION.md)
-
-#### **EVOLUTION.1. Instalação e Configuração** (3-4h)
-
-##### Subtarefa 1.1: Setup Evolution API (1.5h)
-- [ ] **Instalar Evolution API via Docker**
-  - [ ] Criar arquivo `docker-compose.evolution.yml`
-  - [ ] Configurar variáveis de ambiente
-  - [ ] Executar `docker-compose up -d`
-  - [ ] Verificar saúde da API (`/manager/health`)
-  
-- [ ] **Configurar instância WhatsApp**
-  - [ ] Criar instância `navigator-whatsapp`
-  - [ ] Obter QR Code para conectar WhatsApp
-  - [ ] Conectar WhatsApp pessoal para testes
-  - [ ] Verificar status de conexão
-
-##### Subtarefa 1.2: Script de Automação (1h)
-- [ ] **Executar script automatizado**
-  - [ ] Usar `scripts/evolution-setup.sh`
-  - [ ] Configurar API Key: `navigator-evolution-key-2025-secure`
-  - [ ] Testar envio de mensagem inicial
-  - [ ] Salvar QR Code em `qr-code-navigator.png`
-
-##### Subtarefa 1.3: Configuração de Segurança (0.5h)
-- [ ] **Configurar variáveis de ambiente**
-  - [ ] Adicionar `EVOLUTION_API_URL` ao `.env`
-  - [ ] Adicionar `EVOLUTION_API_KEY` ao `.env`
-  - [ ] Configurar firewall (se necessário)
-  - [ ] Testar acesso externo (opcional)
-
-#### **EVOLUTION.2. Integração com N8N** (3-4h)
-
-##### Subtarefa 2.1: Configurar Credencial N8N (0.5h)
-- [ ] **Adicionar credencial Evolution API**
-  - [ ] Acessar N8N: Settings → Credentials
-  - [ ] Criar "HTTP Header Auth"
-  - [ ] Nome: "Evolution API Navigator"
-  - [ ] Header: `apikey` = `navigator-evolution-key-2025-secure`
-
-##### Subtarefa 2.2: Implementar Dual Channel (2h)
-- [ ] **Adicionar node Evolution API no workflow**
-  - [ ] Criar node "HTTP Request" para Evolution API
-  - [ ] URL: `http://localhost:8080/message/sendText/navigator-whatsapp`
-  - [ ] Configurar autenticação via credencial
-  - [ ] Testar envio de mensagem
-
-- [ ] **Implementar lógica de escolha**
-  - [ ] Code Node: "Choose Channel"
-  - [ ] Lógica: Se tenant=demo OU número de teste → Evolution API
-  - [ ] Caso contrário → WhatsApp Business (atual)
-  - [ ] Testar ambos os fluxos
-
-##### Subtarefa 2.3: Webhook para Receber Mensagens (1h)
-- [ ] **Configurar webhook Evolution API**
-  - [ ] Webhook URL: `https://hndll.app.n8n.cloud/webhook/evolution-webhook`
-  - [ ] Eventos: `MESSAGES_UPSERT`, `CONNECTION_UPDATE`
-  - [ ] Criar node "Evolution Webhook Receiver" no N8N
-  - [ ] Processar mensagens recebidas
-
-##### Subtarefa 2.4: Fallback Inteligente (0.5h)
-- [ ] **Implementar fallback automático**
-  - [ ] Tentar Evolution API primeiro
-  - [ ] Se falhar → usar WhatsApp Business
-  - [ ] Log de fallbacks para monitoramento
-  - [ ] Testar cenários de falha
-
-#### **EVOLUTION.3. Testes e Validação** (1-2h)
-
-##### Subtarefa 3.1: Testes Básicos (0.5h)
-- [ ] **Teste 1: Envio via Evolution API**
-  - [ ] Enviar mensagem para número de teste
-  - [ ] Verificar recebimento no WhatsApp
-  - [ ] Validar logs do N8N
-
-- [ ] **Teste 2: Recebimento de mensagem**
-  - [ ] Enviar mensagem do WhatsApp para Evolution API
-  - [ ] Verificar processamento no N8N
-  - [ ] Validar resposta automática
-
-##### Subtarefa 3.2: Testes de Integração (1h)
-- [ ] **Teste 3: Fluxo completo**
-  - [ ] Colaborador inicia trilha
-  - [ ] Backend dispara webhook
-  - [ ] N8N processa e envia via Evolution API
-  - [ ] Colaborador recebe e responde
-  - [ ] Sistema processa resposta
-
-- [ ] **Teste 4: Fallback**
-  - [ ] Simular falha da Evolution API
-  - [ ] Verificar uso do WhatsApp Business
-  - [ ] Confirmar entrega da mensagem
-
-##### Subtarefa 3.3: Testes em Massa (0.5h)
-- [ ] **Teste 5: Múltiplos usuários**
-  - [ ] Adicionar 5-10 números de teste
-  - [ ] Enviar mensagens simultâneas
-  - [ ] Verificar performance e entrega
-  - [ ] Monitorar logs de erro
-
-#### **EVOLUTION.4. Monitoramento e Produção** (1h)
-
-##### Subtarefa 4.1: Dashboard e Métricas (0.5h)
-- [ ] **Configurar monitoramento**
-  - [ ] Dashboard Evolution API: `http://localhost:8080/dashboard`
-  - [ ] Métricas de mensagens enviadas/recebidas
-  - [ ] Status de conexão WhatsApp
-  - [ ] Logs de erro e fallbacks
-
-##### Subtarefa 4.2: Documentação Final (0.5h)
-- [ ] **Documentar implementação**
-  - [ ] Atualizar README com Evolution API
-  - [ ] Criar guia de troubleshooting
-  - [ ] Documentar comandos de manutenção
-  - [ ] Criar procedimentos de backup/restore
+**Alternativas mantidas:**
+- ✅ WhatsApp Business API (produção)
+- ✅ Telegram Bot (backup)
+- ✅ Sistema atual funcionando perfeitamente
 
 ---
 
-### 🔧 **NOVOS ITENS REPORTADOS EM TESTES (17/out/2025)**
+### 🔧 **CORREÇÕES P0 - STATUS ATUALIZADO (17/out/2025)**
 
-#### **Prioridade P0 — Correções críticas no fluxo atual**
-- [ ] **Agente AI com contexto do colaborador**
-  - [ ] Incluir no contexto do agente: `nome`, `gestor` e `buddy`
-  - [ ] Permitir responder perguntas como "qual é meu nome?", "quem é meu gestor?"
-- [ ] **Isolamento por tenantId em todas as consultas**
-  - [ ] Garantir `tenantId` em insights, colaboradores, documentos e trilhas
-  - [ ] Evitar vazamento de dados entre empresas
-- [ ] **Trilhas por tenant no agente**
-  - [ ] As recomendações/listagens do agente devem filtrar pelo `tenantId` do colaborador
-- [ ] **Ordenação de trilhas por prioridade**
-  - [ ] Listar trilhas em ordem crescente de `ordem` (maior prioridade primeiro)
-- [ ] **Fluxo de finalizar/reativar trilha via agente**
-  - [ ] Finalizar trilha (status → `concluida`)
-  - [ ] Reativar trilha (status → `aguardando`)
-- [ ] **Edição de colaborador: `data_admissao`**
-  - [ ] Preencher `data_admissao` no GET de edição
-  - [ ] Evitar salvar `NULL` indevidamente
-- [ ] **Formulário de colaborador: Gestor e Buddy**
-  - [ ] Adicionar selects para escolher gestor e buddy entre usuários do tenant
-- [ ] **Melhorar a entrega do link do painel do colaborador**
-  - [ ] Mensagem formatada/curta com link clicável (WhatsApp/Telegram)
+#### **✅ JÁ IMPLEMENTADO (Workflow N8N Analisado)**
+- ✅ **Agente Conversacional GPT-4o** - 4 ferramentas conectadas funcionando
+- ✅ **Análise de Sentimento Inteligente** - GPT-4o com alertas automáticos
+- ✅ **Detecção de Feedback com IA** - GPT-4o-mini detecta feedback automaticamente
+- ✅ **Análise Semântica de Feedback** - Categorização inteligente (Fase 4.5 parcialmente)
+- ✅ **Histórico de Conversas** - Persistente com contexto dinâmico
+- ✅ **System Message Dinâmico** - Baseado em sentimento e histórico
+- ✅ **Alerta RH Automático** - Para sentimentos muito negativos
+- ✅ **Multi-canal** - WhatsApp + Telegram funcionando
+- ✅ **Categorização de Documentos** - Information Extractor com Gemini
+- ✅ **Busca de Usuário** - Nó existe e funciona
+
+#### **🚧 PARCIALMENTE IMPLEMENTADO (Precisa Ajuste)**
+- [ ] **Agente AI com contexto do colaborador** (50% feito)
+  - ✅ Nó `Buscar Usuário` existe e funciona
+  - ❌ Dados não são passados para o agente no System Message
+  - ❌ Agente não responde "qual é meu nome?", "quem é meu gestor?"
+  - **Ação:** Conectar dados do `Buscar Usuário` no `Prepare System Message`
+
+- [ ] **Isolamento por tenantId** (70% feito)
+  - ✅ `tenantId` está sendo passado no Merge
+  - ❌ `Busca_Trilhas` não filtra por tenant
+  - ❌ `Inicia_trilha` não inclui tenant_id no body
+  - ❌ `Registrar_feedback` não inclui tenant_id no body
+  - **Ação:** Adicionar `?tenant_id={{ tenantId }}` nas URLs das ferramentas
+
+#### **❌ REALMENTE PENDENTE (Precisa Implementar)**
+- [ ] **Trilhas por tenant no agente** (0% feito)
+  - ❌ Ferramenta `Busca_Trilhas` lista trilhas de todas as empresas
+  - ❌ URL atual: `/api/agent/trilhas/disponiveis/{{ from }}`
+  - ❌ URL correta: `/api/agent/trilhas/disponiveis/{{ from }}?tenant_id={{ tenantId }}`
+  - **Ação:** Atualizar URL da ferramenta no N8N
+
+- [ ] **Ordenação de trilhas por prioridade** (Backend)
+  - ❌ Backend não ordena trilhas por campo `ordem`
+  - **Ação:** Verificar/implementar ORDER BY `ordem` ASC no endpoint
+
+- [ ] **Fluxo de finalizar/reativar trilha via agente** (0% feito)
+  - ❌ Falta ferramenta `Finalizar_trilha` no N8N
+  - ❌ Falta ferramenta `Reativar_trilha` no N8N
+  - **Ação:** Criar 2 novas ferramentas HTTP Request Tool
+
+- [ ] **Edição de colaborador: `data_admissao`** (Backend)
+  - ❌ Campo não é preenchido no GET de edição
+  - **Ação:** Incluir `data_admissao` na resposta do endpoint
+
+- [ ] **Formulário de colaborador: Gestor e Buddy** (Frontend)
+  - ❌ Falta selects para escolher gestor e buddy
+  - **Ação:** Adicionar campos no formulário de edição
+
+- [ ] **Melhorar entrega do link do painel** (Frontend)
+  - ❌ Link não é formatado para WhatsApp/Telegram
+  - **Ação:** Criar mensagem formatada com link clicável
 
 #### **Prioridade P1 — Aprimoramentos funcionais**
 - [ ] **Middleware `requireTenant`**
@@ -772,30 +652,32 @@ Ver detalhes completos em: [`HISTORICO_IMPLEMENTACOES.md`](./HISTORICO_IMPLEMENT
 
 ## 🎯 **PRÓXIMOS PASSOS RECOMENDADOS**
 
-### **🔥 PRIORIDADE 1 (AGORA): Evolution API** (8-10h)
+### **🔥 PRIORIDADE 1 (AGORA): Correções P0 Refinadas** (3-4h)
 ```
-✅ Solução imediata para testes em massa
-✅ Zero custos para mensagens
-✅ Mantém WhatsApp Business funcionando
-✅ Documentação completa pronta
-✅ Scripts automatizados criados
+✅ Análise real do workflow N8N concluída
+✅ Muitas funcionalidades já implementadas
+✅ Foco nas correções realmente necessárias
+✅ Tempo estimado reduzido: 3-4 horas
 
-DIA 1 (3-4h): EVOLUTION.1 - Instalação e Configuração
-DIA 2 (3-4h): EVOLUTION.2 - Integração com N8N
-DIA 3 (1-2h): EVOLUTION.3 - Testes e Validação
+DIA 1 (1-2h): Contexto colaborador + Isolamento tenant (ajustes)
+DIA 2 (1-2h): Ferramentas de trilha + Backend (novos endpoints)
 ```
 
-### **⚡ PRIORIDADE 2 (DEPOIS): Fase 4.5** (6-8h)
+### **⚡ PRIORIDADE 2 (DEPOIS): Fase 4.5 Completa** (2-3h)
+```
+✅ Detecção de feedback já implementada
+✅ Análise semântica parcialmente implementada
+✅ Falta apenas: Detecção de urgência + Análise de padrões
+✅ Tempo estimado reduzido: 2-3 horas
+```
 ```
 ✅ Sistema básico já funciona
 ✅ Vai de BÁSICO → INTELIGENTE
 ✅ Alto impacto imediato
 ✅ Documentação completa pronta
 
-DIA 4 (3-4h): 4.5.1 - Categorização Inteligente
-DIA 5 (2-3h): 4.5.2 - Detecção de Urgência
-DIA 6 (3-4h): 4.5.3 - Análise de Padrões
-DIA 7 (2-3h): 4.5.4 - Anotações Proativas
+DIA 4 (1h): 4.5.2 - Detecção de Urgência Automática
+DIA 5 (1-2h): 4.5.3 - Análise de Padrões Diária
 ```
 
 ### **🚀 PRIORIDADE 3 (DEPOIS): Testes + Produção** (10-14h)
@@ -825,13 +707,13 @@ DIA 7 (2-3h): 4.5.4 - Anotações Proativas
 ## 📈 **ESTATÍSTICAS ATUAIS**
 
 ```
-Total de tarefas no checklist: ~790
-Tarefas completas (Fases 1-3 + Brand Manual): 75 tarefas ✅
-Tarefas pendentes: 715 tarefas 📋
+Total de tarefas no checklist: ~700
+Tarefas completas (Fases 1-3 + Brand Manual + N8N): 85 tarefas ✅
+Tarefas pendentes: 615 tarefas 📋
 
 Distribuição das pendentes:
-- Evolution API (nova): 40 tarefas (8-10h)
-- Fase 4.5 (próxima): 28 tarefas (6-8h)
+- Correções P0 (refinadas): 6 tarefas (3-4h) 🔥
+- Fase 4.5 (completar): 8 tarefas (2-3h) ⚡
 - Testes + Produção: 38 tarefas (10-14h)
 - Melhorias opcionais: ~200 tarefas (30-40h)
 - Roadmap futuro: ~100 tarefas (40-60h)
@@ -840,4 +722,4 @@ Distribuição das pendentes:
 ---
 
 *Última atualização: 17 de outubro de 2025*  
-*Status: 3 Fases + Brand Manual Concluídas ✅ | Evolution API + Fase 4.5 Pendentes 🚧*
+*Status: 3 Fases + Brand Manual + N8N Avançado Concluídas ✅ | Correções P0 Refinadas + Fase 4.5 Completa Pendentes 🚧*
