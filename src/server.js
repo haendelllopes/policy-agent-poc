@@ -1,17 +1,4 @@
 require('dotenv').config();
-// Debug das variáveis de ambiente no Vercel
-console.log('🔍 Debug das variáveis de ambiente no Vercel:');
-console.log('=====================================');
-console.log('VERCEL:', process.env.VERCEL);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('DATABASE_URL:', process.env.DATABASE_URL ? '✅ Configurada' : '❌ Não configurada');
-console.log('PGUSER:', process.env.PGUSER ? '✅ Configurada' : '❌ Não configurada');
-console.log('PGPASSWORD:', process.env.PGPASSWORD ? '✅ Configurada' : '❌ Não configurada');
-if (process.env.DATABASE_URL) {
-  console.log('DATABASE_URL (primeiros 50 chars):', process.env.DATABASE_URL.substring(0, 50) + '...');
-  console.log('DATABASE_URL completa:', process.env.DATABASE_URL);
-}
-console.log('=====================================');
 
 const express = require('express');
 const compression = require('compression');
