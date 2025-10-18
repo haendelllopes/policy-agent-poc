@@ -530,8 +530,25 @@ router.delete('/:id', async (req, res) => {
       
       console.log('✅ DELETE - Usuário encontrado:', existing.rows[0]);
 
+      // Verificar se há registros relacionados na tabela colaborador_trilhas
+      console.log('🔍 DELETE - Verificando registros relacionados em colaborador_trilhas...');
+      const trilhasRelacionadas = await query(`
+        SELECT COUNT(*) as total FROM colaborador_trilhas 
+        WHERE colaborador_id = $1
+      `, [userId]);
+      
+      console.log('🔍 DELETE - Registros relacionados encontrados:', trilhasRelacionadas.rows[0].total);
+      
+      if (trilhasRelacionadas.rows[0].total > 0) {
+        console.log('🗑️ DELETE - Excluindo registros relacionados em cascata...');
+        
+        // Excluir registros relacionados primeiro (cascata)
+        await query('DELETE FROM colaborador_trilhas WHERE colaborador_id = $1', [userId]);
+        console.log('✅ DELETE - Registros relacionados excluídos');
+      }
+
       // Verificar se há usuários que dependem deste usuário como gestor ou buddy
-      console.log('🔍 DELETE - Verificando dependências...');
+      console.log('🔍 DELETE - Verificando dependências de gestor/buddy...');
       const dependencias = await query(`
         SELECT id, name FROM users 
         WHERE (gestor_id = $1 OR buddy_id = $1) AND tenant_id = $2
