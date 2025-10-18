@@ -34,6 +34,15 @@ function isCacheValid(tenantId, dataType) {
   return (Date.now() - lastUpdate) < CACHE_DURATION;
 }
 
+// Função para invalidar cache de um tenant e tipo específico
+function invalidateCache(tenantId, dataType) {
+  if (dataCache[dataType]) {
+    dataCache[dataType].delete(tenantId);
+    dataCache.lastUpdate.delete(`${tenantId}-${dataType}`);
+    console.log(`🗑️ Cache invalidado para ${dataType} do tenant ${tenantId}`);
+  }
+}
+
 // Função para obter dados do cache ou buscar novos
 async function getCachedData(tenantId, dataType, fetchFunction) {
   // Verificar se o cache para este tipo de dados existe
@@ -2673,6 +2682,7 @@ app.locals.getTenantBySubdomain = getTenantBySubdomain;
 app.locals.usePostgres = usePostgres;
 app.locals.getDemoData = getDemoData;
 app.locals.getCachedData = getCachedData;
+app.locals.invalidateCache = invalidateCache;
 app.locals.normalizePhone = normalizePhoneHelper;
 app.locals.normalizePhoneForWhatsApp = normalizePhoneForWhatsAppHelper;
 app.locals.addBrazilianNinthDigit = addBrazilianNinthDigitHelper;

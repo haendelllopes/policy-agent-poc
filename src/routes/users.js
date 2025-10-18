@@ -500,7 +500,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const { getTenantBySubdomain, usePostgres, openDatabase, runQuery, runExec, closeDatabase } = req.app.locals;
+    const { getTenantBySubdomain, usePostgres, openDatabase, runQuery, runExec, closeDatabase, invalidateCache } = req.app.locals;
     const userId = req.params.id;
     
     console.log('🔍 DELETE - userId recebido:', userId);
@@ -584,6 +584,10 @@ router.delete('/:id', async (req, res) => {
         closeDatabase(db);
       }
     }
+
+    // Invalidar cache de usuários após exclusão bem-sucedida
+    invalidateCache(tenant.id, 'users');
+    console.log('✅ Cache de usuários invalidado após exclusão');
 
     res.json({ message: 'Usuário deletado com sucesso', id: userId });
   } catch (error) {
