@@ -1962,12 +1962,17 @@ a:hover {
                 phone: formatPhoneForDatabase(phoneCountry, phoneDDD, phoneNumber),
                 position: formData.get('position'),
                 department: formData.get('department'),
-                gestor_id: formData.get('gestor_id'),
-                buddy_id: formData.get('buddy_id'),
+                gestor_id: formData.get('gestor_id') || null,
+                buddy_id: formData.get('buddy_id') || null,
                 role: isAdmin ? 'admin' : 'colaborador',
                 start_date: formData.get('start_date'),
                 status: formData.get('status')
             };
+
+            // Debug: log dos dados sendo enviados
+            console.log('📤 Dados sendo enviados:', data);
+            console.log('🎯 Gestor ID:', data.gestor_id);
+            console.log('🎯 Buddy ID:', data.buddy_id);
 
             // Basic validation
             if (!data.name || !data.email || !data.phone || !data.position) {

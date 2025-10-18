@@ -192,6 +192,11 @@ router.post('/', async (req, res) => {
     const parse = schema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
 
+    // Debug: log dos dados recebidos no POST
+    console.log('📥 Dados recebidos no POST /users:', parse.data);
+    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id);
+    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id);
+
     // Normalizar telefone e adicionar 9º dígito brasileiro se necessário
     let phoneToSave = normalizePhoneForWhatsApp(parse.data.phone); // Remove formatação
     phoneToSave = addBrazilianNinthDigit(phoneToSave); // Adiciona 9 se necessário
@@ -342,6 +347,11 @@ router.put('/:id', async (req, res) => {
     
     const parse = schema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+
+    // Debug: log dos dados recebidos
+    console.log('📥 Dados recebidos no PUT /users:', parse.data);
+    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id);
+    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id);
 
     const normalizedPhone = normalizePhone(parse.data.phone);
     
