@@ -509,12 +509,32 @@ router.delete('/:id', async (req, res) => {
     }
 
     if (await usePostgres()) {
+      console.log('🗑️ Tentando deletar usuário:', userId, 'tenant:', tenant.id);
+      
       const existing = await query('SELECT id FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
       if (existing.rows.length === 0) {
+        console.log('❌ Usuário não encontrado para deletar');
         return res.status(404).json({ error: { formErrors: ['Usuário não encontrado'] } });
       }
 
+      // Verificar se há usuários que dependem deste usuário como gestor ou buddy
+      const dependencias = await query(`
+        SELECT id, name FROM users 
+        WHERE (gestor_id = $1 OR buddy_id = $1) AND tenant_id = $2
+      `, [userId, tenant.id]);
+      
+      if (dependencias.rows.length > 0) {
+        console.log('⚠️ Usuário tem dependências:', dependencias.rows);
+        return res.status(400).json({ 
+          error: { 
+            formErrors: [`Não é possível excluir este usuário pois ele é gestor ou buddy de outros usuários: ${dependencias.rows.map(u => u.name).join(', ')}`] 
+          } 
+        });
+      }
+
+      console.log('✅ Nenhuma dependência encontrada, deletando usuário...');
       await query('DELETE FROM users WHERE id = $1 AND tenant_id = $2', [userId, tenant.id]);
+      console.log('✅ Usuário deletado com sucesso');
     } else {
       const { db } = await openDatabase();
       try {
