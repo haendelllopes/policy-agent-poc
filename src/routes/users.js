@@ -72,22 +72,41 @@ router.get('/', async (req, res) => {
  */
 router.get('/list-for-select', async (req, res) => {
   try {
-    const { getTenantBySubdomain } = req.app.locals;
+    const { getTenantBySubdomain, usePostgres, openDatabase, runQuery, closeDatabase } = req.app.locals;
     
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    const result = await query(`
-      SELECT id, name, email, status
-      FROM users
-      WHERE tenant_id = $1 AND status = 'active'
-      ORDER BY name ASC
-    `, [tenant.id]);
+    let users = [];
+    
+    if (await usePostgres()) {
+      // PostgreSQL
+      const result = await query(`
+        SELECT id, name, email, status
+        FROM users
+        WHERE tenant_id = $1 AND status = 'active'
+        ORDER BY name ASC
+      `, [tenant.id]);
+      users = result.rows;
+    } else {
+      // SQLite
+      const { db } = await openDatabase();
+      try {
+        users = runQuery(db, `
+          SELECT id, name, email, status
+          FROM users
+          WHERE tenant_id = ? AND status = 'active'
+          ORDER BY name ASC
+        `, [tenant.id]);
+      } finally {
+        closeDatabase(db);
+      }
+    }
 
-    console.log(`✅ Listados ${result.rows.length} usuários para selects`);
-    res.json(result.rows);
+    console.log(`✅ Listados ${users.length} usuários para selects`);
+    res.json(users);
   } catch (error) {
     console.error('❌ Erro ao listar usuários:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
