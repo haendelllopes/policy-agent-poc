@@ -1459,6 +1459,29 @@ a:hover {
                     </div>
                 </div>
                 
+                <!-- Gestor e Buddy -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="userGestor">Gestor</label>
+                        <select id="userGestor" name="gestor_id">
+                            <option value="">Selecione um gestor</option>
+                        </select>
+                        <small style="color: var(--navi-secondary-grey); display: block; margin-top: 4px; font-size: 13px;">
+                            Líder direto responsável pelo colaborador
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="userBuddy">Buddy</label>
+                        <select id="userBuddy" name="buddy_id">
+                            <option value="">Selecione um buddy</option>
+                        </select>
+                        <small style="color: var(--navi-secondary-grey); display: block; margin-top: 4px; font-size: 13px;">
+                            Colega que ajudará no onboarding do colaborador
+                        </small>
+                    </div>
+                </div>
+                
                 <div class="form-row">
                     <div class="form-group">
                         <label for="userStartDate">Data de Admissão</label>
@@ -1707,6 +1730,50 @@ a:hover {
             document.getElementById('pagination').style.display = 'none';
         }
 
+        // Popular dropdowns de Gestor e Buddy
+        async function populateGestorBuddyDropdowns(selectedGestor = '', selectedBuddy = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const selectGestor = document.getElementById('userGestor');
+            const selectBuddy = document.getElementById('userBuddy');
+            
+            // Reset selects
+            selectGestor.innerHTML = '<option value="">Selecione um gestor</option>';
+            selectBuddy.innerHTML = '<option value="">Selecione um buddy</option>';
+            
+            try {
+                const users = await fetchData(`/api/users/list-for-select?tenant=${tenant}`);
+                
+                if (!users || users.length === 0) {
+                    console.warn('Nenhum usuário disponível para gestor/buddy');
+                    return;
+                }
+                
+                // Popular ambos os selects com os mesmos usuários
+                (users || []).forEach(user => {
+                    // Option para Gestor
+                    const optionGestor = document.createElement('option');
+                    optionGestor.value = user.id;
+                    optionGestor.textContent = `${user.name} (${user.email})`;
+                    selectGestor.appendChild(optionGestor);
+                    
+                    // Option para Buddy
+                    const optionBuddy = document.createElement('option');
+                    optionBuddy.value = user.id;
+                    optionBuddy.textContent = `${user.name} (${user.email})`;
+                    selectBuddy.appendChild(optionBuddy);
+                });
+                
+                // Selecionar valores se fornecidos
+                if (selectedGestor) selectGestor.value = selectedGestor;
+                if (selectedBuddy) selectBuddy.value = selectedBuddy;
+                
+                console.log(`✅ Dropdowns Gestor/Buddy populados com ${users.length} usuários`);
+            } catch (e) {
+                console.error('Erro ao carregar usuários para gestor/buddy:', e);
+                alert('Erro ao carregar lista de usuários');
+            }
+        }
+
         // Modal functions
         function openAddUserModal() {
             document.getElementById('modalTitle').textContent = 'Adicionar Funcionário';
@@ -1719,6 +1786,8 @@ a:hover {
             
             populateDepartmentDropdown();
             populatePositionDropdown();
+            populateGestorBuddyDropdowns(); // ← ADICIONAR ESTA LINHA
+            
             document.getElementById('addUserModal').style.display = 'flex';
             document.getElementById('userName').focus();
         }
@@ -1969,6 +2038,8 @@ a:hover {
                 document.getElementById('userEmail').value = user.email || '';
                 await populatePositionDropdown(user.position || '');
                 await populateDepartmentDropdown(user.department || '');
+                // Popular gestor e buddy com valores atuais
+                populateGestorBuddyDropdowns(user.gestor_id || '', user.buddy_id || '');
                 document.getElementById('userStartDate').value = user.start_date || '';
                 
                 // Extrair telefone em 3 partes (país, DDD, número)

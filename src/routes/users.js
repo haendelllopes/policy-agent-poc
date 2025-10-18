@@ -66,6 +66,35 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/users/list-for-select
+ * Lista usuários ativos do tenant para popular selects (gestor/buddy)
+ * Retorna apenas id, name, email - otimizado para dropdowns
+ */
+router.get('/list-for-select', async (req, res) => {
+  try {
+    const { getTenantBySubdomain } = req.app.locals;
+    
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    const result = await query(`
+      SELECT id, name, email, status
+      FROM users
+      WHERE tenant_id = $1 AND status = 'active'
+      ORDER BY name ASC
+    `, [tenant.id]);
+
+    console.log(`✅ Listados ${result.rows.length} usuários para selects`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('❌ Erro ao listar usuários:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
  * GET /api/users/:id
  * Buscar usuário específico
  */
@@ -133,6 +162,8 @@ router.post('/', async (req, res) => {
       department: z.string().optional(), // DEPRECATED: manter por compatibilidade
       position_id: z.string().uuid().optional(), // NOVO: usar FK
       department_id: z.string().uuid().optional(), // NOVO: usar FK
+      gestor_id: z.string().uuid().optional().nullable(),
+      buddy_id: z.string().uuid().optional().nullable(),
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -166,13 +197,14 @@ router.post('/', async (req, res) => {
         INSERT INTO users (
           id, tenant_id, name, email, phone, 
           position, department, position_id, department_id,
-          start_date, status, 
+          gestor_id, buddy_id, start_date, status, 
           onboarding_status, onboarding_inicio
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       `, [
         userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone,
         parse.data.position || null, parse.data.department || null, 
         parse.data.position_id || null, parse.data.department_id || null,
+        parse.data.gestor_id || null, parse.data.buddy_id || null,
         onboardingInicio, parse.data.status || 'active',
         'em_andamento', onboardingInicio
       ]);
@@ -190,12 +222,13 @@ router.post('/', async (req, res) => {
         runExec(db, `INSERT INTO users (
           id, tenant_id, name, email, phone, 
           position, department, position_id, department_id,
-          start_date, status,
+          gestor_id, buddy_id, start_date, status,
           onboarding_status, onboarding_inicio
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
           [userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone, 
            parse.data.position || null, parse.data.department || null,
            parse.data.position_id || null, parse.data.department_id || null,
+           parse.data.gestor_id || null, parse.data.buddy_id || null,
            onboardingInicio, parse.data.status || 'active',
            'em_andamento', onboardingInicio]);
         
@@ -280,6 +313,8 @@ router.put('/:id', async (req, res) => {
       department: z.string().optional(),
       position_id: z.string().uuid().optional(),
       department_id: z.string().uuid().optional(),
+      gestor_id: z.string().uuid().optional().nullable(),
+      buddy_id: z.string().uuid().optional().nullable(),
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -310,14 +345,16 @@ router.put('/:id', async (req, res) => {
           name = $1, email = $2, phone = $3, 
           position = $4, department = $5, 
           position_id = $6, department_id = $7,
-          start_date = $8, status = $9,
+          gestor_id = $8, buddy_id = $9,
+          start_date = $10, status = $11,
           updated_at = NOW()
-        WHERE id = $10 AND tenant_id = $11
+        WHERE id = $12 AND tenant_id = $13
       `, [
         parse.data.name, parse.data.email, normalizedPhone, 
         parse.data.position || null, parse.data.department || null,
         parse.data.position_id || null, parse.data.department_id || null,
-        parse.data.start_date || null, parse.data.status || 'active', 
+        parse.data.gestor_id || null, parse.data.buddy_id || null,
+        parse.data.start_date || null, parse.data.status || 'active',
         userId, tenant.id
       ]);
     } else {
@@ -337,13 +374,15 @@ router.put('/:id', async (req, res) => {
           name = ?, email = ?, phone = ?, 
           position = ?, department = ?, 
           position_id = ?, department_id = ?,
+          gestor_id = ?, buddy_id = ?,
           start_date = ?, status = ?, 
           updated_at = CURRENT_TIMESTAMP 
         WHERE id = ? AND tenant_id = ?`, 
           [parse.data.name, parse.data.email, normalizedPhone, 
            parse.data.position || null, parse.data.department || null,
            parse.data.position_id || null, parse.data.department_id || null,
-           parse.data.start_date || null, parse.data.status || 'active', 
+           parse.data.gestor_id || null, parse.data.buddy_id || null,
+           parse.data.start_date || null, parse.data.status || 'active',
            userId, tenant.id]);
       } finally {
         closeDatabase(db);

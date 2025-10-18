@@ -481,6 +481,10 @@ async function migrate() {
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pontuacao_total INTEGER DEFAULT 0`);
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()`);
     
+    // Adicionar campos gestor_id e buddy_id à tabela users
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gestor_id UUID REFERENCES users(id) ON DELETE SET NULL`);
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS buddy_id UUID REFERENCES users(id) ON DELETE SET NULL`);
+    
     // 2. Criar tabela trilhas
     await query(`
       CREATE TABLE IF NOT EXISTS trilhas (
@@ -582,6 +586,8 @@ async function migrate() {
     await query(`CREATE INDEX IF NOT EXISTS idx_users_position ON users(position_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_users_department ON users(department_id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_users_onboarding_status ON users(tenant_id, onboarding_status)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_gestor ON users(gestor_id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_buddy ON users(buddy_id)`);
     
     console.log('Sistema de trilhas criado com sucesso!');
     
