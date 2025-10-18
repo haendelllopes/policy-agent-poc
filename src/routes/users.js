@@ -229,13 +229,17 @@ router.post('/', async (req, res) => {
       userId = uuidv4();
       const onboardingInicio = parse.data.start_date || new Date().toISOString().split('T')[0];
       
-      await query(`
+      console.log('🔧 Executando INSERT para userId:', userId, 'tenantId:', tenant.id);
+      console.log('🔧 Valores INSERT: gestor_id =', parse.data.gestor_id, 'buddy_id =', parse.data.buddy_id);
+      
+      const insertResult = await query(`
         INSERT INTO users (
           id, tenant_id, name, email, phone, 
           position, department, position_id, department_id,
           gestor_id, buddy_id, start_date, status, 
           onboarding_status, onboarding_inicio
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING id, name, gestor_id, buddy_id
       `, [
         userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone,
         parse.data.position || null, parse.data.department || null, 
@@ -244,6 +248,16 @@ router.post('/', async (req, res) => {
         onboardingInicio, parse.data.status || 'active',
         'em_andamento', onboardingInicio
       ]);
+      
+      console.log('✅ INSERT executado. Resultado:', insertResult.rows[0]);
+      
+      // Verificar se realmente foi salvo
+      const verificacao = await query(`
+        SELECT id, name, gestor_id, buddy_id 
+        FROM users 
+        WHERE id = $1
+      `, [userId]);
+      console.log('🔍 Verificação pós-INSERT:', verificacao.rows[0]);
     } else {
       const { db, SQL } = await openDatabase();
       try {
