@@ -281,7 +281,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para conexão
       const connectionPromise = client.connect();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+        setTimeout(() => reject(new Error('Connection timeout')), 30000)
       );
       
       await Promise.race([connectionPromise, timeoutPromise]);
@@ -290,7 +290,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para query
       const queryPromise = client.query(text, params);
       const queryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 15000)
+        setTimeout(() => reject(new Error('Query timeout')), 30000)
       );
       
       const res = await Promise.race([queryPromise, queryTimeoutPromise]);
