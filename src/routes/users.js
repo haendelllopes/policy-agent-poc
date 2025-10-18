@@ -69,44 +69,45 @@ router.get('/', async (req, res) => {
  * GET /api/users/list-for-select
  * Lista usuários ativos do tenant para popular selects (gestor/buddy)
  * Retorna apenas id, name, email - otimizado para dropdowns
+ * IMPORTANTE: Esta rota deve vir ANTES de /:id para evitar conflito
  */
 router.get('/list-for-select', async (req, res) => {
   try {
-    const { getTenantBySubdomain, usePostgres, openDatabase, runQuery, closeDatabase } = req.app.locals;
+    const { getTenantBySubdomain, getCachedData, getDemoData, usePostgres } = req.app.locals;
     
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    let users = [];
-    
-    if (await usePostgres()) {
-      // PostgreSQL
-      const result = await query(`
-        SELECT id, name, email, status
-        FROM users
-        WHERE tenant_id = $1 AND status = 'active'
-        ORDER BY name ASC
-      `, [tenant.id]);
-      users = result.rows;
-    } else {
-      // SQLite
-      const { db } = await openDatabase();
-      try {
-        users = runQuery(db, `
-          SELECT id, name, email, status
-          FROM users
-          WHERE tenant_id = ? AND status = 'active'
-          ORDER BY name ASC
-        `, [tenant.id]);
-      } finally {
-        closeDatabase(db);
-      }
-    }
+    try {
+      const users = await getCachedData(tenant.id, 'users', async () => {
+        if (await usePostgres()) {
+          // PostgreSQL
+          const result = await query(`
+            SELECT id, name, email, status
+            FROM users
+            WHERE tenant_id = $1 AND status = 'active'
+            ORDER BY name ASC
+          `, [tenant.id]);
+          return result.rows;
+        } else {
+          // Demo data fallback
+          const demoData = getDemoData();
+          return demoData.users.filter(user => user.status === 'active');
+        }
+      });
 
-    console.log(`✅ Listados ${users.length} usuários para selects`);
-    res.json(users);
+      console.log(`✅ Listados ${users.length} usuários para selects`);
+      res.json(users);
+    } catch (error) {
+      console.error('Erro ao buscar usuários para selects:', error);
+      // Fallback para demo data
+      const demoData = getDemoData();
+      const users = demoData.users.filter(user => user.status === 'active');
+      console.log(`✅ Fallback: Listados ${users.length} usuários demo para selects`);
+      res.json(users);
+    }
   } catch (error) {
     console.error('❌ Erro ao listar usuários:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -116,6 +117,7 @@ router.get('/list-for-select', async (req, res) => {
 /**
  * GET /api/users/:id
  * Buscar usuário específico
+ * IMPORTANTE: Esta rota deve vir DEPOIS de rotas específicas como /list-for-select
  */
 router.get('/:id', async (req, res) => {
   try {
