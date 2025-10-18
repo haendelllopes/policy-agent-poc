@@ -364,6 +364,8 @@ router.put('/:id', async (req, res) => {
     console.log('📥 Dados recebidos no PUT /users:', parse.data);
     console.log('🎯 Gestor ID recebido:', parse.data.gestor_id, 'Tipo:', typeof parse.data.gestor_id);
     console.log('🎯 Buddy ID recebido:', parse.data.buddy_id, 'Tipo:', typeof parse.data.buddy_id);
+    console.log('🆔 UserId da URL:', userId);
+    console.log('🏢 Tenant ID:', tenant.id);
     
     // Verificar se os campos estão sendo rejeitados pela validação
     if (parse.data.gestor_id === '') {
@@ -393,7 +395,10 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
       }
 
-      await query(`
+      console.log('🔧 Executando UPDATE para userId:', userId, 'tenantId:', tenant.id);
+      console.log('🔧 Valores: gestor_id =', parse.data.gestor_id, 'buddy_id =', parse.data.buddy_id);
+      
+      const updateResult = await query(`
         UPDATE users SET 
           name = $1, email = $2, phone = $3, 
           position = $4, department = $5, 
@@ -402,6 +407,7 @@ router.put('/:id', async (req, res) => {
           start_date = $10, status = $11,
           updated_at = NOW()
         WHERE id = $12 AND tenant_id = $13
+        RETURNING id, name, gestor_id, buddy_id
       `, [
         parse.data.name, parse.data.email, normalizedPhone, 
         parse.data.position || null, parse.data.department || null,
@@ -410,6 +416,8 @@ router.put('/:id', async (req, res) => {
         parse.data.start_date || null, parse.data.status || 'active',
         userId, tenant.id
       ]);
+      
+      console.log('✅ UPDATE executado. Resultado:', updateResult.rows[0]);
     } else {
       const { db } = await openDatabase();
       try {
