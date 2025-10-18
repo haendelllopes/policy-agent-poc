@@ -1733,6 +1733,12 @@ a:hover {
             const selectGestor = document.getElementById('userGestor');
             const selectBuddy = document.getElementById('userBuddy');
             
+            // Verificar se já foram populados para evitar duplicação
+            if (selectGestor.children.length > 1 || selectBuddy.children.length > 1) {
+                console.log('Dropdowns já populados, pulando...');
+                return;
+            }
+            
             // Reset selects
             selectGestor.innerHTML = '<option value="">Selecione um gestor</option>';
             selectBuddy.innerHTML = '<option value="">Selecione um buddy</option>';
@@ -1757,7 +1763,7 @@ a:hover {
                     optionGestor.textContent = user.name;
                     selectGestor.appendChild(optionGestor);
                     
-                    // Option para Buddy
+                    // Option para Buddy (criar uma cópia para evitar referência)
                     const optionBuddy = document.createElement('option');
                     optionBuddy.value = user.id;
                     optionBuddy.textContent = user.name;
