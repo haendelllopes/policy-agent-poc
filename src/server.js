@@ -2685,7 +2685,7 @@ app.locals.closeDatabase = (db) => db.close();
 
 // Registrar rotas (comentadas temporariamente - manter endpoints antigos funcionando)
 app.use('/api/auth', authRoutes);
-// app.use('/api/users', usersRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/trilhas', trilhasRoutes);
 app.use('/api/colaborador', colaboradorRoutes);
 app.use('/api/quiz', quizRoutes);
