@@ -311,6 +311,8 @@ router.post('/', async (req, res) => {
       department: parse.data.department,
       position_id: parse.data.position_id,
       department_id: parse.data.department_id,
+      gestor_id: parse.data.gestor_id,
+      buddy_id: parse.data.buddy_id,
       start_date: parse.data.start_date,
       status: parse.data.status || 'active',
       onboarding_status: 'em_andamento',
@@ -430,6 +432,8 @@ router.put('/:id', async (req, res) => {
       department: parse.data.department,
       position_id: parse.data.position_id,
       department_id: parse.data.department_id,
+      gestor_id: parse.data.gestor_id,
+      buddy_id: parse.data.buddy_id,
       start_date: parse.data.start_date,
       status: parse.data.status || 'active',
       tenant: tenant.name
