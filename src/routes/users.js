@@ -183,8 +183,8 @@ router.post('/', async (req, res) => {
       department: z.string().optional(), // DEPRECATED: manter por compatibilidade
       position_id: z.string().uuid().optional(), // NOVO: usar FK
       department_id: z.string().uuid().optional(), // NOVO: usar FK
-      gestor_id: z.string().uuid().optional().nullable(),
-      buddy_id: z.string().uuid().optional().nullable(),
+      gestor_id: z.string().uuid().optional().nullable().or(z.literal('')),
+      buddy_id: z.string().uuid().optional().nullable().or(z.literal('')),
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -194,8 +194,18 @@ router.post('/', async (req, res) => {
 
     // Debug: log dos dados recebidos no POST
     console.log('📥 Dados recebidos no POST /users:', parse.data);
-    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id);
-    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id);
+    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id, 'Tipo:', typeof parse.data.gestor_id);
+    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id, 'Tipo:', typeof parse.data.buddy_id);
+    
+    // Verificar se os campos estão sendo rejeitados pela validação
+    if (parse.data.gestor_id === '') {
+      console.log('⚠️ Gestor ID está vazio, convertendo para null');
+      parse.data.gestor_id = null;
+    }
+    if (parse.data.buddy_id === '') {
+      console.log('⚠️ Buddy ID está vazio, convertendo para null');
+      parse.data.buddy_id = null;
+    }
 
     // Normalizar telefone e adicionar 9º dígito brasileiro se necessário
     let phoneToSave = normalizePhoneForWhatsApp(parse.data.phone); // Remove formatação
@@ -341,8 +351,8 @@ router.put('/:id', async (req, res) => {
       department: z.string().optional(),
       position_id: z.string().uuid().optional(),
       department_id: z.string().uuid().optional(),
-      gestor_id: z.string().uuid().optional().nullable(),
-      buddy_id: z.string().uuid().optional().nullable(),
+      gestor_id: z.string().uuid().optional().nullable().or(z.literal('')),
+      buddy_id: z.string().uuid().optional().nullable().or(z.literal('')),
       start_date: z.string().optional(),
       status: z.enum(['active', 'inactive']).optional()
     });
@@ -352,8 +362,18 @@ router.put('/:id', async (req, res) => {
 
     // Debug: log dos dados recebidos
     console.log('📥 Dados recebidos no PUT /users:', parse.data);
-    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id);
-    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id);
+    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id, 'Tipo:', typeof parse.data.gestor_id);
+    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id, 'Tipo:', typeof parse.data.buddy_id);
+    
+    // Verificar se os campos estão sendo rejeitados pela validação
+    if (parse.data.gestor_id === '') {
+      console.log('⚠️ Gestor ID está vazio, convertendo para null');
+      parse.data.gestor_id = null;
+    }
+    if (parse.data.buddy_id === '') {
+      console.log('⚠️ Buddy ID está vazio, convertendo para null');
+      parse.data.buddy_id = null;
+    }
 
     const normalizedPhone = normalizePhone(parse.data.phone);
     
