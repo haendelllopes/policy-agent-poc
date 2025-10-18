@@ -8,8 +8,8 @@ let globalMutex = null;
 let connectionCount = 0;
 
 async function initializePool() {
-  // No Vercel, sempre usar Session Pooler se variáveis PG* estiverem disponíveis
-  if (process.env.VERCEL && process.env.PGUSER && process.env.PGPASSWORD) {
+  // No Vercel, usar DATABASE_URL ou Session Pooler se variáveis PG* estiverem disponíveis
+  if (process.env.VERCEL && (process.env.DATABASE_URL || (process.env.PGUSER && process.env.PGPASSWORD))) {
     // Se já temos um pool válido, reutilizar
     if (pool) {
       try {
@@ -67,11 +67,16 @@ async function initializePool() {
         console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
         await new Promise(resolve => setTimeout(resolve, randomDelay));
         
-        console.log('Vercel detectado - usando Session Pooler do Supabase');
-        const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
-        console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
-        
-        pool = createPool(sessionPoolerUrl);
+        if (process.env.DATABASE_URL) {
+          console.log('Vercel detectado - usando DATABASE_URL');
+          console.log('Usando DATABASE_URL:', process.env.DATABASE_URL.substring(0, 50) + '...');
+          pool = createPool(process.env.DATABASE_URL);
+        } else {
+          console.log('Vercel detectado - usando Session Pooler do Supabase');
+          const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
+          console.log('Usando Session Pooler do Supabase (IPv4 compatible):', sessionPoolerUrl.substring(0, 50) + '...');
+          pool = createPool(sessionPoolerUrl);
+        }
         
         // Resolver todas as promessas na fila
         connectionQueue.forEach(resolve => resolve(pool));
