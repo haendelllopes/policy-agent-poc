@@ -69,8 +69,15 @@ async function initializePool() {
         
         if (process.env.DATABASE_URL) {
           console.log('Vercel detectado - usando DATABASE_URL');
+          console.log('DATABASE_URL disponível:', !!process.env.DATABASE_URL);
           console.log('Usando DATABASE_URL:', process.env.DATABASE_URL.substring(0, 50) + '...');
-          pool = createPool(process.env.DATABASE_URL);
+          try {
+            pool = createPool(process.env.DATABASE_URL);
+            console.log('✅ Pool criado com DATABASE_URL');
+          } catch (error) {
+            console.error('❌ Erro ao criar pool com DATABASE_URL:', error);
+            throw error;
+          }
         } else {
           console.log('Vercel detectado - usando Session Pooler do Supabase');
           const sessionPoolerUrl = `postgresql://${process.env.PGUSER}:${encodeURIComponent(process.env.PGPASSWORD)}@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`;
