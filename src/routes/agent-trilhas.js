@@ -457,4 +457,158 @@ router.post('/feedback', requireTenant, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/agent/trilhas/finalizar
+ * Finaliza uma trilha em andamento, marcando como concluída
+ * Usado pelo agente quando colaborador concluir todos os conteúdos
+ */
+router.post('/finalizar', async (req, res) => {
+  try {
+    const { colaborador_id, trilha_id, tenant_id } = req.body;
+
+    // Validação de campos obrigatórios
+    if (!colaborador_id || !trilha_id) {
+      return res.status(400).json({ 
+        error: 'colaborador_id e trilha_id são obrigatórios',
+        received: { colaborador_id, trilha_id }
+      });
+    }
+
+    // Buscar colaborador_trilha existente
+    const ctResult = await query(`
+      SELECT ct.id, ct.status, ct.data_inicio, t.tenant_id, t.nome as trilha_nome
+      FROM colaborador_trilhas ct
+      JOIN trilhas t ON t.id = ct.trilha_id
+      WHERE ct.colaborador_id = $1 AND ct.trilha_id = $2
+    `, [colaborador_id, trilha_id]);
+
+    if (ctResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Trilha não encontrada para este colaborador',
+        colaborador_id,
+        trilha_id
+      });
+    }
+
+    const ct = ctResult.rows[0];
+
+    // Validar tenant (segurança)
+    if (tenant_id && ct.tenant_id !== tenant_id) {
+      console.warn(`⚠️  Tentativa de acesso cross-tenant: ${tenant_id} tentou acessar trilha de ${ct.tenant_id}`);
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    // Verificar se já está concluída
+    if (ct.status === 'concluida') {
+      return res.status(400).json({ 
+        error: 'Trilha já está concluída',
+        status: ct.status
+      });
+    }
+
+    // Finalizar trilha
+    await query(`
+      UPDATE colaborador_trilhas 
+      SET status = 'concluida', 
+          data_conclusao = NOW(),
+          updated_at = NOW()
+      WHERE id = $1
+    `, [ct.id]);
+
+    console.log(`✅ Trilha finalizada: ${ct.trilha_nome} para colaborador ${colaborador_id}`);
+
+    res.json({ 
+      message: 'Trilha finalizada com sucesso! 🎉',
+      colaborador_trilha_id: ct.id,
+      trilha_nome: ct.trilha_nome,
+      status_anterior: ct.status,
+      status_novo: 'concluida',
+      data_conclusao: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Erro ao finalizar trilha:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * POST /api/agent/trilhas/reativar
+ * Reativa uma trilha concluída, permitindo refazer conteúdos
+ * Gera novo prazo baseado no prazo_dias da trilha
+ */
+router.post('/reativar', async (req, res) => {
+  try {
+    const { colaborador_id, trilha_id, tenant_id } = req.body;
+
+    // Validação de campos obrigatórios
+    if (!colaborador_id || !trilha_id) {
+      return res.status(400).json({ 
+        error: 'colaborador_id e trilha_id são obrigatórios',
+        received: { colaborador_id, trilha_id }
+      });
+    }
+
+    // Buscar colaborador_trilha existente
+    const ctResult = await query(`
+      SELECT ct.id, ct.status, ct.data_conclusao, t.tenant_id, t.prazo_dias, t.nome as trilha_nome
+      FROM colaborador_trilhas ct
+      JOIN trilhas t ON t.id = ct.trilha_id
+      WHERE ct.colaborador_id = $1 AND ct.trilha_id = $2
+    `, [colaborador_id, trilha_id]);
+
+    if (ctResult.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Trilha não encontrada para este colaborador',
+        colaborador_id,
+        trilha_id
+      });
+    }
+
+    const ct = ctResult.rows[0];
+
+    // Validar tenant (segurança)
+    if (tenant_id && ct.tenant_id !== tenant_id) {
+      console.warn(`⚠️  Tentativa de acesso cross-tenant: ${tenant_id} tentou acessar trilha de ${ct.tenant_id}`);
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    // Verificar se já está em andamento
+    if (ct.status === 'em_andamento') {
+      return res.status(400).json({ 
+        error: 'Trilha já está em andamento',
+        status: ct.status
+      });
+    }
+
+    // Calcular nova data limite
+    const novaDataLimite = new Date();
+    novaDataLimite.setDate(novaDataLimite.getDate() + (ct.prazo_dias || 7));
+
+    // Reativar trilha
+    await query(`
+      UPDATE colaborador_trilhas 
+      SET status = 'em_andamento',
+          data_limite = $2,
+          data_conclusao = NULL,
+          updated_at = NOW()
+      WHERE id = $1
+    `, [ct.id, novaDataLimite]);
+
+    console.log(`✅ Trilha reativada: ${ct.trilha_nome} para colaborador ${colaborador_id}`);
+
+    res.json({ 
+      message: 'Trilha reativada com sucesso! Você pode refazer os conteúdos. 🔄',
+      colaborador_trilha_id: ct.id,
+      trilha_nome: ct.trilha_nome,
+      status_anterior: ct.status,
+      status_novo: 'em_andamento',
+      nova_data_limite: novaDataLimite,
+      prazo_dias: ct.prazo_dias
+    });
+  } catch (error) {
+    console.error('❌ Erro ao reativar trilha:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 module.exports = router;
