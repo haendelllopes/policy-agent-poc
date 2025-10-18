@@ -1741,15 +1741,19 @@ a:hover {
             selectBuddy.innerHTML = '<option value="">Selecione um buddy</option>';
             
             try {
-                const users = await fetchData(`/api/users/list-for-select?tenant=${tenant}`);
+                // Usar endpoint principal que já funciona, em vez do list-for-select que está com problema de deploy
+                const users = await fetchData(`/api/users?tenant=${tenant}`);
                 
                 if (!users || users.length === 0) {
                     console.warn('Nenhum usuário disponível para gestor/buddy');
                     return;
                 }
                 
-                // Popular ambos os selects com os mesmos usuários
-                (users || []).forEach(user => {
+                // Filtrar apenas usuários ativos e mapear para formato esperado
+                const activeUsers = users.filter(user => user.status === 'active');
+                
+                // Popular ambos os selects com os usuários ativos
+                activeUsers.forEach(user => {
                     // Option para Gestor
                     const optionGestor = document.createElement('option');
                     optionGestor.value = user.id;
@@ -1767,7 +1771,7 @@ a:hover {
                 if (selectedGestor) selectGestor.value = selectedGestor;
                 if (selectedBuddy) selectBuddy.value = selectedBuddy;
                 
-                console.log(`✅ Dropdowns Gestor/Buddy populados com ${users.length} usuários`);
+                console.log(`✅ Dropdowns Gestor/Buddy populados com ${activeUsers.length} usuários ativos`);
             } catch (e) {
                 console.error('Erro ao carregar usuários para gestor/buddy:', e);
                 alert('Erro ao carregar lista de usuários');
