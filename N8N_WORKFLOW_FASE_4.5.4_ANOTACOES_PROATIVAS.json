@@ -1,0 +1,354 @@
+{
+  "name": "Fase 4.5.4 - Anotações Proativas (Monitoramento)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,12,15,18 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-proativo",
+      "name": "🕒 Cron Trigger (4x/dia)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/colaboradores/ativos?onboarding_ativo=true",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      },
+      "id": "buscar-colaboradores-ativos",
+      "name": "👥 Buscar Colaboradores Ativos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Analisar comportamento de cada colaborador\nconst colaboradores = $input.all().map(i => i.json.colaboradores || []).flat();\nconst anotacoesProativas = [];\n\nfor (const colab of colaboradores) {\n  const { \n    id, \n    name, \n    dias_sem_interacao = 0, \n    trilhas_concluidas = 0, \n    trilhas_iniciadas = 0,\n    dias_onboarding = 0,\n    ultimo_sentimento = 'neutro',\n    progresso_trilha_atual = 0,\n    email,\n    phone\n  } = colab;\n  \n  // PADRÃO 1: Inatividade\n  if (dias_sem_interacao >= 5 && progresso_trilha_atual < 100) {\n    anotacoesProativas.push({\n      colaborador_id: id,\n      colaborador_name: name,\n      colaborador_email: email,\n      colaborador_phone: phone,\n      tipo: 'padrao_identificado',\n      padrao: 'inatividade',\n      titulo: `Colaborador ${name} inativo há ${dias_sem_interacao} dias`,\n      descricao: `${name} está há ${dias_sem_interacao} dias sem interagir. Trilha atual: ${progresso_trilha_atual}% concluída.`,\n      urgencia: dias_sem_interacao >= 7 ? 'alta' : 'media',\n      categoria: 'engajamento',\n      subcategoria: 'inatividade',\n      acao_sugerida: dias_sem_interacao >= 7 ? 'Contato URGENTE do RH/Gestor' : 'Enviar mensagem de re-engajamento',\n      impacto_estimado: 'medio',\n      metadata: { \n        dias_sem_interacao, \n        progresso_trilha_atual,\n        padrao_detectado: 'inatividade'\n      }\n    });\n  }\n  \n  // PADRÃO 2: Progresso Excepcional\n  if (trilhas_concluidas >= 5 && dias_onboarding <= 7) {\n    anotacoesProativas.push({\n      colaborador_id: id,\n      colaborador_name: name,\n      colaborador_email: email,\n      colaborador_phone: phone,\n      tipo: 'padrao_identificado',\n      padrao: 'progresso_excepcional',\n      titulo: `${name} com progresso excepcional`,\n      descricao: `${name} completou ${trilhas_concluidas} trilhas em apenas ${dias_onboarding} dias. Performance acima da média.`,\n      urgencia: 'baixa',\n      categoria: 'engajamento',\n      subcategoria: 'performance_alta',\n      acao_sugerida: 'Considerar como candidato a mentor ou embaixador',\n      impacto_estimado: 'baixo',\n      metadata: { \n        trilhas_concluidas, \n        dias_onboarding,\n        padrao_detectado: 'progresso_excepcional'\n      }\n    });\n  }\n  \n  // PADRÃO 3: Baixo Engajamento\n  if (trilhas_iniciadas >= 3 && trilhas_concluidas === 0 && dias_onboarding >= 14) {\n    anotacoesProativas.push({\n      colaborador_id: id,\n      colaborador_name: name,\n      colaborador_email: email,\n      colaborador_phone: phone,\n      tipo: 'padrao_identificado',\n      padrao: 'baixo_engajamento',\n      titulo: `${name} com baixo engajamento`,\n      descricao: `${name} iniciou ${trilhas_iniciadas} trilhas mas não concluiu nenhuma em ${dias_onboarding} dias.`,\n      urgencia: 'media',\n      categoria: 'engajamento',\n      subcategoria: 'baixo_engajamento',\n      acao_sugerida: 'Investigar dificuldades e oferecer suporte personalizado',\n      impacto_estimado: 'medio',\n      metadata: { \n        trilhas_iniciadas, \n        trilhas_concluidas, \n        dias_onboarding,\n        padrao_detectado: 'baixo_engajamento'\n      }\n    });\n  }\n  \n  // PADRÃO 4: Risco de Evasão\n  if (\n    dias_sem_interacao >= 7 && \n    progresso_trilha_atual > 0 && \n    progresso_trilha_atual < 50 && \n    ultimo_sentimento === 'negativo'\n  ) {\n    anotacoesProativas.push({\n      colaborador_id: id,\n      colaborador_name: name,\n      colaborador_email: email,\n      colaborador_phone: phone,\n      tipo: 'padrao_identificado',\n      padrao: 'risco_evasao',\n      titulo: `⚠️ RISCO: ${name} pode evadir`,\n      descricao: `${name} está inativo há ${dias_sem_interacao} dias, trilha ${progresso_trilha_atual}% completa e último sentimento negativo.`,\n      urgencia: 'critica',\n      categoria: 'engajamento',\n      subcategoria: 'risco_evasao',\n      acao_sugerida: 'Contato URGENTE do gestor/RH para entender situação',\n      impacto_estimado: 'alto',\n      metadata: { \n        dias_sem_interacao, \n        progresso_trilha_atual, \n        ultimo_sentimento,\n        padrao_detectado: 'risco_evasao'\n      }\n    });\n  }\n}\n\nreturn anotacoesProativas.map(a => ({ json: a }));"
+      },
+      "id": "analisar-comportamento",
+      "name": "🔍 Analisar Comportamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Authorization": "Bearer {{ $credentials.openai.apiKey }}",
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4o-mini"
+            },
+            {
+              "name": "messages",
+              "value": "=[\n  {\n    \"role\": \"system\",\n    \"content\": \"Você é um especialista em RH e onboarding. Enriqueça a anotação proativa com insights e recomendações específicas.\"\n  },\n  {\n    \"role\": \"user\",\n    \"content\": \"Enriqueça esta anotação proativa:\\n\\n{{ JSON.stringify($json) }}\\n\\nRetorne JSON com:\\n{\\n  \\\"tags\\\": [5 tags específicas],\\n  \\\"insights\\\": \\\"string (2-3 frases de insights)\\\",\\n  \\\"acoes_especificas\\\": [\\\"ação 1\\\", \\\"ação 2\\\", \\\"ação 3\\\"],\\n  \\\"prioridade_revisao\\\": \\\"urgente|alta|media|baixa\\\"\\n}\"\n  }\n]"
+            },
+            {
+              "name": "temperature",
+              "value": "0.4"
+            },
+            {
+              "name": "max_tokens",
+              "value": "300"
+            }
+          ]
+        }
+      },
+      "id": "gpt4-enriquecer-anotacao",
+      "name": "🧠 GPT-4 Enriquecer Anotação",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processar resposta do GPT-4o e combinar com dados originais\nconst response = $input.first().json;\nconst content = response.choices[0].message.content;\nconst dadosOriginais = $('🔍 Analisar Comportamento').item.json;\n\nlet enriquecimento;\ntry {\n  const jsonStr = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '');\n  enriquecimento = JSON.parse(jsonStr);\n} catch (e) {\n  console.error('Erro ao parsear enriquecimento GPT-4o:', e);\n  enriquecimento = { \n    tags: ['padrao-identificado', 'proativo'],\n    insights: 'Padrão detectado automaticamente pelo sistema',\n    acoes_especificas: [dadosOriginais.acao_sugerida],\n    prioridade_revisao: dadosOriginais.urgencia\n  };\n}\n\n// Combinar dados originais com enriquecimento\nconst anotacaoFinal = {\n  ...dadosOriginais,\n  tags: enriquecimento.tags || ['padrao-identificado', 'proativo'],\n  insights: enriquecimento.insights,\n  acoes_especificas: enriquecimento.acoes_especificas || [dadosOriginais.acao_sugerida],\n  prioridade_revisao: enriquecimento.prioridade_revisao || dadosOriginais.urgencia,\n  gerado_automaticamente: true,\n  data_deteccao: new Date().toISOString()\n};\n\nreturn [{ json: anotacaoFinal }];"
+      },
+      "id": "processar-enriquecimento",
+      "name": "⚙️ Processar Enriquecimento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/anotacoes/proativa",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.colaborador_id }}"
+            },
+            {
+              "name": "tipo",
+              "value": "={{ $json.tipo }}"
+            },
+            {
+              "name": "titulo",
+              "value": "={{ $json.titulo }}"
+            },
+            {
+              "name": "anotacao",
+              "value": "={{ $json.descricao }}"
+            },
+            {
+              "name": "tags",
+              "value": "={{ JSON.stringify($json.tags) }}"
+            },
+            {
+              "name": "urgencia",
+              "value": "={{ $json.urgencia }}"
+            },
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "subcategoria",
+              "value": "={{ $json.subcategoria }}"
+            },
+            {
+              "name": "acao_sugerida",
+              "value": "={{ $json.acao_sugerida }}"
+            },
+            {
+              "name": "impacto_estimado",
+              "value": "={{ $json.impacto_estimado }}"
+            },
+            {
+              "name": "insights",
+              "value": "={{ $json.insights }}"
+            },
+            {
+              "name": "acoes_especificas",
+              "value": "={{ JSON.stringify($json.acoes_especificas) }}"
+            },
+            {
+              "name": "prioridade_revisao",
+              "value": "={{ $json.prioridade_revisao }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify($json.metadata) }}"
+            },
+            {
+              "name": "gerado_automaticamente",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "id": "salvar-anotacao-proativa",
+      "name": "💾 Salvar Anotação Proativa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.urgencia }}",
+              "operation": "equal",
+              "value2": "critica"
+            }
+          ]
+        }
+      },
+      "id": "verificar-urgencia-proativa",
+      "name": "🚨 Verificar Urgência Proativa",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/alertas/urgencia-critica",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "anotacao_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "tipo",
+              "value": "={{ $json.tipo }}"
+            },
+            {
+              "name": "urgencia",
+              "value": "critica"
+            },
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "mensagem",
+              "value": "={{ $json.anotacao }}"
+            },
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.colaborador_id }}"
+            },
+            {
+              "name": "acao_sugerida",
+              "value": "={{ $json.acao_sugerida }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "alertar-urgencia-proativa",
+      "name": "🔔 Alertar Urgência Proativa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log final do monitoramento proativo\nconst totalAnotacoes = $input.all().length;\n\nconsole.log('🔍 MONITORAMENTO PROATIVO CONCLUÍDO:', {\n  data: new Date().toISOString(),\n  total_anotacoes_geradas: totalAnotacoes,\n  status: 'sucesso'\n});\n\nreturn [{\n  json: {\n    status: 'sucesso',\n    total_anotacoes: totalAnotacoes,\n    data_monitoramento: new Date().toISOString(),\n    tipo: 'proativo'\n  }\n}];"
+      },
+      "id": "log-final-proativo",
+      "name": "📝 Log Final Proativo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1780, 400]
+    }
+  ],
+  "connections": {
+    "🕒 Cron Trigger (4x/dia)": {
+      "main": [
+        [
+          {
+            "node": "👥 Buscar Colaboradores Ativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "👥 Buscar Colaboradores Ativos": {
+      "main": [
+        [
+          {
+            "node": "🔍 Analisar Comportamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔍 Analisar Comportamento": {
+      "main": [
+        [
+          {
+            "node": "🧠 GPT-4 Enriquecer Anotação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 GPT-4 Enriquecer Anotação": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Processar Enriquecimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Processar Enriquecimento": {
+      "main": [
+        [
+          {
+            "node": "💾 Salvar Anotação Proativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Salvar Anotação Proativa": {
+      "main": [
+        [
+          {
+            "node": "🚨 Verificar Urgência Proativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚨 Verificar Urgência Proativa": {
+      "main": [
+        [
+          {
+            "node": "🔔 Alertar Urgência Proativa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-18T21:00:00.000Z",
+      "updatedAt": "2025-10-18T21:00:00.000Z",
+      "id": "fase-4-5-4",
+      "name": "Fase 4.5.4"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-18T21:00:00.000Z",
+  "versionId": "1"
+}

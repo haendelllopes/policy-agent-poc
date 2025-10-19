@@ -29,7 +29,15 @@ router.post('/anotacoes', authenticate, async (req, res) => {
       sentimento,
       intensidade_sentimento,
       contexto,
-      tags
+      tags,
+      // Novos campos da Fase 4.5
+      urgencia = 'baixa',
+      categoria = 'outros',
+      subcategoria = null,
+      sentimento_contexto = null,
+      acao_sugerida = null,
+      impacto_estimado = 'baixo',
+      metadata = {}
     } = req.body;
 
     // Validações obrigatórias
@@ -40,14 +48,14 @@ router.post('/anotacoes', authenticate, async (req, res) => {
     }
 
     // Validar tipo
-    const tiposValidos = ['sentimento_trilha', 'sentimento_empresa', 'dificuldade_conteudo', 'sugestao_colaborador', 'padrao_identificado', 'observacao_geral'];
+    const tiposValidos = ['sentimento_trilha', 'sentimento_empresa', 'dificuldade_conteudo', 'sugestao_colaborador', 'padrao_identificado', 'observacao_geral', 'problema_tecnico'];
     if (!tiposValidos.includes(tipo)) {
       return res.status(400).json({
         error: `Tipo inválido. Tipos válidos: ${tiposValidos.join(', ')}`
       });
     }
 
-    // Inserir anotação
+    // Inserir anotação com novos campos da Fase 4.5
     const result = await query(`
       INSERT INTO agente_anotacoes (
         tenant_id,
@@ -71,11 +79,29 @@ router.post('/anotacoes', authenticate, async (req, res) => {
       anotacao,
       sentimento,
       intensidade_sentimento,
-      contexto ? JSON.stringify(contexto) : null,
+      contexto ? JSON.stringify({
+        ...contexto,
+        // Incluir novos campos no contexto JSON
+        urgencia,
+        categoria,
+        subcategoria,
+        sentimento_contexto,
+        acao_sugerida,
+        impacto_estimado,
+        ...metadata
+      }) : JSON.stringify({
+        urgencia,
+        categoria,
+        subcategoria,
+        sentimento_contexto,
+        acao_sugerida,
+        impacto_estimado,
+        ...metadata
+      }),
       tags
     ]);
 
-    console.log(`📝 Nova anotação criada: ${tipo} - ${titulo}`);
+    console.log(`📝 Nova anotação criada: ${tipo} - ${titulo} (urgencia: ${urgencia}, categoria: ${categoria})`);
 
     res.status(201).json({
       success: true,
@@ -435,6 +461,370 @@ router.post('/anotacoes/:id/gerar-melhoria', async (req, res) => {
     console.error('Erro ao gerar melhoria:', error);
     res.status(500).json({
       error: 'Erro interno ao gerar melhoria',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/agente/alertas/urgencia-critica
+ * Endpoint para alertas de urgência crítica
+ */
+router.post('/alertas/urgencia-critica', authenticate, async (req, res) => {
+  try {
+    const {
+      anotacao_id,
+      tipo,
+      urgencia,
+      categoria,
+      mensagem,
+      colaborador_id,
+      acao_sugerida,
+      timestamp
+    } = req.body;
+
+    console.log('🚨 ALERTA URGÊNCIA CRÍTICA:', {
+      anotacao_id,
+      categoria,
+      mensagem,
+      colaborador_id
+    });
+
+    // 1. Buscar administradores do tenant
+    const admins = await query(
+      `SELECT id, name, email FROM users 
+       WHERE tenant_id = $1 AND role = 'admin' AND active = true`,
+      [req.tenantId]
+    );
+
+    // 2. Criar notificação no sistema (se tabela existir)
+    try {
+      await query(
+        `INSERT INTO notifications (tenant_id, user_id, type, title, message, priority, metadata, created_at)
+         SELECT $1, id, 'urgencia_critica', $2, $3, 'alta', $4, NOW()
+         FROM users WHERE tenant_id = $1 AND role = 'admin' AND active = true`,
+        [
+          req.tenantId,
+          `Urgência Crítica: ${tipo}`,
+          mensagem,
+          JSON.stringify({ anotacao_id, categoria, acao_sugerida, colaborador_id })
+        ]
+      );
+    } catch (notifError) {
+      console.log('Tabela notifications não existe, continuando sem notificação no banco');
+    }
+
+    // 3. Log de emergência
+    console.log('🚨 LOG EMERGÊNCIA:', {
+      timestamp: new Date().toISOString(),
+      tenant_id: req.tenantId,
+      anotacao_id,
+      categoria,
+      mensagem,
+      admins_notificados: admins.rows.length,
+      acao_sugerida
+    });
+
+    res.json({
+      success: true,
+      notified: admins.rows.length,
+      admins: admins.rows.map(a => ({ id: a.id, name: a.name })),
+      message: 'Admins notificados com sucesso',
+      alerta_id: `urg-${Date.now()}-${anotacao_id}`
+    });
+
+  } catch (error) {
+    console.error('Erro ao processar alerta de urgência:', error);
+    res.status(500).json({
+      error: 'Erro ao processar alerta',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/agente/tickets
+ * Criar ticket automático para urgências
+ */
+router.post('/tickets', authenticate, async (req, res) => {
+  try {
+    const {
+      titulo,
+      descricao,
+      urgencia,
+      categoria,
+      colaborador_id,
+      prioridade,
+      anotacao_id
+    } = req.body;
+
+    // Inserir ticket na tabela (se existir) ou log
+    try {
+      const result = await query(
+        `INSERT INTO tickets (tenant_id, titulo, descricao, urgencia, categoria, colaborador_id, prioridade, anotacao_origem_id, criado_por, status, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'sistema_automatico', 'aberto', NOW())
+         RETURNING *`,
+        [req.tenantId, titulo, descricao, urgencia, categoria, colaborador_id, prioridade, anotacao_id]
+      );
+
+      console.log('🎫 Ticket criado automaticamente:', {
+        id: result.rows[0].id,
+        titulo,
+        categoria,
+        urgencia
+      });
+
+      res.status(201).json({
+        success: true,
+        ticket: result.rows[0],
+        message: 'Ticket criado com sucesso'
+      });
+
+    } catch (ticketError) {
+      // Se tabela tickets não existe, criar log
+      console.log('🎫 LOG TICKET (tabela não existe):', {
+        titulo,
+        descricao,
+        urgencia,
+        categoria,
+        colaborador_id,
+        prioridade,
+        anotacao_id
+      });
+
+      res.status(201).json({
+        success: true,
+        ticket: {
+          id: `log-${Date.now()}`,
+          titulo,
+          descricao,
+          urgencia,
+          categoria,
+          status: 'log_created'
+        },
+        message: 'Ticket logado (tabela não existe)'
+      });
+    }
+
+  } catch (error) {
+    console.error('Erro ao criar ticket:', error);
+    res.status(500).json({
+      error: 'Erro ao criar ticket',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/agente/anotacoes/ultimos-dias
+ * Buscar anotações dos últimos dias para análise de padrões
+ */
+router.get('/anotacoes/ultimos-dias', authenticate, async (req, res) => {
+  try {
+    const { dias = 7, limit = 100 } = req.query;
+
+    const result = await query(
+      `SELECT 
+        aa.*,
+        u.name as colaborador_name,
+        t.nome as trilha_nome
+       FROM agente_anotacoes aa
+       LEFT JOIN users u ON u.id = aa.colaborador_id
+       LEFT JOIN trilhas t ON t.id = aa.trilha_id
+       WHERE aa.tenant_id = $1 
+         AND aa.relevante = true
+         AND aa.created_at >= NOW() - INTERVAL '${parseInt(dias)} days'
+       ORDER BY aa.created_at DESC
+       LIMIT $2`,
+      [req.tenantId, parseInt(limit)]
+    );
+
+    res.json({
+      success: true,
+      periodo_dias: parseInt(dias),
+      total: result.rows.length,
+      anotacoes: result.rows
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar anotações dos últimos dias:', error);
+    res.status(500).json({
+      error: 'Erro interno ao buscar anotações',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/agente/melhorias
+ * Salvar melhorias sugeridas pela análise de padrões
+ */
+router.post('/melhorias', authenticate, async (req, res) => {
+  try {
+    const {
+      titulo,
+      descricao,
+      categoria,
+      prioridade,
+      impacto_estimado,
+      esforco_estimado,
+      evidencias,
+      metricas_sucesso,
+      metadata = {}
+    } = req.body;
+
+    // Validar campos obrigatórios
+    if (!titulo || !descricao || !categoria) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: titulo, descricao, categoria'
+      });
+    }
+
+    // Inserir melhoria na tabela (se existir) ou log
+    try {
+      const result = await query(
+        `INSERT INTO onboarding_improvements (
+          tenant_id, titulo, descricao, categoria, prioridade, 
+          impacto_estimado, esforco_estimado, evidencias, 
+          metricas_sucesso, metadata, status, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pendente', NOW())
+        RETURNING *`,
+        [
+          req.tenantId, titulo, descricao, categoria, prioridade,
+          impacto_estimado, esforco_estimado, 
+          JSON.stringify(evidencias || []),
+          JSON.stringify(metricas_sucesso || []),
+          JSON.stringify(metadata)
+        ]
+      );
+
+      console.log('💡 Melhoria salva automaticamente:', {
+        id: result.rows[0].id,
+        titulo,
+        categoria,
+        prioridade
+      });
+
+      res.status(201).json({
+        success: true,
+        melhoria: result.rows[0],
+        message: 'Melhoria salva com sucesso'
+      });
+
+    } catch (dbError) {
+      // Se tabela não existe, criar log
+      console.log('💡 LOG MELHORIA (tabela não existe):', {
+        titulo,
+        descricao,
+        categoria,
+        prioridade,
+        impacto_estimado,
+        esforco_estimado,
+        evidencias,
+        metricas_sucesso,
+        metadata
+      });
+
+      res.status(201).json({
+        success: true,
+        melhoria: {
+          id: `log-${Date.now()}`,
+          titulo,
+          descricao,
+          categoria,
+          prioridade,
+          status: 'log_created'
+        },
+        message: 'Melhoria logada (tabela não existe)'
+      });
+    }
+
+  } catch (error) {
+    console.error('Erro ao salvar melhoria:', error);
+    res.status(500).json({
+      error: 'Erro ao salvar melhoria',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/agente/anotacoes/proativa
+ * Salvar anotação proativa gerada automaticamente
+ */
+router.post('/anotacoes/proativa', authenticate, async (req, res) => {
+  try {
+    const {
+      colaborador_id,
+      tipo,
+      titulo,
+      anotacao,
+      tags,
+      urgencia = 'baixa',
+      categoria = 'outros',
+      subcategoria = null,
+      acao_sugerida = null,
+      impacto_estimado = 'baixo',
+      insights = null,
+      acoes_especificas = [],
+      prioridade_revisao = 'baixa',
+      metadata = {},
+      gerado_automaticamente = false
+    } = req.body;
+
+    // Validar campos obrigatórios
+    if (!colaborador_id || !tipo || !titulo || !anotacao) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: colaborador_id, tipo, titulo, anotacao'
+      });
+    }
+
+    // Inserir anotação proativa
+    const result = await query(`
+      INSERT INTO agente_anotacoes (
+        tenant_id,
+        colaborador_id,
+        tipo,
+        titulo,
+        anotacao,
+        contexto,
+        tags
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [
+      req.tenantId,
+      colaborador_id,
+      tipo,
+      titulo,
+      anotacao,
+      JSON.stringify({
+        urgencia,
+        categoria,
+        subcategoria,
+        acao_sugerida,
+        impacto_estimado,
+        insights,
+        acoes_especificas,
+        prioridade_revisao,
+        gerado_automaticamente,
+        data_deteccao: new Date().toISOString(),
+        ...metadata
+      }),
+      tags || []
+    ]);
+
+    console.log(`🤖 Anotação proativa criada: ${tipo} - ${titulo} (urgencia: ${urgencia})`);
+
+    res.status(201).json({
+      success: true,
+      anotacao: result.rows[0],
+      message: 'Anotação proativa criada com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Erro ao criar anotação proativa:', error);
+    res.status(500).json({
+      error: 'Erro interno ao criar anotação proativa',
       details: error.message
     });
   }

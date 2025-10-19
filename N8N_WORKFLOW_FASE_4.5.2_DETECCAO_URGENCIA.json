@@ -1,0 +1,272 @@
+{
+  "name": "Fase 4.5.2 - Detecção de Urgência Automática",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.urgencia }}",
+              "operation": "equal",
+              "value2": "critica"
+            }
+          ]
+        }
+      },
+      "id": "analisar-urgencia-critica",
+      "name": "🚨 Urgência CRÍTICA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.urgencia }}",
+              "operation": "equal",
+              "value2": "alta"
+            }
+          ]
+        }
+      },
+      "id": "analisar-urgencia-alta",
+      "name": "⚠️ Urgência ALTA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [800, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/alertas/urgencia-critica",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "anotacao_id",
+              "value": "={{ $('💾 Salvar Anotação').item.json.id }}"
+            },
+            {
+              "name": "tipo",
+              "value": "={{ $json.tipo }}"
+            },
+            {
+              "name": "urgencia",
+              "value": "critica"
+            },
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "mensagem",
+              "value": "={{ $json.mensagem }}"
+            },
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "acao_sugerida",
+              "value": "={{ $json.acao_sugerida }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "notificar-admin-critica",
+      "name": "🔔 Notificar Admin (CRÍTICA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar dados do ticket para urgência crítica\nconst categoria = $json.categoria;\nconst titulo = $json.titulo_sugerido;\nconst descricao = $json.mensagem;\nconst urgencia = \"CRÍTICA\";\nconst colaborador_id = $json.from;\n\nlet ticketData = {\n  titulo: `[URGENTE] ${titulo}`,\n  descricao: descricao,\n  urgencia: urgencia,\n  categoria: categoria,\n  colaborador_id: colaborador_id,\n  prioridade: 'alta',\n  anotacao_id: $('💾 Salvar Anotação').item.json.id\n};\n\nreturn [{ json: ticketData }];"
+      },
+      "id": "preparar-ticket-critica",
+      "name": "🎫 Preparar Ticket (CRÍTICA)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/tickets",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "titulo",
+              "value": "={{ $json.titulo }}"
+            },
+            {
+              "name": "descricao",
+              "value": "={{ $json.descricao }}"
+            },
+            {
+              "name": "urgencia",
+              "value": "={{ $json.urgencia }}"
+            },
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.colaborador_id }}"
+            },
+            {
+              "name": "prioridade",
+              "value": "={{ $json.prioridade }}"
+            },
+            {
+              "name": "anotacao_id",
+              "value": "={{ $json.anotacao_id }}"
+            }
+          ]
+        }
+      },
+      "id": "criar-ticket-critica",
+      "name": "🎫 Criar Ticket (CRÍTICA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/alertas/urgencia-critica",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "anotacao_id",
+              "value": "={{ $('💾 Salvar Anotação').item.json.id }}"
+            },
+            {
+              "name": "tipo",
+              "value": "={{ $json.tipo }}"
+            },
+            {
+              "name": "urgencia",
+              "value": "alta"
+            },
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "mensagem",
+              "value": "={{ $json.mensagem }}"
+            },
+            {
+              "name": "colaborador_id",
+              "value": "={{ $json.from }}"
+            },
+            {
+              "name": "acao_sugerida",
+              "value": "={{ $json.acao_sugerida }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "id": "notificar-admin-alta",
+      "name": "📧 Notificar Admin (ALTA)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Continuar fluxo normal para urgências baixas/médias\nreturn [{ json: $('💾 Salvar Anotação').item.json }];"
+      },
+      "id": "continuar-fluxo-normal",
+      "name": "✅ Continuar Fluxo Normal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 800]
+    }
+  ],
+  "connections": {
+    "🚨 Urgência CRÍTICA?": {
+      "main": [
+        [
+          {
+            "node": "🔔 Notificar Admin (CRÍTICA)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🎫 Preparar Ticket (CRÍTICA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚠️ Urgência ALTA?": {
+      "main": [
+        [
+          {
+            "node": "📧 Notificar Admin (ALTA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎫 Preparar Ticket (CRÍTICA)": {
+      "main": [
+        [
+          {
+            "node": "🎫 Criar Ticket (CRÍTICA)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-18T21:00:00.000Z",
+      "updatedAt": "2025-10-18T21:00:00.000Z",
+      "id": "fase-4-5-2",
+      "name": "Fase 4.5.2"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-18T21:00:00.000Z",
+  "versionId": "1"
+}

@@ -1,0 +1,248 @@
+{
+  "name": "Fase 4.5.3 - Análise de Padrões Diária com GPT-4o",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-diario",
+      "name": "🕒 Cron Trigger (Diário 9h)",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/anotacoes/ultimos-dias?dias=7&limit=100",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      },
+      "id": "buscar-anotacoes-7-dias",
+      "name": "📊 Buscar Anotações (7 dias)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preparar dados para análise de padrões com GPT-4o\nconst anotacoes = $input.all().map(item => item.json.anotacoes || []).flat();\n\nif (anotacoes.length === 0) {\n  return [{\n    json: {\n      total_anotacoes: 0,\n      periodo: '7 dias',\n      mensagem: 'Nenhuma anotação encontrada para análise'\n    }\n  }];\n}\n\n// Agrupar por categoria\nconst porCategoria = {};\nconst porTipo = {};\nconst porUrgencia = {};\nconst porSentimento = {};\n\nanotacoes.forEach(anotacao => {\n  // Por categoria (do contexto JSON)\n  const contexto = typeof anotacao.contexto === 'string' ? \n    JSON.parse(anotacao.contexto || '{}') : \n    anotacao.contexto || {};\n  \n  const cat = contexto.categoria || 'outros';\n  if (!porCategoria[cat]) porCategoria[cat] = [];\n  porCategoria[cat].push(anotacao);\n  \n  // Por tipo\n  const tipo = anotacao.tipo;\n  if (!porTipo[tipo]) porTipo[tipo] = [];\n  porTipo[tipo].push(anotacao);\n  \n  // Por urgência\n  const urg = contexto.urgencia || 'baixa';\n  if (!porUrgencia[urg]) porUrgencia[urg] = [];\n  porUrgencia[urg].push(anotacao);\n  \n  // Por sentimento\n  const sent = anotacao.sentimento || 'neutro';\n  if (!porSentimento[sent]) porSentimento[sent] = [];\n  porSentimento[sent].push(anotacao);\n});\n\n// Criar resumo para GPT-4o\nconst resumo = {\n  total_anotacoes: anotacoes.length,\n  periodo: '7 dias',\n  por_categoria: Object.entries(porCategoria).map(([cat, items]) => ({\n    categoria: cat,\n    quantidade: items.length,\n    exemplos: items.slice(0, 3).map(i => i.anotacao)\n  })),\n  por_tipo: Object.entries(porTipo).map(([tipo, items]) => ({\n    tipo: tipo,\n    quantidade: items.length,\n    sentimento_medio: items.reduce((acc, i) => acc + (i.intensidade_sentimento || 0.5), 0) / items.length\n  })),\n  por_urgencia: Object.entries(porUrgencia).map(([urg, items]) => ({\n    urgencia: urg,\n    quantidade: items.length\n  })),\n  por_sentimento: Object.entries(porSentimento).map(([sent, items]) => ({\n    sentimento: sent,\n    quantidade: items.length,\n    intensidade_media: items.reduce((acc, i) => acc + (i.intensidade_sentimento || 0.5), 0) / items.length\n  })),\n  anotacoes_completas: anotacoes.slice(0, 20) // Limitar para Nas exceder tokens\n};\n\nreturn [{ json: resumo }];"
+      },
+      "id": "preparar-dados-analise",
+      "name": "📋 Preparar Dados para Análise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Authorization": "Bearer {{ $credentials.openai.apiKey }}",
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4o"
+            },
+            {
+              "name": "messages",
+              "value": "=[\n  {\n    \"role\": \"system\",\n    \"content\": \"Você é um especialista em análise de padrões e geração de melhorias para processos de onboarding corporativo. Analise os dados fornecidos e identifique padrões, problemas recorrentes e oportunidades de melhoria.\"\n  },\n  {\n    \"role\": \"user\",\n    \"content\": \"Analise as seguintes anotações dos últimos 7 dias e gere melhorias:\\n\\n{{ JSON.stringify($json, null, 2) }}\\n\\nRetorne um JSON com:\\n{\\n  \\\"padroes_identificados\\\": [\\n    {\\n      \\\"descricao\\\": \\\"string\\\",\\n      \\\"frequencia\\\": number,\\n      \\\"categoria\\\": \\\"string\\\",\\n      \\\"impacto\\\": \\\"muito_alto|alto|medio|baixo\\\"\\n    }\\n  ],\\n  \\\"melhorias_sugeridas\\\": [\\n    {\\n      \\\"titulo\\\": \\\"string\\\",\\n      \\\"descricao\\\": \\\"string\\\",\\n      \\\"categoria\\\": \\\"conteudo|interface|fluxo|performance|engajamento|acessibilidade|outros\\\",\\n      \\\"prioridade\\\": \\\"alta|media|baixa\\\",\\n      \\\"impacto_estimado\\\": \\\"muito_alto|alto|medio|baixo\\\",\\n      \\\"esforco_estimado\\\": \\\"alto|medio|baixo\\\",\\n      \\\"evidencias\\\": [\\\"string\\\"],\\n      \\\"metricas_sucesso\\\": [\\\"string\\\"]\\n    }\\n  ]\\n}\"\n  }\n]"
+            },
+            {
+              "name": "temperature",
+              "value": "0.5"
+            },
+            {
+              "name": "max_tokens",
+              "value": "2000"
+            }
+          ]
+        }
+      },
+      "id": "gpt4-analise-padroes",
+      "name": "🧠 GPT-4 Análise de Padrões",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processar resposta do GPT-4o\nconst response = $input.first().json;\nconst content = response.choices[0].message.content;\n\nlet analise;\ntry {\n  const jsonStr = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '');\n  analise = JSON.parse(jsonStr);\n} catch (e) {\n  console.error('Erro ao parsear resposta GPT-4o:', e);\n  analise = { \n    padroes_identificados: [], \n    melhorias_sugeridas: [] \n  };\n}\n\n// Preparar melhorias para salvar\nconst melhorias = analise.melhorias_sugeridas.map(melhoria => ({\n  titulo: melhoria.titulo,\n  descricao: melhoria.descricao,\n  categoria: melhoria.categoria,\n  prioridade: melhoria.prioridade,\n  impacto_estimado: melhoria.impacto_estimado,\n  esforco_estimado: melhoria.esforco_estimado,\n  evidencias: melhoria.evidencias,\n  metricas_sucesso: melhoria.metricas_sucesso,\n  gerado_por: 'analise_automatica_gpt4',\n  data_analise: new Date().toISOString(),\n  periodo_analise: '7_dias',\n  padroes_origem: analise.padroes_identificados\n}));\n\nreturn melhorias.map(m => ({ json: m }));"
+      },
+      "id": "processar-resposta-gpt4",
+      "name": "⚙️ Processar Resposta GPT-4o",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('BACKEND_URL').item.json.url }}/api/agente/melhorias",
+        "authentication": "none",
+        "requestOptions": {
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        },
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "titulo",
+              "value": "={{ $json.titulo }}"
+            },
+            {
+              "name": "descricao",
+              "value": "={{ $json.descricao }}"
+            },
+            {
+              "name": "categoria",
+              "value": "={{ $json.categoria }}"
+            },
+            {
+              "name": "prioridade",
+              "value": "={{ $json.prioridade }}"
+            },
+            {
+              "name": "impacto_estimado",
+              "value": "={{ $json.impacto_estimado }}"
+            },
+            {
+              "name": "esforco_estimado",
+              "value": "={{ $json.esforco_estimado }}"
+            },
+            {
+              "name": "evidencias",
+              "value": "={{ JSON.stringify($json.evidencias) }}"
+            },
+            {
+              "name": "metricas_sucesso",
+              "value": "={{ JSON.stringify($json.metricas_sucesso) }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ JSON.stringify({\n  gerado_por: $json.gerado_por,\n  data_analise: $json.data_analise,\n  periodo_analise: $json.periodo_analise,\n  padroes_origem: $json.padroes_origem\n}) }}"
+            }
+          ]
+        }
+      },
+      "id": "salvar-melhorias",
+      "name": "💾 Salvar Melhorias",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log final da análise\nconst totalMelhorias = $input.all().length;\n\nconsole.log('📊 ANÁLISE DE PADRÕES CONCLUÍDA:', {\n  data: new Date().toISOString(),\n  periodo: '7 dias',\n  total_melhorias_geradas: totalMelhorias,\n  status: 'sucesso'\n});\n\nreturn [{\n  json: {\n    status: 'sucesso',\n    total_melhorias: totalMelhorias,\n    data_analise: new Date().toISOString(),\n    periodo: '7 dias'\n  }\n}];"
+      },
+      "id": "log-final-analise",
+      "name": "📝 Log Final da Análise",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "🕒 Cron Trigger (Diário 9h)": {
+      "main": [
+        [
+          {
+            "node": "📊 Buscar Anotações (7 dias)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Buscar Anotações (7 dias)": {
+      "main": [
+        [
+          {
+            "node": "📋 Preparar Dados para Análise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Preparar Dados para Análise": {
+      "main": [
+        [
+          {
+            "node": "🧠 GPT-4 Análise de Padrões",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧠 GPT-4 Análise de Padrões": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Processar Resposta GPT-4o",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Processar Resposta GPT-4o": {
+      "main": [
+        [
+          {
+            "node": "💾 Salvar Melhorias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💾 Salvar Melhorias": {
+      "main": [
+        [
+          {
+            "node": "📝 Log Final da Análise",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-10-18T21:00:00.000Z",
+      "updatedAt": "2025-10-18T21:00:00.000Z",
+      "id": "fase-4-5-3",
+      "name": "Fase 4.5.3"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-10-18T21:00:00.000Z",
+  "versionId": "1"
+}
