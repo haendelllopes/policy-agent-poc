@@ -61,6 +61,24 @@ router.get('/history/:colaboradorId', authenticate, async (req, res) => {
       console.log(`📞 Lookup: ${colaboradorId} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → ${userId}`);
     }
 
+    // Se tenantId não foi fornecido, buscar do usuário
+    let finalTenantId = tenantId;
+    if (!finalTenantId) {
+      const userTenantResult = await query(
+        'SELECT tenant_id FROM users WHERE id = $1 LIMIT 1',
+        [userId]
+      );
+      if (userTenantResult.rows.length > 0) {
+        finalTenantId = userTenantResult.rows[0].tenant_id;
+      }
+    }
+
+    if (!finalTenantId) {
+      return res.status(400).json({ 
+        error: 'tenant_id é obrigatório ou usuário não encontrado' 
+      });
+    }
+
     // Buscar histórico
     const result = await query(
       `SELECT 
@@ -75,7 +93,7 @@ router.get('/history/:colaboradorId', authenticate, async (req, res) => {
       WHERE user_id = $1 AND tenant_id = $2
       ORDER BY created_at DESC
       LIMIT $3`,
-      [userId, tenantId, limit]
+      [userId, finalTenantId, limit]
     );
 
     // Formatar mensagens no padrão OpenAI (ordem cronológica)
@@ -91,7 +109,7 @@ router.get('/history/:colaboradorId', authenticate, async (req, res) => {
     res.json({
       success: true,
       userId,
-      tenantId,
+      tenantId: finalTenantId,
       messages,
       count: messages.length
     });
