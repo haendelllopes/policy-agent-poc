@@ -102,11 +102,15 @@ router.get('/disponiveis/:colaboradorId', requireTenant, async (req, res) => {
 });
 
 /**
- * GET /api/agent/colaborador/:colaboradorId
+ * GET /api/agent/trilhas/colaborador/:colaboradorId
  * Busca informações completas do colaborador para o agente conversacional
  * Aceita UUID ou telefone como colaboradorId
+ * 
+ * NOTA: Este endpoint NÃO usa requireTenant porque é o primeiro ponto de entrada
+ * no workflow N8N (só tem telefone neste momento). O tenant_id é buscado 
+ * automaticamente do usuário pelo telefone.
  */
-router.get('/colaborador/:colaboradorId', requireTenant, async (req, res) => {
+router.get('/colaborador/:colaboradorId', async (req, res) => {
   try {
     const colaboradorId = req.params.colaboradorId;
     let userId = colaboradorId;

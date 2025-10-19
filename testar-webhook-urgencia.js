@@ -80,3 +80,4 @@ testarWebhookUrgencia().catch(error => {
   log(`❌ Erro geral: ${error.message}`, 'red');
   process.exit(1);
 });
+
