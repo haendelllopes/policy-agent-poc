@@ -162,7 +162,7 @@ router.get('/colaborador/:colaboradorId', async (req, res) => {
         u.name as nome,
         u.email,
         u.phone as telefone,
-        u.data_admissao,
+        u.start_date as data_admissao,
         p.name as cargo,
         d.name as departamento,
         gestor.name as gestor_nome,
