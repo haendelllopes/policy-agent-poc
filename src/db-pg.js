@@ -162,8 +162,8 @@ function createPool(connStr) {
     // Configurações para liberar recursos muito rapidamente
     keepAlive: false, // Desabilitar keepAlive para liberar recursos
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 30000, // 30 segundos para queries
-    query_timeout: 30000, // 30 segundos para queries
+    statement_timeout: 60000, // 60 segundos para queries
+    query_timeout: 60000, // 60 segundos para queries
     // Configurações específicas para Lambda/Vercel
     allowExitOnIdle: true, // Permitir saída quando idle
     maxUses: 100, // Limite muito baixo de usos por conexão
@@ -270,8 +270,8 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
         connectionString: sessionPoolerUrl,
         ssl: { rejectUnauthorized: false },
         connectionTimeoutMillis: 10000, // 10 segundos - mais agressivo
-        statement_timeout: 15000, // 15 segundos
-        query_timeout: 15000, // 15 segundos
+        statement_timeout: 30000, // 30 segundos
+        query_timeout: 30000, // 30 segundos
         application_name: `navigator-app-${Date.now()}-${attempt}`,
         // Configurações adicionais para estabilidade
         keepAlive: false,
@@ -281,7 +281,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para conexão
       const connectionPromise = client.connect();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 30000)
+        setTimeout(() => reject(new Error('Connection timeout')), 60000)
       );
       
       await Promise.race([connectionPromise, timeoutPromise]);
@@ -290,7 +290,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para query
       const queryPromise = client.query(text, params);
       const queryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 30000)
+        setTimeout(() => reject(new Error('Query timeout')), 60000)
       );
       
       const res = await Promise.race([queryPromise, queryTimeoutPromise]);
