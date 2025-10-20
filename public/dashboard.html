@@ -2059,24 +2059,21 @@ a:hover {
         
     </script>
     
-    <!-- Chat Widget Integration -->
-    <link href="css/chat-widget.css" rel="stylesheet">
-    <script src="js/chat-widget.js"></script>
-    <script src="js/chat-integration.js"></script>
-    <script>
-        // Initialize chat widget for dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            if (window.ChatWidget) {
-                window.chatWidget = new ChatWidget();
-                window.chatIntegration = new ChatIntegration();
-                
-                // Set dashboard context
-                window.chatIntegration.setPageContext({
-                    page: 'dashboard',
-                    userType: 'admin'
-                });
-            }
-        });
-    </script>
+        <!-- Chat Widget Integration (HTTP Version for Vercel) -->
+        <link href="css/chat-widget.css" rel="stylesheet">
+        <script src="js/chat-widget-http.js"></script>
+        <script>
+            // Initialize chat widget for dashboard
+            document.addEventListener('DOMContentLoaded', function() {
+                if (window.chatWidgetHTTP) {
+                    // Set dashboard context
+                    window.chatWidgetHTTP.setUserId('admin-demo');
+                    window.chatWidgetHTTP.setContext({
+                        page: 'dashboard',
+                        userType: 'admin'
+                    });
+                }
+            });
+        </script>
 </body>
 </html>

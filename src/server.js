@@ -184,9 +184,50 @@ app.get('/js/chat-widget.js', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/js/chat-widget.js'));
 });
 
+app.get('/js/chat-widget-http.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, '../public/js/chat-widget-http.js'));
+});
+
 app.get('/js/chat-integration.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.sendFile(path.join(__dirname, '../public/js/chat-integration.js'));
+});
+
+// Endpoint HTTP para chat (compatível com Vercel)
+app.post('/api/chat', async (req, res) => {
+  try {
+    const { message, userId, context } = req.body;
+    
+    console.log('💬 Chat HTTP - Mensagem recebida:', { message, userId, context });
+    
+    // Simular resposta do Navi (versão simplificada)
+    const responses = [
+      'Olá! Como posso ajudar você hoje?',
+      'Entendi sua pergunta. Vou buscar informações para você.',
+      'Ótima pergunta! Deixe-me verificar isso.',
+      'Posso ajudar você com informações sobre trilhas, documentos ou processos.',
+      'Estou aqui para auxiliar no seu onboarding!'
+    ];
+    
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+    
+    // Simular delay de processamento
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    res.json({
+      message: randomResponse,
+      timestamp: new Date().toISOString(),
+      status: 'success'
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro no chat HTTP:', error);
+    res.status(500).json({
+      message: 'Desculpe, ocorreu um erro. Tente novamente.',
+      status: 'error'
+    });
+  }
 });
 
 // Página inicial do dashboard (redireciona para dashboard.html)
