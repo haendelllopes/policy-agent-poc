@@ -170,18 +170,17 @@ router.get('/trilhas/disponiveis/:colaborador_id', deriveTenantFromCollaborator,
         t.descricao,
         t.prazo_dias,
         t.ordem,
-        t.categoria,
-        t.status,
+        t.ativo as status,
         CASE 
           WHEN ct.id IS NOT NULL THEN ct.status
           ELSE 'disponivel'
         END as status_colaborador,
-        ct.data_inscricao,
+        ct.data_inicio as data_inscricao,
         ct.data_limite,
-        ct.progresso_percentual
+        ct.pontuacao_final as progresso_percentual
       FROM trilhas t
       LEFT JOIN colaborador_trilhas ct ON t.id = ct.trilha_id AND ct.colaborador_id = $1
-      WHERE t.tenant_id = $2 AND t.status = 'ativa'
+      WHERE t.tenant_id = $2 AND t.ativo = true
       ORDER BY t.ordem ASC, t.nome ASC
     `, [colaboradorId, tenantId]);
 
