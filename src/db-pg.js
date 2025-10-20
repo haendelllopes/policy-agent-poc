@@ -151,19 +151,19 @@ function createPool(connStr) {
     // Configurações otimizadas para Supabase Session Pooler
     max: 2, // 2 conexões para melhor throughput
     min: 1, // Manter 1 conexão ativa
-    idleTimeoutMillis: 10000, // 10 segundos para conexões idle
-    connectionTimeoutMillis: 30000, // 30 segundos para conexão inicial
-    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
+    idleTimeoutMillis: 15000, // 15 segundos para conexões idle (aumentado)
+    connectionTimeoutMillis: 45000, // 45 segundos para conexão inicial (aumentado)
+    acquireTimeoutMillis: 30000, // 30 segundos para adquirir conexão (aumentado)
     // Configurações de retry otimizadas
     retryDelayMs: 5000, // 5 segundos entre tentativas
-    retryAttempts: 2, // 2 tentativas para melhor resiliência
+    retryAttempts: 3, // 3 tentativas para melhor resiliência (aumentado)
     // Forçar IPv4
     family: 4,
     // Configurações para liberar recursos muito rapidamente
     keepAlive: false, // Desabilitar keepAlive para liberar recursos
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 90000, // 90 segundos para queries
-    query_timeout: 90000, // 90 segundos para queries
+    statement_timeout: 120000, // 120 segundos para queries (aumentado)
+    query_timeout: 120000, // 120 segundos para queries (aumentado)
     // Configurações específicas para Lambda/Vercel
     allowExitOnIdle: true, // Permitir saída quando idle
     maxUses: 100, // Limite muito baixo de usos por conexão
@@ -269,9 +269,9 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       client = new Client({
         connectionString: sessionPoolerUrl,
         ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 10000, // 10 segundos - mais agressivo
-        statement_timeout: 30000, // 30 segundos
-        query_timeout: 30000, // 30 segundos
+        connectionTimeoutMillis: 30000, // 30 segundos - aumentado
+        statement_timeout: 90000, // 90 segundos - aumentado
+        query_timeout: 90000, // 90 segundos - aumentado
         application_name: `navigator-app-${Date.now()}-${attempt}`,
         // Configurações adicionais para estabilidade
         keepAlive: false,
@@ -281,7 +281,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para conexão
       const connectionPromise = client.connect();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 60000)
+        setTimeout(() => reject(new Error('Connection timeout')), 90000) // Aumentado para 90s
       );
       
       await Promise.race([connectionPromise, timeoutPromise]);
@@ -290,7 +290,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para query
       const queryPromise = client.query(text, params);
       const queryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 60000)
+        setTimeout(() => reject(new Error('Query timeout')), 120000) // Aumentado para 120s
       );
       
       const res = await Promise.race([queryPromise, queryTimeoutPromise]);
