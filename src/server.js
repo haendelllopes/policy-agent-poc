@@ -345,21 +345,25 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
           }
         }
       },
-      {
-        type: 'function',
-        function: {
-          name: 'analisar_performance_colaboradores',
-          description: 'Analisa performance e identifica colaboradores em risco de evasão',
-          parameters: {
-            type: 'object',
-            properties: {
-              departamento: { type: 'string', description: 'Departamento específico (opcional)' },
-              periodo: { type: 'string', description: 'Período de análise (7d, 30d, 90d)', default: '30d' },
-              criterios: { type: 'array', description: 'Critérios específicos de análise' }
-            }
-          }
-        }
-      }
+              {
+                type: 'function',
+                function: {
+                  name: 'analisar_performance_colaboradores',
+                  description: 'Analisa performance e identifica colaboradores em risco de evasão',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      departamento: { type: 'string', description: 'Departamento específico (opcional)' },
+                      periodo: { type: 'string', description: 'Período de análise (7d, 30d, 90d)', default: '30d' },
+                      criterios: { 
+                        type: 'array', 
+                        description: 'Critérios específicos de análise',
+                        items: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
     ];
 
     // Chamar GPT-4o com ferramentas
