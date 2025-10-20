@@ -966,6 +966,26 @@ a:hover {
         }
     </script>
     
+    <!-- Chat Widget Integration -->
+    <link href="css/chat-widget.css" rel="stylesheet">
+    <script src="js/chat-widget.js"></script>
+    <script src="js/chat-integration.js"></script>
+    <script>
+        // Initialize chat widget for trilhas page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.ChatWidget) {
+                window.chatWidget = new ChatWidget();
+                window.chatIntegration = new ChatIntegration();
+                
+                // Set trilhas context
+                window.chatIntegration.setPageContext({
+                    page: 'colaborador-trilhas',
+                    userType: 'colaborador'
+                });
+            }
+        });
+    </script>
+    
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
 </body>

@@ -101,3 +101,4 @@ testTimeoutConfigurations()
     console.error('\n❌ Erro durante os testes:', error);
     process.exit(1);
   });
+

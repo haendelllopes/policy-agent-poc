@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const http = require('http');
 const compression = require('compression');
 const multer = require('multer');
 const path = require('path');
@@ -13,6 +14,7 @@ const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTena
 const { analyzeDocument } = require('./document-analyzer');
 const TelegramBot = require('./telegram-bot');
 const QRCode = require('qrcode');
+const ChatWebSocketServer = require('./websocket/chatServer');
 
 // Cache simples para dados quando PostgreSQL está instável
 const dataCache = {
@@ -2725,8 +2727,16 @@ async function bootstrap() {
     await initializeDatabase();
     
     const port = Number(process.env.PORT || 3000);
-    app.listen(port, () => {
+    
+    // Criar servidor HTTP para integrar WebSocket
+    const server = http.createServer(app);
+    
+    // Inicializar WebSocket Server
+    const chatWebSocketServer = new ChatWebSocketServer(server);
+    
+    server.listen(port, () => {
       console.log(`🚀 Flowly API rodando em http://localhost:${port}`);
+      console.log(`💬 WebSocket Chat disponível em ws://localhost:${port}/ws/chat`);
       console.log(`📊 Database: ${process.env.DATABASE_URL ? 'PostgreSQL (Supabase)' : 'SQLite (Local)'}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     });

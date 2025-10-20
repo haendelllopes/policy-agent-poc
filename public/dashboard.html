@@ -2057,9 +2057,25 @@ a:hover {
             console.log('Alterar itens por página...');
         }
         
-        // Inicializar Feather Icons
+    </script>
+    
+    <!-- Chat Widget Integration -->
+    <link href="css/chat-widget.css" rel="stylesheet">
+    <script src="js/chat-widget.js"></script>
+    <script src="js/chat-integration.js"></script>
+    <script>
+        // Initialize chat widget for dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            feather.replace();
+            if (window.ChatWidget) {
+                window.chatWidget = new ChatWidget();
+                window.chatIntegration = new ChatIntegration();
+                
+                // Set dashboard context
+                window.chatIntegration.setPageContext({
+                    page: 'dashboard',
+                    userType: 'admin'
+                });
+            }
         });
     </script>
 </body>

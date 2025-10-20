@@ -2015,5 +2015,25 @@ textarea:focus {
         
         console.log(' Dashboard inicializado com sucesso!');
     </script>
+    
+    <!-- Chat Widget Integration -->
+    <link href="css/chat-widget.css" rel="stylesheet">
+    <script src="js/chat-widget.js"></script>
+    <script src="js/chat-integration.js"></script>
+    <script>
+        // Initialize chat widget for inicio page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.ChatWidget) {
+                window.chatWidget = new ChatWidget();
+                window.chatIntegration = new ChatIntegration();
+                
+                // Set inicio context
+                window.chatIntegration.setPageContext({
+                    page: 'inicio',
+                    userType: 'admin'
+                });
+            }
+        });
+    </script>
 </body>
 </html>

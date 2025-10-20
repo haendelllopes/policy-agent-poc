@@ -46,3 +46,4 @@ async function testarBuscaTrilha() {
 
 // Executar teste
 testarBuscaTrilha();
+
