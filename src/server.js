@@ -196,6 +196,17 @@ app.get('/js/chat-integration.js', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/js/chat-integration.js'));
 });
 
+// Endpoint para verificar configuração
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
+    nodeEnv: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Endpoint HTTP para chat (compatível com Vercel)
 app.post('/api/chat', async (req, res) => {
   try {
