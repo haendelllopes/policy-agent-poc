@@ -7,6 +7,8 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const mammoth = require('mammoth');
+const OpenAI = require('openai');
+const axios = require('axios');
 // pdf-parse não funciona no Vercel (requer @napi-rs/canvas)
 // const pdfParse = require('pdf-parse');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
@@ -202,7 +204,14 @@ app.post('/api/chat', async (req, res) => {
     console.log('💬 Chat HTTP - Mensagem recebida:', { message, userId, context });
     
     // Integrar com o sistema de IA real
-    const OpenAI = require('openai');
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('❌ OPENAI_API_KEY não encontrada');
+      return res.status(500).json({
+        message: 'Configuração de API não encontrada',
+        status: 'error'
+      });
+    }
+    
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
     // Simular contexto do usuário baseado no userId
