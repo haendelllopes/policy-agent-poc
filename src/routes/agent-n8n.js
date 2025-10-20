@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { query } = require('../db-pg');
-const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/phone-utils');
+const { normalizePhoneForWhatsApp, addBrazilianNinthDigit } = require('../utils/helpers');
 
 /**
  * MIDDLEWARE PARA DERIVAR TENANT_ID DO COLABORADOR_ID
