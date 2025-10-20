@@ -201,22 +201,216 @@ app.post('/api/chat', async (req, res) => {
     
     console.log('💬 Chat HTTP - Mensagem recebida:', { message, userId, context });
     
-    // Simular resposta do Navi (versão simplificada)
-    const responses = [
-      'Olá! Como posso ajudar você hoje?',
-      'Entendi sua pergunta. Vou buscar informações para você.',
-      'Ótima pergunta! Deixe-me verificar isso.',
-      'Posso ajudar você com informações sobre trilhas, documentos ou processos.',
-      'Estou aqui para auxiliar no seu onboarding!'
+    // Integrar com o sistema de IA real
+    const OpenAI = require('openai');
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    // Simular contexto do usuário baseado no userId
+    const userContext = {
+      profile: {
+        name: userId === 'admin-demo' ? 'Administrador' : 'Colaborador',
+        position: userId === 'admin-demo' ? 'Gerente' : 'Desenvolvedor',
+        department: userId === 'admin-demo' ? 'Administração' : 'Tecnologia',
+        sentimento_atual: 'neutro',
+        sentimento_intensidade: 50,
+        role: userId === 'admin-demo' ? 'admin' : 'colaborador'
+      },
+      conversationHistory: []
+    };
+    
+    // Gerar mensagem do sistema baseada no contexto
+    const systemMessage = `Você é o **Navi**, assistente de onboarding inteligente e proativo.
+
+🎯 **CONTEXTO ATUAL:**
+- **Usuário:** ${userContext.profile.name}
+- **Cargo:** ${userContext.profile.position}
+- **Departamento:** ${userContext.profile.department}
+- **Tipo:** ${userContext.profile.role === 'admin' ? 'ADMINISTRADOR' : 'COLABORADOR'}
+- **Sentimento:** ${userContext.profile.sentimento_atual} (${userContext.profile.sentimento_intensidade}%)
+- **Página atual:** ${context?.page || 'Dashboard'}
+${context?.trilha_visualizando ? `- **Trilha Visualizando:** ${context.trilha_visualizando}` : ''}
+
+🎭 **TOM DE VOZ:** Amigável e prestativo 😊
+
+${userContext.profile.role === 'admin' ? `
+🎯 **MODO ADMINISTRADOR ATIVADO:**
+- Você tem acesso a ferramentas avançadas de análise
+- Seja proativo em identificar problemas e oportunidades
+- Gere insights estratégicos baseados em dados
+- Sugira ações preventivas e melhorias
+- Foque em métricas de performance e ROI
+` : ''}
+
+🔧 **SUAS FERRAMENTAS DISPONÍVEIS:**
+
+**PARA COLABORADORES:**
+- buscar_trilhas_disponiveis: Lista trilhas do colaborador
+- iniciar_trilha: Inicia trilha específica
+- registrar_feedback: Registra feedback sobre trilhas
+- buscar_documentos: Busca semântica em documentos
+
+**PARA ADMINISTRADORES:**
+- analisar_performance_colaboradores: Analisa performance e identifica riscos
+- gerar_relatorio_onboarding: Gera relatórios automáticos (executivo/operacional)
+- criar_alertas_personalizados: Sistema de alertas inteligentes
+- identificar_gargalos_trilhas: Detecta problemas em trilhas
+
+**INSTRUÇÕES IMPORTANTES:**
+- SEMPRE use as ferramentas quando apropriado
+- Para administradores, seja proativo em usar as ferramentas de análise
+- Quando o usuário pedir análise, relatórios ou alertas, USE as ferramentas correspondentes
+- Não responda sem usar ferramentas quando elas são necessárias
+
+SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proativo!`;
+
+    // Definir ferramentas disponíveis
+    const tools = [
+      {
+        type: 'function',
+        function: {
+          name: 'buscar_trilhas_disponiveis',
+          description: 'Busca trilhas disponíveis para o colaborador',
+          parameters: {
+            type: 'object',
+            properties: {
+              colaborador_id: { type: 'string' }
+            }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'iniciar_trilha',
+          description: 'Inicia uma trilha específica para o colaborador',
+          parameters: {
+            type: 'object',
+            properties: {
+              trilha_id: { type: 'string' },
+              colaborador_id: { type: 'string' }
+            }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'analisar_performance_colaboradores',
+          description: 'Analisa performance e identifica colaboradores em risco de evasão',
+          parameters: {
+            type: 'object',
+            properties: {
+              departamento: { type: 'string', description: 'Departamento específico (opcional)' },
+              periodo: { type: 'string', description: 'Período de análise (7d, 30d, 90d)', default: '30d' },
+              criterios: { type: 'array', description: 'Critérios específicos de análise' }
+            }
+          }
+        }
+      }
     ];
-    
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
-    // Simular delay de processamento
-    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Chamar GPT-4o com ferramentas
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemMessage },
+        { role: 'user', content: message }
+      ],
+      tools: tools,
+      tool_choice: 'auto',
+      temperature: 0.7,
+      max_tokens: 500
+    });
+
+    const responseMessage = response.choices[0].message;
+    let finalResponse = responseMessage.content || 'Desculpe, não consegui processar sua mensagem.';
+
+    // Se o modelo quer usar ferramentas
+    if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+      const toolCalls = responseMessage.tool_calls;
+      const toolResults = [];
+
+      for (const toolCall of toolCalls) {
+        const functionName = toolCall.function.name;
+        const functionArgs = JSON.parse(toolCall.function.arguments);
+
+        try {
+          console.log(`🔧 Executando ferramenta: ${functionName}`, functionArgs);
+          
+          let toolResult;
+          switch (functionName) {
+            case 'buscar_trilhas_disponiveis':
+              // Simular busca de trilhas
+              toolResult = {
+                status: 'sucesso',
+                trilhas: [
+                  { id: 'trilha-1', nome: 'Trilha 2', status: 'disponivel' },
+                  { id: 'trilha-2', nome: 'Cultura Organizacional', status: 'disponivel' },
+                  { id: 'trilha-3', nome: 'Trilha de Liderança', status: 'disponivel' }
+                ]
+              };
+              break;
+            case 'iniciar_trilha':
+              // Simular início de trilha
+              toolResult = {
+                status: 'sucesso',
+                mensagem: `Trilha ${functionArgs.trilha_id} iniciada com sucesso!`,
+                trilha_iniciada: functionArgs.trilha_id
+              };
+              break;
+            case 'analisar_performance_colaboradores':
+              // Simular análise de performance
+              toolResult = {
+                status: 'sucesso',
+                insights: `Análise de performance para ${functionArgs.departamento || 'todos os departamentos'} no período de ${functionArgs.periodo}:
+- Colaboradores em risco de evasão: 2 (João Silva, Maria Oliveira)
+- Colaboradores com baixa performance em trilhas: 3
+- Recomendações: Oferecer mentoria para João Silva, revisar trilha X para Maria Oliveira.`,
+                data: [
+                  { name: 'João Silva', status: 'em_risco', motivo: 'baixa_conclusao_trilhas' },
+                  { name: 'Maria Oliveira', status: 'baixa_performance', motivo: 'feedback_negativo_recorrente' }
+                ]
+              };
+              break;
+            default:
+              toolResult = { error: `Ferramenta não encontrada: ${functionName}` };
+          }
+
+          toolResults.push({
+            tool_call_id: toolCall.id,
+            role: "tool",
+            name: functionName,
+            content: JSON.stringify(toolResult)
+          });
+        } catch (error) {
+          console.error(`❌ Erro ao executar ferramenta ${functionName}:`, error);
+          toolResults.push({
+            tool_call_id: toolCall.id,
+            role: "tool",
+            name: functionName,
+            content: JSON.stringify({ error: `Erro ao executar ${functionName}: ${error.message}` })
+          });
+        }
+      }
+
+      // Gerar resposta final com os resultados das ferramentas
+      const finalResponseGPT = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: message },
+          { role: 'assistant', content: responseMessage.content },
+          ...toolResults
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      });
+
+      finalResponse = finalResponseGPT.choices[0].message.content;
+    }
     
     res.json({
-      message: randomResponse,
+      message: finalResponse,
       timestamp: new Date().toISOString(),
       status: 'success'
     });
