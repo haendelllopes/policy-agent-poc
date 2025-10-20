@@ -198,12 +198,16 @@ app.get('/js/chat-integration.js', (req, res) => {
 
 // Endpoint para verificar configuração
 app.get('/api/debug-env', (req, res) => {
+  const openaiKey = process.env.OPENAI_API_KEY;
   res.json({
-    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasOpenAIKey: !!openaiKey,
+    openaiKeyLength: openaiKey ? openaiKey.length : 0,
+    openaiKeyPrefix: openaiKey ? openaiKey.substring(0, 8) + '...' : 'undefined',
     hasSupabaseUrl: !!process.env.SUPABASE_URL,
     hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
     nodeEnv: process.env.NODE_ENV,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    allEnvKeys: Object.keys(process.env).filter(key => key.includes('OPENAI') || key.includes('SUPABASE'))
   });
 });
 
@@ -213,6 +217,11 @@ app.post('/api/chat', async (req, res) => {
     const { message, userId, context } = req.body;
     
     console.log('💬 Chat HTTP - Mensagem recebida:', { message, userId, context });
+    console.log('🔑 Debug OPENAI_API_KEY:', {
+      exists: !!process.env.OPENAI_API_KEY,
+      length: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.length : 0,
+      prefix: process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 8) + '...' : 'undefined'
+    });
     
     // Integrar com o sistema de IA real
     if (!process.env.OPENAI_API_KEY) {
