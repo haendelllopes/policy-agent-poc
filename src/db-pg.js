@@ -63,7 +63,7 @@ async function initializePool() {
       
       try {
         // Reduzir delay para acelerar primeira conexão em produção
-        const randomDelay = Math.random() * 1500 + 500; // 0.5-2.0 segundos
+        const randomDelay = Math.random() * 500 + 100; // 0.1-0.6 segundos
         console.log(`Aguardando ${Math.round(randomDelay)}ms antes de conectar...`);
         await new Promise(resolve => setTimeout(resolve, randomDelay));
         
@@ -152,8 +152,8 @@ function createPool(connStr) {
     max: 2, // 2 conexões para melhor throughput
     min: 1, // Manter 1 conexão ativa
     idleTimeoutMillis: 10000, // 10 segundos para conexões idle
-    connectionTimeoutMillis: 15000, // 15 segundos para conexão inicial
-    acquireTimeoutMillis: 5000, // 5 segundos para adquirir conexão
+    connectionTimeoutMillis: 30000, // 30 segundos para conexão inicial
+    acquireTimeoutMillis: 15000, // 15 segundos para adquirir conexão
     // Configurações de retry otimizadas
     retryDelayMs: 5000, // 5 segundos entre tentativas
     retryAttempts: 2, // 2 tentativas para melhor resiliência
@@ -162,8 +162,8 @@ function createPool(connStr) {
     // Configurações para liberar recursos muito rapidamente
     keepAlive: false, // Desabilitar keepAlive para liberar recursos
     keepAliveInitialDelayMillis: 0,
-    statement_timeout: 60000, // 60 segundos para queries
-    query_timeout: 60000, // 60 segundos para queries
+    statement_timeout: 90000, // 90 segundos para queries
+    query_timeout: 90000, // 90 segundos para queries
     // Configurações específicas para Lambda/Vercel
     allowExitOnIdle: true, // Permitir saída quando idle
     maxUses: 100, // Limite muito baixo de usos por conexão
