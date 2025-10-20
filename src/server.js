@@ -295,6 +295,20 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       {
         type: 'function',
         function: {
+          name: 'buscar_documentos',
+          description: 'Busca semântica em documentos corporativos',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: { type: 'string', description: 'Termo de busca para documentos' },
+              colaborador_id: { type: 'string', description: 'ID do colaborador' }
+            }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
           name: 'analisar_performance_colaboradores',
           description: 'Analisa performance e identifica colaboradores em risco de evasão',
           parameters: {
@@ -357,6 +371,29 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                 mensagem: `Trilha ${functionArgs.trilha_id} iniciada com sucesso!`,
                 trilha_iniciada: functionArgs.trilha_id
               };
+              break;
+            case 'buscar_documentos':
+              // Buscar documentos reais usando o endpoint existente
+              try {
+                const searchResponse = await axios.post('http://localhost:3000/api/documents/semantic-search', {
+                  query: functionArgs.query,
+                  colaborador_id: functionArgs.colaborador_id || 'demo-user'
+                });
+                
+                toolResult = {
+                  status: 'sucesso',
+                  documentos_encontrados: searchResponse.data.documents?.length || 0,
+                  documentos: searchResponse.data.documents || [],
+                  query: functionArgs.query
+                };
+              } catch (error) {
+                console.error('❌ Erro ao buscar documentos:', error);
+                toolResult = {
+                  status: 'erro',
+                  mensagem: 'Erro ao buscar documentos',
+                  documentos: []
+                };
+              }
               break;
             case 'analisar_performance_colaboradores':
               // Simular análise de performance
