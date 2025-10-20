@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "node src/server.js",
-    "start": "node server-simple.js",
+    "start": "node src/server.js",
     "build": "echo 'Build completed - no build step required'",
     "test": "echo \"No tests in POC\" && exit 0"
   },

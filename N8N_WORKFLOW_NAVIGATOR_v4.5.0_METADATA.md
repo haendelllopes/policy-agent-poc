@@ -231,3 +231,5 @@ BAIXA   → 💾 Salvar Normalmente
 *Documentação atualizada em 19 de outubro de 2025*  
 *Versão: 4.5.0 - Detecção de Urgência Implementada*
 
+
+
