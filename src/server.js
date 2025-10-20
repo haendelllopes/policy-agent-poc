@@ -242,6 +242,7 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     }
     
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    console.log('🤖 OpenAI client criado com sucesso');
     
     // Simular contexto do usuário baseado no userId
     const userContext = {
@@ -362,6 +363,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
     ];
 
     // Chamar GPT-4o com ferramentas
+    console.log('🚀 Fazendo chamada para OpenAI GPT-4o...');
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -373,6 +375,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       temperature: 0.7,
       max_tokens: 500
     });
+    console.log('✅ Resposta OpenAI recebida:', response.choices[0]?.message?.content?.substring(0, 100) + '...');
 
     const responseMessage = response.choices[0].message;
     let finalResponse = responseMessage.content || 'Desculpe, não consegui processar sua mensagem.';
@@ -492,9 +495,17 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
     
   } catch (error) {
     console.error('❌ Erro no chat HTTP:', error);
+    console.error('❌ Detalhes do erro:', {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      type: error.type
+    });
+    
     res.status(500).json({
-      message: 'Desculpe, ocorreu um erro. Tente novamente.',
-      status: 'error'
+      message: `Erro: ${error.message || 'Erro desconhecido'}`,
+      status: 'error',
+      errorType: error.type || 'unknown'
     });
   }
 });
