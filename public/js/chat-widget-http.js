@@ -1,4 +1,4 @@
-// Chat Widget HTTP - Versão com Botão Flutuante Garantido
+// Chat Widget HTTP - Versão com Estilos Aplicados via JavaScript
 console.log('🚀 Carregando Chat Widget HTTP...');
 
 class ChatWidgetHTTP {
@@ -24,32 +24,41 @@ class ChatWidgetHTTP {
   createFloatingButton() {
     console.log('🔘 Criando botão flutuante...');
     
-    // Criar botão flutuante super visível
+    // Criar botão flutuante
     const floatingButton = document.createElement('div');
     floatingButton.id = 'navi-floating-button';
-    floatingButton.innerHTML = `
-      <div style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #17A2B8, #138496);
-        border-radius: 50%;
-        box-shadow: 0 4px 20px rgba(23, 162, 184, 0.4);
-        cursor: pointer;
-        z-index: 999999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        color: white;
-        transition: all 0.3s ease;
-        border: 3px solid white;
-      " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-        🤖
-      </div>
-    `;
+    
+    // Aplicar estilos via JavaScript
+    const buttonStyle = {
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px',
+      width: '60px',
+      height: '60px',
+      background: 'linear-gradient(135deg, #17A2B8, #138496)',
+      borderRadius: '50%',
+      boxShadow: '0 4px 20px rgba(23, 162, 184, 0.4)',
+      cursor: 'pointer',
+      zIndex: '999999',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '24px',
+      color: 'white',
+      transition: 'all 0.3s ease',
+      border: '3px solid white'
+    };
+    
+    Object.assign(floatingButton.style, buttonStyle);
+    floatingButton.innerHTML = '🤖';
+    
+    // Adicionar hover effect
+    floatingButton.addEventListener('mouseenter', () => {
+      floatingButton.style.transform = 'scale(1.1)';
+    });
+    floatingButton.addEventListener('mouseleave', () => {
+      floatingButton.style.transform = 'scale(1)';
+    });
 
     document.body.appendChild(floatingButton);
     console.log('🔘 Botão flutuante criado e adicionado ao DOM');
@@ -61,108 +70,165 @@ class ChatWidgetHTTP {
     // Criar janela do chat
     const chatWindow = document.createElement('div');
     chatWindow.id = 'navi-chat-window';
-    chatWindow.innerHTML = `
-      <div style="
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        width: 350px;
-        height: 500px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        z-index: 999998;
-        display: none;
-        flex-direction: column;
-        font-family: 'Montserrat', 'Roboto', sans-serif;
-        border: 1px solid #e9ecef;
-        overflow: hidden;
-      ">
+    
+    // Aplicar estilos via JavaScript
+    const windowStyle = {
+      position: 'fixed',
+      bottom: '90px',
+      right: '20px',
+      width: '350px',
+      height: '500px',
+      background: 'white',
+      borderRadius: '12px',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+      zIndex: '999998',
+      display: 'none',
+      flexDirection: 'column',
+      fontFamily: "'Montserrat', 'Roboto', sans-serif",
+      border: '1px solid #e9ecef',
+      overflow: 'hidden'
+    };
+    
+    Object.assign(chatWindow.style, windowStyle);
+    
+    // Criar header
+    const header = document.createElement('div');
+    const headerStyle = {
+      background: 'linear-gradient(135deg, #17A2B8, #138496)',
+      color: 'white',
+      padding: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
+    };
+    Object.assign(header.style, headerStyle);
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.style.display = 'flex';
+    titleDiv.style.alignItems = 'center';
+    titleDiv.innerHTML = `
+      <span style="font-size: 20px; margin-right: 8px;">🤖</span>
+      <span style="font-weight: 600;">Navi</span>
+      <span id="navi-status" style="margin-left: 8px;">🟢</span>
+    `;
+    
+    const closeButton = document.createElement('button');
+    closeButton.id = 'navi-close-chat';
+    const closeButtonStyle = {
+      background: 'none',
+      border: 'none',
+      color: 'white',
+      cursor: 'pointer',
+      fontSize: '20px',
+      padding: '4px'
+    };
+    Object.assign(closeButton.style, closeButtonStyle);
+    closeButton.innerHTML = '✕';
+    
+    header.appendChild(titleDiv);
+    header.appendChild(closeButton);
+    
+    // Criar body
+    const body = document.createElement('div');
+    body.id = 'navi-chat-body';
+    const bodyStyle = {
+      flex: '1',
+      display: 'flex',
+      flexDirection: 'column'
+    };
+    Object.assign(body.style, bodyStyle);
+    
+    // Criar área de mensagens
+    const messagesArea = document.createElement('div');
+    messagesArea.id = 'navi-chat-messages';
+    const messagesStyle = {
+      flex: '1',
+      padding: '16px',
+      overflowY: 'auto',
+      background: '#f8f9fa'
+    };
+    Object.assign(messagesArea.style, messagesStyle);
+    
+    // Mensagem inicial
+    const initialMessage = document.createElement('div');
+    initialMessage.style.marginBottom = '16px';
+    initialMessage.innerHTML = `
+      <div style="display: flex; align-items: flex-start;">
         <div style="
-          background: linear-gradient(135deg, #17A2B8, #138496);
-          color: white;
-          padding: 16px;
+          width: 32px;
+          height: 32px;
+          background: #17A2B8;
+          border-radius: 50%;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: center;
+          margin-right: 12px;
+          font-size: 16px;
+        ">🤖</div>
+        <div style="
+          background: white;
+          padding: 12px;
+          border-radius: 12px;
+          max-width: 80%;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         ">
-          <div style="display: flex; align-items: center;">
-            <span style="font-size: 20px; margin-right: 8px;">🤖</span>
-            <span style="font-weight: 600;">Navi</span>
-            <span id="navi-status" style="margin-left: 8px;">🟢</span>
-          </div>
-          <button id="navi-close-chat" style="
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 20px;
-            padding: 4px;
-          ">✕</button>
-        </div>
-        
-        <div id="navi-chat-body" style="flex: 1; display: flex; flex-direction: column;">
-          <div id="navi-chat-messages" style="
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            background: #f8f9fa;
-          ">
-            <div style="margin-bottom: 16px;">
-              <div style="display: flex; align-items: flex-start;">
-                <div style="
-                  width: 32px;
-                  height: 32px;
-                  background: #17A2B8;
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  margin-right: 12px;
-                  font-size: 16px;
-                ">🤖</div>
-                <div style="
-                  background: white;
-                  padding: 12px;
-                  border-radius: 12px;
-                  max-width: 80%;
-                  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                ">
-                  Olá! Sou o Navi, seu assistente de onboarding. Como posso ajudar você hoje?
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div style="
-            padding: 16px;
-            border-top: 1px solid #e9ecef;
-            background: white;
-          ">
-            <div style="display: flex; gap: 8px;">
-              <input type="text" id="navi-chat-input" placeholder="Digite sua mensagem..." style="
-                flex: 1;
-                padding: 12px;
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                outline: none;
-                font-size: 14px;
-              ">
-              <button id="navi-chat-send" style="
-                background: #17A2B8;
-                color: white;
-                border: none;
-                padding: 12px 16px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 16px;
-              ">📤</button>
-            </div>
-          </div>
+          Olá! Sou o Navi, seu assistente de onboarding. Como posso ajudar você hoje?
         </div>
       </div>
     `;
-
+    messagesArea.appendChild(initialMessage);
+    
+    // Criar área de input
+    const inputArea = document.createElement('div');
+    const inputAreaStyle = {
+      padding: '16px',
+      borderTop: '1px solid #e9ecef',
+      background: 'white'
+    };
+    Object.assign(inputArea.style, inputAreaStyle);
+    
+    const inputWrapper = document.createElement('div');
+    inputWrapper.style.display = 'flex';
+    inputWrapper.style.gap = '8px';
+    
+    const input = document.createElement('input');
+    input.id = 'navi-chat-input';
+    input.type = 'text';
+    input.placeholder = 'Digite sua mensagem...';
+    const inputStyle = {
+      flex: '1',
+      padding: '12px',
+      border: '1px solid #e9ecef',
+      borderRadius: '8px',
+      outline: 'none',
+      fontSize: '14px'
+    };
+    Object.assign(input.style, inputStyle);
+    
+    const sendButton = document.createElement('button');
+    sendButton.id = 'navi-chat-send';
+    const sendButtonStyle = {
+      background: '#17A2B8',
+      color: 'white',
+      border: 'none',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontSize: '16px'
+    };
+    Object.assign(sendButton.style, sendButtonStyle);
+    sendButton.innerHTML = '📤';
+    
+    inputWrapper.appendChild(input);
+    inputWrapper.appendChild(sendButton);
+    inputArea.appendChild(inputWrapper);
+    
+    // Montar estrutura
+    body.appendChild(messagesArea);
+    body.appendChild(inputArea);
+    chatWindow.appendChild(header);
+    chatWindow.appendChild(body);
+    
     document.body.appendChild(chatWindow);
     console.log('💬 Janela do chat criada e adicionada ao DOM');
     console.log('🔍 Debug - chatWindow element:', chatWindow);
