@@ -173,6 +173,22 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static('public'));
 
+// Rotas específicas para arquivos do chat (fallback para Vercel)
+app.get('/css/chat-widget.css', (req, res) => {
+  res.setHeader('Content-Type', 'text/css');
+  res.sendFile(path.join(__dirname, '../public/css/chat-widget.css'));
+});
+
+app.get('/js/chat-widget.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, '../public/js/chat-widget.js'));
+});
+
+app.get('/js/chat-integration.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, '../public/js/chat-integration.js'));
+});
+
 // Página inicial do dashboard (redireciona para dashboard.html)
 app.get('/inicio', (req, res) => {
   res.redirect('/dashboard.html' + (req.url.includes('?') ? '?' + req.url.split('?')[1] : ''));
