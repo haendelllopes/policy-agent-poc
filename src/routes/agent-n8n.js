@@ -66,8 +66,14 @@ async function deriveTenantFromCollaborator(req, res, next) {
     
     next();
   } catch (error) {
-    console.error('Erro ao derivar tenant do colaborador:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro ao derivar tenant do colaborador:', error);
+    console.error('📞 Colaborador ID:', colaborador_id);
+    console.error('🔍 Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message,
+      colaborador_id: colaborador_id
+    });
   }
 }
 
@@ -134,8 +140,14 @@ async function deriveTenantFromCollaboratorBody(req, res, next) {
     
     next();
   } catch (error) {
-    console.error('Erro ao derivar tenant do colaborador:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro ao derivar tenant do colaborador:', error);
+    console.error('📞 Colaborador ID:', colaborador_id);
+    console.error('🔍 Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message,
+      colaborador_id: colaborador_id
+    });
   }
 }
 
