@@ -216,10 +216,19 @@ app.post('/api/chat', async (req, res) => {
     
     // Integrar com o sistema de IA real
     if (!process.env.OPENAI_API_KEY) {
-      console.error('❌ OPENAI_API_KEY não encontrada');
-      return res.status(500).json({
-        message: 'Configuração de API não encontrada',
-        status: 'error'
+      console.error('❌ OPENAI_API_KEY não encontrada - usando resposta simulada');
+      // Resposta simulada quando não há API key
+      return res.json({
+        message: `Olá! Sou o Navi, seu assistente de onboarding. 
+
+🎯 **Modo Simulado** (API não configurada)
+- Você é um ${userId === 'admin-demo' ? 'Administrador' : 'Colaborador'}
+- Página atual: ${context?.page || 'Dashboard'}
+${context?.trilha_visualizando ? `- Trilha visualizando: ${context.trilha_visualizando}` : ''}
+
+Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
+        timestamp: new Date().toISOString(),
+        status: 'simulated'
       });
     }
     
