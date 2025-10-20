@@ -165,6 +165,9 @@ class ChatWidgetHTTP {
 
     document.body.appendChild(chatWindow);
     console.log('💬 Janela do chat criada e adicionada ao DOM');
+    console.log('🔍 Debug - chatWindow element:', chatWindow);
+    console.log('🔍 Debug - chatWindow position:', chatWindow.style.position);
+    console.log('🔍 Debug - chatWindow z-index:', chatWindow.style.zIndex);
   }
 
   setupEventListeners() {
@@ -208,7 +211,12 @@ class ChatWidgetHTTP {
     console.log('🔄 Abrindo chat...');
     const chatWindow = document.getElementById('navi-chat-window');
     if (chatWindow) {
+      // Garantir que a janela seja visível
       chatWindow.style.display = 'flex';
+      chatWindow.style.visibility = 'visible';
+      chatWindow.style.opacity = '1';
+      chatWindow.style.zIndex = '999998';
+      
       this.isOpen = true;
       
       // Focar no input
@@ -217,7 +225,11 @@ class ChatWidgetHTTP {
         setTimeout(() => input.focus(), 100);
       }
       
-      console.log('✅ Chat aberto');
+      console.log('✅ Chat aberto - janela deve estar visível agora');
+      console.log('🔍 Debug - chatWindow:', chatWindow);
+      console.log('🔍 Debug - chatWindow.style.display:', chatWindow.style.display);
+    } else {
+      console.error('❌ Janela do chat não encontrada!');
     }
   }
 
