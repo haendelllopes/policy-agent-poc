@@ -31,7 +31,7 @@ class ChatWidgetHTTP {
             <span class="navi-status" id="navi-status">●</span>
           </div>
           <button class="chat-toggle" id="chat-toggle">
-            <i data-feather="message-circle"></i>
+            <i data-feather="message-circle">💬</i>
           </button>
         </div>
         
@@ -60,10 +60,14 @@ class ChatWidgetHTTP {
     `;
 
     document.body.appendChild(chatContainer);
+    console.log('📦 Chat widget HTML criado e adicionado ao DOM');
     
     // Inicializar Feather Icons
     if (typeof feather !== 'undefined') {
       feather.replace();
+      console.log('🎨 Feather Icons inicializados');
+    } else {
+      console.log('⚠️ Feather Icons não disponível, usando emoji como fallback');
     }
   }
 
@@ -221,5 +225,11 @@ class ChatWidgetHTTP {
 
 // Inicializar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', function() {
-  window.chatWidgetHTTP = new ChatWidgetHTTP();
+  console.log('🚀 Inicializando Chat Widget HTTP...');
+  try {
+    window.chatWidgetHTTP = new ChatWidgetHTTP();
+    console.log('✅ Chat Widget HTTP inicializado com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao inicializar Chat Widget HTTP:', error);
+  }
 });
