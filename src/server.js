@@ -353,9 +353,9 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
           parameters: {
             type: 'object',
             properties: {
-              query: { type: 'string', description: 'Termo de busca para documentos' },
-              colaborador_id: { type: 'string', description: 'ID do colaborador' }
-            }
+              query: { type: 'string', description: 'Termo de busca para documentos' }
+            },
+            required: ['query']
           }
         }
       },
