@@ -397,6 +397,10 @@ class HybridChatWidget {
     // Adicionar mensagem do usuário
     this.addMessage(text, 'user');
 
+    // Limpar input IMEDIATAMENTE após adicionar mensagem
+    this.input.value = '';
+    this.input.style.height = 'auto';
+
     // Mostrar indicador de digitação
     this.showTypingIndicator();
 
@@ -405,10 +409,6 @@ class HybridChatWidget {
     } else {
       await this.sendMessageHttp(text);
     }
-
-    // Limpar input após envio
-    this.input.value = '';
-    this.input.style.height = 'auto';
   }
 
   async sendMessageSupabase(text) {
