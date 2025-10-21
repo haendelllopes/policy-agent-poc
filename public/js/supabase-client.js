@@ -2,34 +2,40 @@
 const supabaseUrl = 'https://gxqwfltteimexngybwna.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cXdmbHR0ZWltZXhuZ3lid25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MTg4MzMsImV4cCI6MjA3NTA5NDgzM30.522lie-dDK_0ct6X1iYpQcI2RZaH6sq8s9jjwTY8AOI';
 
-// Função para inicializar Supabase com fallback
+// Função para inicializar Supabase com fallback assíncrono robusto
 function initializeSupabase() {
-    // Verificar se createClient está disponível
-    if (typeof createClient !== 'undefined') {
-        try {
-            const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-                realtime: {
-                    params: {
-                        eventsPerSecond: 10
-                    }
+    return new Promise((resolve) => {
+        const checkSupabase = () => {
+            // Verificar se createClient está disponível e totalmente carregado
+            if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+                try {
+                    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+                        realtime: {
+                            params: {
+                                eventsPerSecond: 10
+                            }
+                        }
+                    });
+                    
+                    window.supabase = supabase;
+                    console.log('✅ Cliente Supabase carregado com sucesso');
+                    
+                    // Testar conexão
+                    testSupabaseConnection(supabase);
+                    resolve(supabase);
+                } catch (error) {
+                    console.error('❌ Erro ao criar cliente Supabase:', error);
+                    resolve(null);
                 }
-            });
-            
-            window.supabase = supabase;
-            console.log('✅ Cliente Supabase carregado com sucesso');
-            
-            // Testar conexão
-            testSupabaseConnection(supabase);
-            
-            return supabase;
-        } catch (error) {
-            console.error('❌ Erro ao criar cliente Supabase:', error);
-            return null;
-        }
-    } else {
-        console.warn('⚠️ createClient não está disponível. Usando modo fallback.');
-        return null;
-    }
+            } else {
+                // Aguardar mais um pouco antes de tentar novamente
+                setTimeout(checkSupabase, 100);
+            }
+        };
+        
+        // Iniciar verificação
+        checkSupabase();
+    });
 }
 
 // Função para testar conexão Supabase
@@ -53,15 +59,23 @@ async function testSupabaseConnection(supabase) {
 // Inicializar Supabase quando disponível
 let supabaseClient = null;
 
-// Tentar inicializar imediatamente
-supabaseClient = initializeSupabase();
-
-// Se não funcionou, tentar novamente após um delay
-if (!supabaseClient) {
-    setTimeout(() => {
-        supabaseClient = initializeSupabase();
-    }, 1000);
+// Função para inicializar de forma assíncrona
+async function initSupabaseClient() {
+    try {
+        supabaseClient = await initializeSupabase();
+        if (supabaseClient) {
+            console.log('✅ Supabase inicializado com sucesso');
+        } else {
+            console.log('⚠️ Supabase não disponível, usando modo fallback');
+        }
+    } catch (error) {
+        console.error('❌ Erro na inicialização do Supabase:', error);
+        supabaseClient = null;
+    }
 }
+
+// Tentar inicializar imediatamente
+initSupabaseClient();
 
 // Exportar para uso global
 window.supabase = supabaseClient;

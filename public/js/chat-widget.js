@@ -80,6 +80,18 @@ class HybridChatWidget {
 
   async trySupabase() {
     try {
+      // Aguardar Supabase estar disponível
+      await new Promise(resolve => {
+        const checkSupabase = () => {
+          if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+            resolve();
+          } else {
+            setTimeout(checkSupabase, 100);
+          }
+        };
+        checkSupabase();
+      });
+
       // Verificar se Supabase JS está disponível
       if (typeof createClient === 'undefined') {
         console.log('⚠️ Supabase JS não disponível');

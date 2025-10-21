@@ -2086,8 +2086,38 @@ a:hover {
         
         <!-- Chat Widget Scripts -->
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase-client.js"></script>
-    <script src="/js/chat-widget.js"></script>
-        <script src="/js/chat-integration.js"></script>
+        <script>
+            // Aguardar Supabase estar completamente carregado
+            document.addEventListener('DOMContentLoaded', async () => {
+                console.log('🔄 Aguardando carregamento do Supabase...');
+                
+                // Aguardar Supabase estar disponível
+                await new Promise(resolve => {
+                    const checkSupabase = () => {
+                        if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+                            console.log('✅ Supabase JS carregado e pronto');
+                            resolve();
+                        } else {
+                            setTimeout(checkSupabase, 50);
+                        }
+                    };
+                    checkSupabase();
+                });
+                
+                // Agora carregar os scripts dependentes
+                const scripts = [
+                    '/js/supabase-client.js',
+                    '/js/chat-widget.js',
+                    '/js/chat-integration.js'
+                ];
+                
+                for (const scriptSrc of scripts) {
+                    const script = document.createElement('script');
+                    script.src = scriptSrc;
+                    script.async = true;
+                    document.head.appendChild(script);
+                }
+            });
+        </script>
 </body>
 </html>
