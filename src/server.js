@@ -315,6 +315,9 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     console.log('🤖 OpenAI client criado com sucesso');
     
+    // Usar colaborador_id real ou ID demo válido para salvar conversas
+    const realUserId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
+    
     // 1. ANÁLISE DE SENTIMENTO EM TEMPO REAL
     console.log('🎭 Analisando sentimento da mensagem...');
     let sentimentAnalysis = { sentimento: 'neutro', intensidade: 0.5 };
@@ -328,7 +331,7 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     
     // 2. CARREGAR HISTÓRICO DE CONVERSAS
     console.log('📝 Carregando histórico de conversas...');
-    const conversationHistory = await loadConversationHistory(userId, 10);
+    const conversationHistory = await loadConversationHistory(realUserId, 10);
     
     // 3. CONTEXTO DINÂMICO BASEADO EM SENTIMENTO E HISTÓRICO
     // Extrair colaborador_id da URL se disponível
@@ -626,7 +629,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
 
         // Salvar conversa
         await saveConversation(
-          userId, 
+          realUserId, 
           message, 
           personalizedResponse, 
           sentimentAnalysis.sentimento, 
@@ -884,9 +887,9 @@ SEMPRE seja conversacional, personalizado e útil!`;
     // 4. SALVAR CONVERSAS NO BANCO DE DADOS
     console.log('💾 Salvando conversa no banco de dados...');
     await saveConversation(
-      userId, 
+      realUserId, 
       message, 
-      finalResponse, 
+      finalResponse,
       sentimentAnalysis.sentimento, 
       sentimentAnalysis.intensidade
     );
