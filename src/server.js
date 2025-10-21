@@ -386,6 +386,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
 
     // Se o modelo quer usar ferramentas
     if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
+      console.log('🔧 GPT quer usar ferramentas:', responseMessage.tool_calls.length);
       const toolCalls = responseMessage.tool_calls;
       const toolResults = [];
 
@@ -476,20 +477,20 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         }
       }
 
-      // Gerar resposta final com os resultados das ferramentas
-      const finalResponseGPT = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: message },
-          { role: 'assistant', content: responseMessage.content },
-          ...toolResults
-        ],
-        temperature: 0.7,
-        max_tokens: 500
-      });
+              // Gerar resposta final com os resultados das ferramentas
+              const finalResponseGPT = await openai.chat.completions.create({
+                model: 'gpt-4o',
+                messages: [
+                  { role: 'system', content: systemMessage },
+                  { role: 'user', content: message },
+                  { role: 'assistant', content: responseMessage.content || 'Usando ferramentas...' },
+                  ...toolResults
+                ],
+                temperature: 0.7,
+                max_tokens: 500
+              });
 
-      finalResponse = finalResponseGPT.choices[0].message.content;
+              finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
     }
     
     res.json({
