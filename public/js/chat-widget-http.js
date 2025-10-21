@@ -145,7 +145,10 @@ class ChatWidgetHTTP {
       flex: '1',
       padding: '16px',
       overflowY: 'auto',
-      background: '#f8f9fa'
+      background: '#f8f9fa',
+      minHeight: '0', // Importante para flex funcionar
+      maxHeight: '350px', // Altura máxima fixa para garantir scroll
+      height: '350px' // Altura fixa para área de mensagens
     };
     Object.assign(messagesArea.style, messagesStyle);
     
@@ -183,7 +186,9 @@ class ChatWidgetHTTP {
     const inputAreaStyle = {
       padding: '16px',
       borderTop: '1px solid #e9ecef',
-      background: 'white'
+      background: 'white',
+      flexShrink: '0', // Não permite que encolha
+      minHeight: '80px' // Altura mínima fixa
     };
     Object.assign(inputArea.style, inputAreaStyle);
     
