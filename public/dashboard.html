@@ -474,8 +474,8 @@ a:hover {
 }
     </style>
     
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -942,6 +942,214 @@ a:hover {
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
 
+        /* ===== ESTILOS PARA DASHBOARD UNIFICADO ===== */
+        
+        /* Grid expandido para métricas principais */
+        .stats-grid-expanded {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Seção de gráficos */
+        .charts-section {
+            margin-bottom: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .chart-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #374151;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .form-select-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+        }
+
+        /* Seção de tabelas */
+        .tables-section {
+            margin-bottom: 2rem;
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .table-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #374151;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .form-input-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            width: 150px;
+        }
+
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f3f4f6;
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table td {
+            padding: 0.75rem;
+            font-size: 13px;
+            color: #6b7280;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .data-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .table-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .table-pagination button {
+            padding: 0.5rem 1rem;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .table-pagination button:hover:not(:disabled) {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+        }
+
+        .table-pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .table-pagination span {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        /* Cores específicas para cards de métricas */
+        .stat-card.primary { border-left: 4px solid #3b82f6; }
+        .stat-card.info { border-left: 4px solid #06b6d4; }
+        .stat-card.success { border-left: 4px solid #10b981; }
+        .stat-card.warning { border-left: 4px solid #f59e0b; }
+        .stat-card.danger { border-left: 4px solid #ef4444; }
+        .stat-card.critical { border-left: 4px solid #dc2626; }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .stats-grid-expanded {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+
         /* ===== ESTILOS PARA SEÇÃO DE PROATIVIDADE ===== */
         
         /* Badge pulsante para alertas */
@@ -1263,13 +1471,6 @@ a:hover {
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#proatividade-section" class="nav-link" data-section="proatividade-section" data-tooltip="Monitoramento Proativo">
-                    <i data-feather="activity" class="nav-icon"></i>
-                    <span class="nav-text">Proatividade</span>
-                    <span id="alertasBadge" class="badge badge-pulse" style="display: none;">0</span>
-                </a>
-            </li>
-            <li class="nav-item">
                 <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
                     <i data-feather="settings" class="nav-icon"></i>
                     <span class="nav-text">Configurações</span>
@@ -1307,93 +1508,328 @@ a:hover {
 
         <!-- Content -->
         <div class="content">
-            <!-- Insights Section -->
+            <!-- Dashboard Unificado com Proatividade Integrada -->
             <div id="insights-section" class="section active">
+                <!-- Header dinâmico com status em tempo real -->
                 <div class="section-header">
-                    <h2>💡 Insights do Agente de IA</h2>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <select id="insights-period" onchange="loadInsightsData()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-                            <option value="7">Últimos 7 dias</option>
-                            <option value="30" selected>Últimos 30 dias</option>
-                            <option value="90">Últimos 90 dias</option>
+                    <div>
+                        <h2>📊 Dashboard Executivo</h2>
+                        <p class="text-muted">
+                            <span id="lastUpdate">Carregando...</span>
+                            <span id="autoRefreshStatus" class="badge badge-sm">Auto-refresh: ON</span>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="dashboard-filter" onchange="filterDashboardData()" class="form-select">
+                            <option value="all">Todos</option>
+                            <option value="critical">Críticos</option>
+                            <option value="pending">Pendentes</option>
+                            <option value="today">Hoje</option>
                         </select>
-                        <button class="btn-secondary" onclick="loadInsightsData()">
+                        <button class="btn-secondary" onclick="loadDashboardData()" id="refreshBtn">
                             <i data-feather="refresh-cw"></i>
                             Atualizar
+                        </button>
+                        <button class="btn-outline" onclick="toggleAutoRefresh()" id="autoRefreshBtn">
+                            <i data-feather="zap"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Stats Grid -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalAnotacoes">0</div>
-                        <div class="stat-label">📝 Anotações Capturadas</div>
+                <!-- Cards de métricas principais expandidos -->
+                <div class="stats-grid-expanded">
+                    <div class="stat-card primary" onclick="filterByType('trilhas')" data-tooltip="Ver trilhas ativas">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value" id="trilhasAtivas">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Trilhas Ativas</div>
+                        <div class="stat-trend" id="trilhasTrend"></div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalPadroes">0</div>
-                        <div class="stat-label">🔍 Padrões Identificados</div>
+                    <div class="stat-card info" onclick="filterByType('usuarios')" data-tooltip="Ver usuários em onboarding">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value" id="usuariosOnboarding">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Usuários em Onboarding</div>
+                        <div class="stat-trend" id="usuariosTrend"></div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalMelhorias">0</div>
-                        <div class="stat-label">💡 Melhorias Sugeridas</div>
+                    <div class="stat-card success" onclick="filterByType('melhorias')" data-tooltip="Ver melhorias sugeridas">
+                        <div class="stat-icon">💡</div>
+                        <div class="stat-value" id="melhoriasSugeridas">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Melhorias Sugeridas</div>
+                        <div class="stat-trend" id="melhoriasTrend"></div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="sentimentoMedio">--</div>
-                        <div class="stat-label">😊 Sentimento Médio</div>
+                    <div class="stat-card warning" onclick="filterByType('sentimento')" data-tooltip="Ver análise de sentimento">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value" id="sentimentoMedio">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Sentimento Médio</div>
+                        <div class="stat-trend" id="sentimentoTrend"></div>
+                    </div>
+                    <div class="stat-card danger" onclick="filterByType('alertas')" data-tooltip="Ver alertas críticos">
+                        <div class="stat-icon">🚨</div>
+                        <div class="stat-value" id="alertasAtivos">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Alertas Ativos</div>
+                        <div class="stat-trend" id="alertasTrend"></div>
+                    </div>
+                    <div class="stat-card critical" onclick="filterByType('risco')" data-tooltip="Ver colaboradores em risco">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value" id="colaboradoresRisco">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Colaboradores em Risco</div>
+                        <div class="stat-trend" id="riscoTrend"></div>
                     </div>
                 </div>
 
-                <!-- Charts Row -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                    <div class="card">
-                        <h3 style="margin-bottom: 1rem;">📊 Distribuição por Tipo</h3>
-                        <div id="chartTipos" style="min-height: 200px;">
-                            <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando...</p>
+                <!-- Seção de Gráficos Dinâmicos -->
+                <div class="charts-section">
+                    <div class="charts-grid">
+                        <!-- Trilhas por Cargo -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>📊 Trilhas por Cargo</h3>
+                                <div class="chart-controls">
+                                    <select id="trilhasCargoFilter" onchange="updateTrilhasCargoChart()" class="form-select-sm">
+                                        <option value="ativo">Ativas</option>
+                                        <option value="concluido">Concluídas</option>
+                                        <option value="atrasado">Atrasadas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="trilhasCargoChart"></canvas>
+                            </div>
                         </div>
-                    </div>
-                    <div class="card">
-                        <h3 style="margin-bottom: 1rem;">😊 Distribuição por Sentimento</h3>
-                        <div id="chartSentimentos" style="min-height: 200px;">
-                            <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando...</p>
+
+                        <!-- Sentimento por Cargo -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>😊 Sentimento por Cargo</h3>
+                                <div class="chart-controls">
+                                    <select id="sentimentoCargoFilter" onchange="updateSentimentoCargoChart()" class="form-select-sm">
+                                        <option value="7">Últimos 7 dias</option>
+                                        <option value="30">Últimos 30 dias</option>
+                                        <option value="90">Últimos 90 dias</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="sentimentoCargoChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Alertas por Severidade -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>🚨 Alertas por Severidade</h3>
+                                <div class="chart-controls">
+                                    <select id="alertasSeveridadeFilter" onchange="updateAlertasSeveridadeChart()" class="form-select-sm">
+                                        <option value="24">Últimas 24h</option>
+                                        <option value="7">Últimos 7 dias</option>
+                                        <option value="30">Últimos 30 dias</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="alertasSeveridadeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Tendência de Engajamento -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>📈 Tendência de Engajamento</h3>
+                                <div class="chart-controls">
+                                    <select id="engajamentoFilter" onchange="updateEngajamentoChart()" class="form-select-sm">
+                                        <option value="7">Últimos 7 dias</option>
+                                        <option value="30">Últimos 30 dias</option>
+                                        <option value="90">Últimos 90 dias</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="engajamentoChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Padrões Identificados -->
-                <div class="card" style="margin-bottom: 1.5rem;">
-                    <h3 style="margin-bottom: 1rem;">🔍 Padrões Identificados</h3>
-                    <div id="padroesContainer">
-                        <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando padrões...</p>
+                <!-- Seção de Tabelas com Paginação -->
+                <div class="tables-section">
+                    <div class="tables-grid">
+                        <!-- Padrões Identificados -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>🔍 Padrões Identificados</h3>
+                                <div class="table-controls">
+                                    <input type="text" id="padroesSearch" placeholder="Buscar padrões..." class="form-input-sm" onkeyup="searchPadroes()">
+                                    <button class="btn-sm btn-outline" onclick="exportPadroes()">
+                                        <i data-feather="download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Padrão</th>
+                                            <th>Tipo</th>
+                                            <th>Frequência</th>
+                                            <th>Impacto</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="padroesTableBody">
+                                        <!-- Carregado dinamicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table-pagination">
+                                <button id="padroesPrevBtn" onclick="loadPadroesPage('prev')" disabled>Anterior</button>
+                                <span id="padroesPageInfo">Página 1 de 1</span>
+                                <button id="padroesNextBtn" onclick="loadPadroesPage('next')" disabled>Próxima</button>
+                                <button id="padroesLoadMoreBtn" onclick="loadMorePadroes()" class="btn-outline">Carregar Mais</button>
+                            </div>
+                        </div>
+
+                        <!-- Alertas Críticos -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>🚨 Alertas Críticos</h3>
+                                <div class="table-controls">
+                                    <select id="alertasFilter" onchange="filterAlertas()" class="form-select-sm">
+                                        <option value="all">Todos</option>
+                                        <option value="critica">Críticos</option>
+                                        <option value="alta">Altos</option>
+                                        <option value="media">Médios</option>
+                                    </select>
+                                    <button class="btn-sm btn-outline" onclick="exportAlertas()">
+                                        <i data-feather="download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alerta</th>
+                                            <th>Colaborador</th>
+                                            <th>Severidade</th>
+                                            <th>Data</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="alertasTableBody">
+                                        <!-- Carregado dinamicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table-pagination">
+                                <button id="alertasPrevBtn" onclick="loadAlertasPage('prev')" disabled>Anterior</button>
+                                <span id="alertasPageInfo">Página 1 de 1</span>
+                                <button id="alertasNextBtn" onclick="loadAlertasPage('next')" disabled>Próxima</button>
+                                <button id="alertasLoadMoreBtn" onclick="loadMoreAlertas()" class="btn-outline">Carregar Mais</button>
+                            </div>
+                        </div>
+
+                        <!-- Ações Pendentes -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>⏳ Ações Pendentes</h3>
+                                <div class="table-controls">
+                                    <select id="acoesFilter" onchange="filterAcoes()" class="form-select-sm">
+                                        <option value="all">Todas</option>
+                                        <option value="pendente">Pendentes</option>
+                                        <option value="aprovada">Aprovadas</option>
+                                        <option value="rejeitada">Rejeitadas</option>
+                                    </select>
+                                    <button class="btn-sm btn-outline" onclick="exportAcoes()">
+                                        <i data-feather="download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Ação</th>
+                                            <th>Tipo</th>
+                                            <th>Colaborador</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="acoesTableBody">
+                                        <!-- Carregado dinamicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table-pagination">
+                                <button id="acoesPrevBtn" onclick="loadAcoesPage('prev')" disabled>Anterior</button>
+                                <span id="acoesPageInfo">Página 1 de 1</span>
+                                <button id="acoesNextBtn" onclick="loadAcoesPage('next')" disabled>Próxima</button>
+                                <button id="acoesLoadMoreBtn" onclick="loadMoreAcoes()" class="btn-outline">Carregar Mais</button>
+                            </div>
+                        </div>
+
+                        <!-- Colaboradores em Risco -->
+                        <div class="table-card">
+                            <div class="table-header">
+                                <h3>⚠️ Colaboradores em Risco</h3>
+                                <div class="table-controls">
+                                    <select id="riscoFilter" onchange="filterRisco()" class="form-select-sm">
+                                        <option value="all">Todos</option>
+                                        <option value="critico">Crítico</option>
+                                        <option value="alto">Alto</option>
+                                        <option value="medio">Médio</option>
+                                    </select>
+                                    <button class="btn-sm btn-outline" onclick="exportRisco()">
+                                        <i data-feather="download"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Colaborador</th>
+                                            <th>Cargo</th>
+                                            <th>Score</th>
+                                            <th>Fatores</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="riscoTableBody">
+                                        <!-- Carregado dinamicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table-pagination">
+                                <button id="riscoPrevBtn" onclick="loadRiscoPage('prev')" disabled>Anterior</button>
+                                <span id="riscoPageInfo">Página 1 de 1</span>
+                                <button id="riscoNextBtn" onclick="loadRiscoPage('next')" disabled>Próxima</button>
+                                <button id="riscoLoadMoreBtn" onclick="loadMoreRisco()" class="btn-outline">Carregar Mais</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Anotações Recentes -->
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                        <h3>📝 Anotações Recentes</h3>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select id="filtroTipo" onchange="filtrarAnotacoes()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-                                <option value="">Todos os tipos</option>
-                                <option value="duvida_frequente">Dúvida Frequente</option>
-                                <option value="dificuldade_trilha">Dificuldade na Trilha</option>
-                                <option value="feedback_positivo">Feedback Positivo</option>
-                                <option value="feedback_negativo">Feedback Negativo</option>
-                                <option value="sugestao_melhoria">Sugestão de Melhoria</option>
-                                <option value="observacao_geral">Observação Geral</option>
-                            </select>
-                            <select id="filtroSentimento" onchange="filtrarAnotacoes()" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px;">
-                                <option value="">Todos sentimentos</option>
-                                <option value="muito_positivo">Muito Positivo</option>
-                                <option value="positivo">Positivo</option>
-                                <option value="neutro">Neutro</option>
-                                <option value="negativo">Negativo</option>
-                                <option value="muito_negativo">Muito Negativo</option>
-                            </select>
+                <!-- Modal de detalhes (overlay) -->
+                <div id="detailsModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="modalTitle"></h3>
+                            <button onclick="closeModal()" class="btn-close">&times;</button>
                         </div>
-                    </div>
-                    <div id="anotacoesContainer">
-                        <p style="text-align: center; color: #94a3b8; padding: 2rem;">Carregando anotações...</p>
+                        <div class="modal-body" id="modalBody"></div>
+                        <div class="modal-footer" id="modalFooter"></div>
                     </div>
                 </div>
             </div>
@@ -1534,148 +1970,331 @@ a:hover {
                 </div>
             </div>
 
-            <!-- Proatividade Section -->
-            <div id="proatividade-section" class="section">
-                <!-- Header dinâmico com status em tempo real -->
-                <div class="section-header">
-                    <div>
-                        <h2>🎯 Monitoramento Proativo</h2>
-                        <p class="text-muted">
-                            <span id="lastUpdate">Carregando...</span>
-                            <span id="autoRefreshStatus" class="badge badge-sm">Auto-refresh: ON</span>
-                        </p>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <select id="proactive-filter" onchange="filterProactiveData()" class="form-select">
-                            <option value="all">Todos</option>
-                            <option value="critical">Críticos</option>
-                            <option value="pending">Pendentes</option>
-                            <option value="today">Hoje</option>
-                        </select>
-                        <button class="btn-secondary" onclick="loadProactiveData()" id="refreshBtn">
-                            <i data-feather="refresh-cw"></i>
-                            Atualizar
-                        </button>
-                        <button class="btn-outline" onclick="toggleAutoRefresh()" id="autoRefreshBtn">
-                            <i data-feather="zap"></i>
-                        </button>
-                    </div>
+        <!-- Dashboard Unificado com Proatividade Integrada -->
+        <div id="dashboard-section" class="section">
+            <!-- Header dinâmico com status em tempo real -->
+            <div class="section-header">
+                <div>
+                    <h2>📊 Dashboard Executivo</h2>
+                    <p class="text-muted">
+                        <span id="lastUpdate">Carregando...</span>
+                        <span id="autoRefreshStatus" class="badge badge-sm">Auto-refresh: ON</span>
+                    </p>
                 </div>
-
-                <!-- Cards de métricas interativos com animação -->
-                <div class="stats-grid">
-                    <div class="stat-card critical" onclick="filterByType('critical')" data-tooltip="Clique para filtrar">
-                        <div class="stat-icon">🚨</div>
-                        <div class="stat-value" id="alertasAtivos">
-                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
-                        </div>
-                        <div class="stat-label">Alertas Ativos</div>
-                        <div class="stat-trend" id="alertasTrend"></div>
-                    </div>
-                    <div class="stat-card warning" onclick="filterByType('risk')" data-tooltip="Clique para filtrar">
-                        <div class="stat-icon">⚠️</div>
-                        <div class="stat-value" id="colaboradoresRisco">
-                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
-                        </div>
-                        <div class="stat-label">Colaboradores em Risco</div>
-                        <div class="stat-trend" id="riscoTrend"></div>
-                    </div>
-                    <div class="stat-card info" onclick="filterByType('pending')" data-tooltip="Clique para filtrar">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-value" id="acoesPendentes">
-                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
-                        </div>
-                        <div class="stat-label">Ações Pendentes</div>
-                        <div class="stat-trend" id="pendenteTrend"></div>
-                    </div>
-                    <div class="stat-card success" onclick="showResolvedHistory()" data-tooltip="Ver histórico">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-value" id="alertasResolvidos">
-                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
-                        </div>
-                        <div class="stat-label">Resolvidos (7 dias)</div>
-                        <div class="stat-trend positive">+12% vs semana passada</div>
-                    </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="dashboard-filter" onchange="filterDashboardData()" class="form-select">
+                        <option value="all">Todos</option>
+                        <option value="critical">Críticos</option>
+                        <option value="pending">Pendentes</option>
+                        <option value="today">Hoje</option>
+                    </select>
+                    <button class="btn-secondary" onclick="loadDashboardData()" id="refreshBtn">
+                        <i data-feather="refresh-cw"></i>
+                        Atualizar
+                    </button>
+                    <button class="btn-outline" onclick="toggleAutoRefresh()" id="autoRefreshBtn">
+                        <i data-feather="zap"></i>
+                    </button>
                 </div>
+            </div>
 
-                <!-- Layout em 2 colunas responsivo -->
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-                    <!-- Coluna Esquerda: Alertas e Ações -->
-                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        <!-- Alertas Críticos com Timeline -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>🚨 Alertas Críticos</h3>
-                                <span class="badge badge-danger" id="alertasCriticosCount">0</span>
-                            </div>
-                            <div id="alertasCriticos" class="activity-timeline">
-                                <!-- Loading skeleton -->
-                                <div class="skeleton" style="height: 80px; margin-bottom: 10px;"></div>
-                                <div class="skeleton" style="height: 80px;"></div>
-                            </div>
-                        </div>
-
-                        <!-- Ações Pendentes com aprovação inline -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>⏳ Ações Aguardando Aprovação</h3>
-                                <span class="badge badge-warning" id="acoesPendentesCount">0</span>
-                            </div>
-                            <div id="acoesPendentesLista">
-                                <!-- Renderizado dinamicamente -->
-                            </div>
-                        </div>
+            <!-- Cards de métricas principais expandidos -->
+            <div class="stats-grid-expanded">
+                <div class="stat-card primary" onclick="filterByType('trilhas')" data-tooltip="Ver trilhas ativas">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="trilhasAtivas">
+                        <div class="skeleton" style="width: 60px; height: 32px;"></div>
                     </div>
-
-                    <!-- Coluna Direita: Riscos e Insights -->
-                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                        <!-- Top 5 Colaboradores em Risco -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>⚠️ Top 5 Riscos</h3>
-                                <button class="btn-link" onclick="showAllRisks()">Ver todos</button>
-                            </div>
-                            <div id="topRiscos">
-                                <!-- Lista com score visual -->
-                            </div>
-                        </div>
-
-                        <!-- Insights da IA -->
-                        <div class="card bg-gradient">
-                            <div class="card-header">
-                                <h3>💡 Insights do Navi</h3>
-                            </div>
-                            <div id="aiInsights">
-                                <div class="insight-item">
-                                    <p class="insight-text">Analisando padrões...</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Atividade Recente -->
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>📊 Atividade Recente</h3>
-                            </div>
-                            <div id="recentActivity" class="activity-timeline">
-                                <!-- Timeline de eventos -->
-                            </div>
-                        </div>
-                    </div>
+                    <div class="stat-label">Trilhas Ativas</div>
+                    <div class="stat-trend" id="trilhasTrend"></div>
                 </div>
+                <div class="stat-card info" onclick="filterByType('usuarios')" data-tooltip="Ver usuários em onboarding">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="usuariosOnboarding">
+                        <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                    </div>
+                    <div class="stat-label">Usuários em Onboarding</div>
+                    <div class="stat-trend" id="usuariosTrend"></div>
+                </div>
+                <div class="stat-card success" onclick="filterByType('melhorias')" data-tooltip="Ver melhorias sugeridas">
+                    <div class="stat-icon">💡</div>
+                    <div class="stat-value" id="melhoriasSugeridas">
+                        <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                    </div>
+                    <div class="stat-label">Melhorias Sugeridas</div>
+                    <div class="stat-trend" id="melhoriasTrend"></div>
+                </div>
+                <div class="stat-card warning" onclick="filterByType('sentimento')" data-tooltip="Ver análise de sentimento">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-value" id="sentimentoMedio">
+                        <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                    </div>
+                    <div class="stat-label">Sentimento Médio</div>
+                    <div class="stat-trend" id="sentimentoTrend"></div>
+                </div>
+                <div class="stat-card danger" onclick="filterByType('alertas')" data-tooltip="Ver alertas críticos">
+                    <div class="stat-icon">🚨</div>
+                    <div class="stat-value" id="alertasAtivos">
+                        <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                    </div>
+                    <div class="stat-label">Alertas Ativos</div>
+                    <div class="stat-trend" id="alertasTrend"></div>
+                </div>
+                <div class="stat-card critical" onclick="filterByType('risco')" data-tooltip="Ver colaboradores em risco">
+                    <div class="stat-icon">⚠️</div>
+                    <div class="stat-value" id="colaboradoresRisco">
+                        <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                    </div>
+                    <div class="stat-label">Colaboradores em Risco</div>
+                    <div class="stat-trend" id="riscoTrend"></div>
+                </div>
+            </div>
 
-                <!-- Modal de detalhes (overlay) -->
-                <div id="detailsModal" class="modal" style="display: none;">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 id="modalTitle"></h3>
-                            <button onclick="closeModal()" class="btn-close">&times;</button>
+            <!-- Seção de Gráficos Dinâmicos -->
+            <div class="charts-section">
+                <div class="charts-grid">
+                    <!-- Trilhas por Cargo -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>📊 Trilhas por Cargo</h3>
+                            <div class="chart-controls">
+                                <select id="trilhasCargoFilter" onchange="updateTrilhasCargoChart()" class="form-select-sm">
+                                    <option value="ativo">Ativas</option>
+                                    <option value="concluido">Concluídas</option>
+                                    <option value="atrasado">Atrasadas</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="modal-body" id="modalBody"></div>
-                        <div class="modal-footer" id="modalFooter"></div>
+                        <div class="chart-container">
+                            <canvas id="trilhasCargoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Sentimento por Cargo -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>😊 Sentimento por Cargo</h3>
+                            <div class="chart-controls">
+                                <select id="sentimentoCargoFilter" onchange="updateSentimentoCargoChart()" class="form-select-sm">
+                                    <option value="7">Últimos 7 dias</option>
+                                    <option value="30">Últimos 30 dias</option>
+                                    <option value="90">Últimos 90 dias</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="sentimentoCargoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Alertas por Severidade -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>🚨 Alertas por Severidade</h3>
+                            <div class="chart-controls">
+                                <select id="alertasSeveridadeFilter" onchange="updateAlertasSeveridadeChart()" class="form-select-sm">
+                                    <option value="24">Últimas 24h</option>
+                                    <option value="7">Últimos 7 dias</option>
+                                    <option value="30">Últimos 30 dias</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="alertasSeveridadeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tendência de Engajamento -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>📈 Tendência de Engajamento</h3>
+                            <div class="chart-controls">
+                                <select id="engajamentoFilter" onchange="updateEngajamentoChart()" class="form-select-sm">
+                                    <option value="7">Últimos 7 dias</option>
+                                    <option value="30">Últimos 30 dias</option>
+                                    <option value="90">Últimos 90 dias</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="engajamentoChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Seção de Tabelas com Paginação -->
+            <div class="tables-section">
+                <div class="tables-grid">
+                    <!-- Padrões Identificados -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>🔍 Padrões Identificados</h3>
+                            <div class="table-controls">
+                                <input type="text" id="padroesSearch" placeholder="Buscar padrões..." class="form-input-sm" onkeyup="searchPadroes()">
+                                <button class="btn-sm btn-outline" onclick="exportPadroes()">
+                                    <i data-feather="download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Padrão</th>
+                                        <th>Tipo</th>
+                                        <th>Frequência</th>
+                                        <th>Impacto</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="padroesTableBody">
+                                    <!-- Carregado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination">
+                            <button id="padroesPrevBtn" onclick="loadPadroesPage('prev')" disabled>Anterior</button>
+                            <span id="padroesPageInfo">Página 1 de 1</span>
+                            <button id="padroesNextBtn" onclick="loadPadroesPage('next')" disabled>Próxima</button>
+                            <button id="padroesLoadMoreBtn" onclick="loadMorePadroes()" class="btn-outline">Carregar Mais</button>
+                        </div>
+                    </div>
+
+                    <!-- Alertas Críticos -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>🚨 Alertas Críticos</h3>
+                            <div class="table-controls">
+                                <select id="alertasFilter" onchange="filterAlertas()" class="form-select-sm">
+                                    <option value="all">Todos</option>
+                                    <option value="critica">Críticos</option>
+                                    <option value="alta">Altos</option>
+                                    <option value="media">Médios</option>
+                                </select>
+                                <button class="btn-sm btn-outline" onclick="exportAlertas()">
+                                    <i data-feather="download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Alerta</th>
+                                        <th>Colaborador</th>
+                                        <th>Severidade</th>
+                                        <th>Data</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alertasTableBody">
+                                    <!-- Carregado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination">
+                            <button id="alertasPrevBtn" onclick="loadAlertasPage('prev')" disabled>Anterior</button>
+                            <span id="alertasPageInfo">Página 1 de 1</span>
+                            <button id="alertasNextBtn" onclick="loadAlertasPage('next')" disabled>Próxima</button>
+                            <button id="alertasLoadMoreBtn" onclick="loadMoreAlertas()" class="btn-outline">Carregar Mais</button>
+                        </div>
+                    </div>
+
+                    <!-- Ações Pendentes -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>⏳ Ações Pendentes</h3>
+                            <div class="table-controls">
+                                <select id="acoesFilter" onchange="filterAcoes()" class="form-select-sm">
+                                    <option value="all">Todas</option>
+                                    <option value="pendente">Pendentes</option>
+                                    <option value="aprovada">Aprovadas</option>
+                                    <option value="rejeitada">Rejeitadas</option>
+                                </select>
+                                <button class="btn-sm btn-outline" onclick="exportAcoes()">
+                                    <i data-feather="download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ação</th>
+                                        <th>Tipo</th>
+                                        <th>Colaborador</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="acoesTableBody">
+                                    <!-- Carregado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination">
+                            <button id="acoesPrevBtn" onclick="loadAcoesPage('prev')" disabled>Anterior</button>
+                            <span id="acoesPageInfo">Página 1 de 1</span>
+                            <button id="acoesNextBtn" onclick="loadAcoesPage('next')" disabled>Próxima</button>
+                            <button id="acoesLoadMoreBtn" onclick="loadMoreAcoes()" class="btn-outline">Carregar Mais</button>
+                        </div>
+                    </div>
+
+                    <!-- Colaboradores em Risco -->
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>⚠️ Colaboradores em Risco</h3>
+                            <div class="table-controls">
+                                <select id="riscoFilter" onchange="filterRisco()" class="form-select-sm">
+                                    <option value="all">Todos</option>
+                                    <option value="critico">Crítico</option>
+                                    <option value="alto">Alto</option>
+                                    <option value="medio">Médio</option>
+                                </select>
+                                <button class="btn-sm btn-outline" onclick="exportRisco()">
+                                    <i data-feather="download"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Colaborador</th>
+                                        <th>Cargo</th>
+                                        <th>Score</th>
+                                        <th>Fatores</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="riscoTableBody">
+                                    <!-- Carregado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination">
+                            <button id="riscoPrevBtn" onclick="loadRiscoPage('prev')" disabled>Anterior</button>
+                            <span id="riscoPageInfo">Página 1 de 1</span>
+                            <button id="riscoNextBtn" onclick="loadRiscoPage('next')" disabled>Próxima</button>
+                            <button id="riscoLoadMoreBtn" onclick="loadMoreRisco()" class="btn-outline">Carregar Mais</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de detalhes (overlay) -->
+            <div id="detailsModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="modalTitle"></h3>
+                        <button onclick="closeModal()" class="btn-close">&times;</button>
+                    </div>
+                    <div class="modal-body" id="modalBody"></div>
+                    <div class="modal-footer" id="modalFooter"></div>
+                </div>
+            </div>
+        </div>
         </div>
     </main>
 
@@ -1800,7 +2419,7 @@ a:hover {
             
             // Load data for insights section
             if (section === 'insights') {
-                loadInsightsData();
+                loadDashboardData();
             }
         }
         
@@ -2189,6 +2808,576 @@ a:hover {
             }
         });
         
+        // ===== FUNÇÕES DO DASHBOARD UNIFICADO =====
+        
+        // Variáveis globais para o dashboard unificado
+        let dashboardData = {
+            metrics: {},
+            charts: {},
+            tables: {
+                padroes: { data: [], page: 1, totalPages: 1 },
+                alertas: { data: [], page: 1, totalPages: 1 },
+                acoes: { data: [], page: 1, totalPages: 1 },
+                risco: { data: [], page: 1, totalPages: 1 }
+            }
+        };
+        
+        let autoRefreshInterval = null;
+        let autoRefreshEnabled = true;
+        
+        // Carregar dados do dashboard unificado
+        async function loadDashboardData() {
+            try {
+                console.log('🔄 Carregando dados do dashboard unificado...');
+                
+                // Atualizar timestamp
+                document.getElementById('lastUpdate').textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+                
+                // Carregar métricas principais
+                await loadDashboardMetrics();
+                
+                // Carregar gráficos
+                await loadDashboardCharts();
+                
+                // Carregar tabelas
+                await loadDashboardTables();
+                
+                console.log('✅ Dashboard unificado carregado com sucesso!');
+            } catch (error) {
+                console.error('❌ Erro ao carregar dashboard unificado:', error);
+            }
+        }
+        
+        // Carregar métricas principais
+        async function loadDashboardMetrics() {
+            try {
+                const response = await fetch('/api/proactive/dashboard-metrics');
+                const data = await response.json();
+                
+                // Atualizar cards de métricas
+                updateMetricCard('trilhasAtivas', data.trilhasAtivas || 0, data.trilhasTrend || '+0%');
+                updateMetricCard('usuariosOnboarding', data.usuariosOnboarding || 0, data.usuariosTrend || '+0%');
+                updateMetricCard('melhoriasSugeridas', data.melhoriasSugeridas || 0, data.melhoriasTrend || '+0%');
+                updateMetricCard('sentimentoMedio', data.sentimentoMedio || '--', data.sentimentoTrend || '+0%');
+                updateMetricCard('alertasAtivos', data.alertasAtivos || 0, data.alertasTrend || '+0%');
+                updateMetricCard('colaboradoresRisco', data.colaboradoresRisco || 0, data.riscoTrend || '+0%');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar métricas:', error);
+                // Usar dados mock em caso de erro
+                updateMetricCard('trilhasAtivas', 12, '+15%');
+                updateMetricCard('usuariosOnboarding', 8, '+8%');
+                updateMetricCard('melhoriasSugeridas', 5, '+12%');
+                updateMetricCard('sentimentoMedio', '4.2', '+0.3');
+                updateMetricCard('alertasAtivos', 3, '-25%');
+                updateMetricCard('colaboradoresRisco', 2, '-50%');
+            }
+        }
+        
+        // Atualizar card de métrica
+        function updateMetricCard(elementId, value, trend) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = value;
+                
+                const trendElement = document.getElementById(elementId.replace('Ativas', 'Trend').replace('Onboarding', 'Trend').replace('Sugeridas', 'Trend').replace('Medio', 'Trend').replace('Ativos', 'Trend').replace('Risco', 'Trend'));
+                if (trendElement) {
+                    trendElement.textContent = trend;
+                    trendElement.className = `stat-trend ${trend.startsWith('+') ? 'positive' : trend.startsWith('-') ? 'negative' : 'neutral'}`;
+                }
+            }
+        }
+        
+        // Carregar gráficos do dashboard
+        async function loadDashboardCharts() {
+            try {
+                // Trilhas por Cargo
+                await updateTrilhasCargoChart();
+                
+                // Sentimento por Cargo
+                await updateSentimentoCargoChart();
+                
+                // Alertas por Severidade
+                await updateAlertasSeveridadeChart();
+                
+                // Tendência de Engajamento
+                await updateEngajamentoChart();
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar gráficos:', error);
+            }
+        }
+        
+        // Atualizar gráfico de Trilhas por Cargo
+        async function updateTrilhasCargoChart() {
+            const canvas = document.getElementById('trilhasCargoChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const filter = document.getElementById('trilhasCargoFilter')?.value || 'ativo';
+            
+            // Dados mock para demonstração
+            const data = {
+                labels: ['Desenvolvedor', 'Designer', 'Product Manager', 'QA', 'DevOps'],
+                datasets: [{
+                    label: filter === 'ativo' ? 'Trilhas Ativas' : filter === 'concluido' ? 'Concluídas' : 'Atrasadas',
+                    data: filter === 'ativo' ? [8, 6, 4, 5, 3] : filter === 'concluido' ? [12, 8, 6, 7, 4] : [2, 1, 1, 2, 1],
+                    backgroundColor: filter === 'ativo' ? '#3b82f6' : filter === 'concluido' ? '#10b981' : '#ef4444',
+                    borderColor: filter === 'ativo' ? '#2563eb' : filter === 'concluido' ? '#059669' : '#dc2626',
+                    borderWidth: 1
+                }]
+            };
+            
+            // Destruir gráfico existente se houver
+            if (window.trilhasCargoChart) {
+                window.trilhasCargoChart.destroy();
+            }
+            
+            window.trilhasCargoChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Atualizar gráfico de Sentimento por Cargo
+        async function updateSentimentoCargoChart() {
+            const canvas = document.getElementById('sentimentoCargoChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Dados mock para demonstração
+            const data = {
+                labels: ['Desenvolvedor', 'Designer', 'Product Manager', 'QA', 'DevOps'],
+                datasets: [{
+                    label: 'Sentimento Médio',
+                    data: [4.2, 4.5, 4.1, 3.8, 4.3],
+                    backgroundColor: '#10b981',
+                    borderColor: '#059669',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1
+                }]
+            };
+            
+            if (window.sentimentoCargoChart) {
+                window.sentimentoCargoChart.destroy();
+            }
+            
+            window.sentimentoCargoChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 5
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Atualizar gráfico de Alertas por Severidade
+        async function updateAlertasSeveridadeChart() {
+            const canvas = document.getElementById('alertasSeveridadeChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Dados mock para demonstração
+            const data = {
+                labels: ['Crítico', 'Alto', 'Médio', 'Baixo'],
+                datasets: [{
+                    data: [2, 5, 8, 12],
+                    backgroundColor: ['#dc2626', '#f59e0b', '#3b82f6', '#10b981'],
+                    borderWidth: 0
+                }]
+            };
+            
+            if (window.alertasSeveridadeChart) {
+                window.alertasSeveridadeChart.destroy();
+            }
+            
+            window.alertasSeveridadeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Atualizar gráfico de Tendência de Engajamento
+        async function updateEngajamentoChart() {
+            const canvas = document.getElementById('engajamentoChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Dados mock para demonstração
+            const data = {
+                labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'],
+                datasets: [{
+                    label: 'Engajamento',
+                    data: [85, 78, 92, 88, 95, 82, 89],
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.1
+                }]
+            };
+            
+            if (window.engajamentoChart) {
+                window.engajamentoChart.destroy();
+            }
+            
+            window.engajamentoChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Carregar tabelas do dashboard
+        async function loadDashboardTables() {
+            try {
+                await loadPadroesTable();
+                await loadAlertasTable();
+                await loadAcoesTable();
+                await loadRiscoTable();
+            } catch (error) {
+                console.error('❌ Erro ao carregar tabelas:', error);
+            }
+        }
+        
+        // Carregar tabela de Padrões
+        async function loadPadroesTable() {
+            const tbody = document.getElementById('padroesTableBody');
+            if (!tbody) return;
+            
+            // Dados mock para demonstração
+            const padroes = [
+                { padrao: 'Dificuldade com documentação técnica', tipo: 'Dificuldade', frequencia: 'Alta', impacto: 'Médio' },
+                { padrao: 'Feedback positivo sobre onboarding', tipo: 'Positivo', frequencia: 'Média', impacto: 'Baixo' },
+                { padrao: 'Sugestões de melhoria em trilhas', tipo: 'Sugestão', frequencia: 'Alta', impacto: 'Alto' }
+            ];
+            
+            tbody.innerHTML = padroes.map(p => `
+                <tr>
+                    <td>${p.padrao}</td>
+                    <td><span class="badge badge-sm">${p.tipo}</span></td>
+                    <td>${p.frequencia}</td>
+                    <td>${p.impacto}</td>
+                    <td>
+                        <button class="btn-sm btn-outline" onclick="viewPadraoDetails('${p.padrao}')">
+                            <i data-feather="eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            feather.replace();
+        }
+        
+        // Carregar tabela de Alertas
+        async function loadAlertasTable() {
+            const tbody = document.getElementById('alertasTableBody');
+            if (!tbody) return;
+            
+            // Dados mock para demonstração
+            const alertas = [
+                { alerta: 'Baixo engajamento em trilha', colaborador: 'João Silva', severidade: 'Alta', data: '2024-12-20' },
+                { alerta: 'Múltiplas dúvidas não resolvidas', colaborador: 'Maria Santos', severidade: 'Média', data: '2024-12-19' }
+            ];
+            
+            tbody.innerHTML = alertas.map(a => `
+                <tr>
+                    <td>${a.alerta}</td>
+                    <td>${a.colaborador}</td>
+                    <td><span class="badge badge-sm ${a.severidade.toLowerCase()}">${a.severidade}</span></td>
+                    <td>${a.data}</td>
+                    <td>
+                        <button class="btn-sm btn-primary" onclick="resolveAlert('${a.alerta}')">
+                            <i data-feather="check"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            feather.replace();
+        }
+        
+        // Carregar tabela de Ações
+        async function loadAcoesTable() {
+            const tbody = document.getElementById('acoesTableBody');
+            if (!tbody) return;
+            
+            // Dados mock para demonstração
+            const acoes = [
+                { acao: 'Revisar trilha de onboarding', tipo: 'Melhoria', colaborador: 'Sistema', status: 'Pendente' },
+                { acao: 'Agendar reunião de feedback', tipo: 'Ação', colaborador: 'João Silva', status: 'Aprovada' }
+            ];
+            
+            tbody.innerHTML = acoes.map(a => `
+                <tr>
+                    <td>${a.acao}</td>
+                    <td>${a.tipo}</td>
+                    <td>${a.colaborador}</td>
+                    <td><span class="badge badge-sm ${a.status.toLowerCase()}">${a.status}</span></td>
+                    <td>
+                        <button class="btn-sm btn-success" onclick="approveAction('${a.acao}')">
+                            <i data-feather="check"></i>
+                        </button>
+                        <button class="btn-sm btn-danger" onclick="rejectAction('${a.acao}')">
+                            <i data-feather="x"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            feather.replace();
+        }
+        
+        // Carregar tabela de Risco
+        async function loadRiscoTable() {
+            const tbody = document.getElementById('riscoTableBody');
+            if (!tbody) return;
+            
+            // Dados mock para demonstração
+            const riscos = [
+                { colaborador: 'João Silva', cargo: 'Desenvolvedor', score: 75, fatores: 'Baixo engajamento, múltiplas dúvidas' },
+                { colaborador: 'Maria Santos', cargo: 'Designer', score: 60, fatores: 'Dificuldade com ferramentas' }
+            ];
+            
+            tbody.innerHTML = riscos.map(r => `
+                <tr>
+                    <td>${r.colaborador}</td>
+                    <td>${r.cargo}</td>
+                    <td><span class="badge badge-sm ${r.score > 70 ? 'danger' : r.score > 50 ? 'warning' : 'success'}">${r.score}</span></td>
+                    <td>${r.fatores}</td>
+                    <td>
+                        <button class="btn-sm btn-primary" onclick="viewRiskDetails('${r.colaborador}')">
+                            <i data-feather="eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            feather.replace();
+        }
+        
+        // Funções de filtro e paginação
+        function filterDashboardData() {
+            const filter = document.getElementById('dashboard-filter').value;
+            console.log('🔍 Filtrando dashboard por:', filter);
+            loadDashboardData();
+        }
+        
+        function filterByType(type) {
+            console.log('🎯 Filtrando por tipo:', type);
+            // Implementar filtro específico por tipo
+        }
+        
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const btn = document.getElementById('autoRefreshBtn');
+            const status = document.getElementById('autoRefreshStatus');
+            
+            if (autoRefreshEnabled) {
+                btn.innerHTML = '<i data-feather="zap"></i>';
+                status.textContent = 'Auto-refresh: ON';
+                status.className = 'badge badge-sm success';
+                startAutoRefresh();
+            } else {
+                btn.innerHTML = '<i data-feather="zap-off"></i>';
+                status.textContent = 'Auto-refresh: OFF';
+                status.className = 'badge badge-sm danger';
+                stopAutoRefresh();
+            }
+            
+            feather.replace();
+        }
+        
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(loadDashboardData, 30000); // 30 segundos
+        }
+        
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+        
+        // Funções de paginação (implementação básica)
+        function loadPadroesPage(direction) {
+            console.log('📄 Carregando página de padrões:', direction);
+            // Implementar paginação
+        }
+        
+        function loadMorePadroes() {
+            console.log('📄 Carregando mais padrões...');
+            // Implementar carregar mais
+        }
+        
+        function loadAlertasPage(direction) {
+            console.log('📄 Carregando página de alertas:', direction);
+            // Implementar paginação
+        }
+        
+        function loadMoreAlertas() {
+            console.log('📄 Carregando mais alertas...');
+            // Implementar carregar mais
+        }
+        
+        function loadAcoesPage(direction) {
+            console.log('📄 Carregando página de ações:', direction);
+            // Implementar paginação
+        }
+        
+        function loadMoreAcoes() {
+            console.log('📄 Carregando mais ações...');
+            // Implementar carregar mais
+        }
+        
+        function loadRiscoPage(direction) {
+            console.log('📄 Carregando página de risco:', direction);
+            // Implementar paginação
+        }
+        
+        function loadMoreRisco() {
+            console.log('📄 Carregando mais riscos...');
+            // Implementar carregar mais
+        }
+        
+        // Funções de ação
+        function viewPadraoDetails(padrao) {
+            console.log('👁️ Visualizando detalhes do padrão:', padrao);
+            showModal('Detalhes do Padrão', `Padrão: ${padrao}<br>Detalhes completos aqui...`);
+        }
+        
+        function resolveAlert(alerta) {
+            console.log('✅ Resolvendo alerta:', alerta);
+            // Implementar resolução de alerta
+        }
+        
+        function approveAction(acao) {
+            console.log('✅ Aprovando ação:', acao);
+            // Implementar aprovação de ação
+        }
+        
+        function rejectAction(acao) {
+            console.log('❌ Rejeitando ação:', acao);
+            // Implementar rejeição de ação
+        }
+        
+        function viewRiskDetails(colaborador) {
+            console.log('👁️ Visualizando detalhes de risco:', colaborador);
+            showModal('Detalhes de Risco', `Colaborador: ${colaborador}<br>Análise completa de risco aqui...`);
+        }
+        
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = content;
+            document.getElementById('detailsModal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+        
+        // Funções de exportação
+        function exportPadroes() {
+            console.log('📤 Exportando padrões...');
+            // Implementar exportação
+        }
+        
+        function exportAlertas() {
+            console.log('📤 Exportando alertas...');
+            // Implementar exportação
+        }
+        
+        function exportAcoes() {
+            console.log('📤 Exportando ações...');
+            // Implementar exportação
+        }
+        
+        function exportRisco() {
+            console.log('📤 Exportando riscos...');
+            // Implementar exportação
+        }
+        
+        // Funções de busca
+        function searchPadroes() {
+            const search = document.getElementById('padroesSearch').value;
+            console.log('🔍 Buscando padrões:', search);
+            // Implementar busca
+        }
+        
+        function filterAlertas() {
+            const filter = document.getElementById('alertasFilter').value;
+            console.log('🔍 Filtrando alertas:', filter);
+            // Implementar filtro
+        }
+        
+        function filterAcoes() {
+            const filter = document.getElementById('acoesFilter').value;
+            console.log('🔍 Filtrando ações:', filter);
+            // Implementar filtro
+        }
+        
+        function filterRisco() {
+            const filter = document.getElementById('riscoFilter').value;
+            console.log('🔍 Filtrando riscos:', filter);
+            // Implementar filtro
+        }
+        
+        // ===== FIM DAS FUNÇÕES DO DASHBOARD UNIFICADO =====
+
         // Registration Routine Functions
         let currentRoutine = null;
         let editingItemId = null;

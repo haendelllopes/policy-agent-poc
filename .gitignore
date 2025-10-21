@@ -10,3 +10,4 @@ Thumbs.db
 # Evolution API - Arquivos sensíveis
 EVOLUTION_API_CREDENTIALS.txt
 qr-code-evolution.html
+.vercel
