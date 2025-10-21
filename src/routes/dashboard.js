@@ -6,7 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { query } = require('../db-pg'); // Usar a conexão existente
+const db = require('../db-pg'); // Usar a conexão existente
 
 // ============================================
 // GET /api/dashboard/metrics/:tenantId
@@ -40,7 +40,7 @@ router.get('/metrics/:tenantId', async (req, res) => {
                 (SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND risk_score > 50) as colaboradores_risco
         `;
         
-        const result = await query(query, [tenantId]);
+        const result = await db.query(query, [tenantId]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ 
@@ -52,7 +52,7 @@ router.get('/metrics/:tenantId', async (req, res) => {
         const metrics = result.rows[0];
         
         // Buscar dados reais dos gráficos
-        const graficosReais = await getGraficosReais(tenantId, query);
+        const graficosReais = await getGraficosReais(tenantId, db.query);
         
         // Construir resposta no formato esperado pelo frontend
         const dashboardData = {
@@ -193,7 +193,7 @@ router.get('/insights/:tenantId', async (req, res) => {
                 params = [tenantId, limit, offset];
         }
         
-        const result = await query(query, params);
+        const result = await db.query(query, params);
         
         console.log(`✅ Insights carregados (${type}):`, result.rows.length, 'registros');
         
@@ -269,7 +269,7 @@ router.post('/action/:actionId', async (req, res) => {
                 });
         }
         
-        const result = await query(query, params);
+        const result = await db.query(query, params);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ 
@@ -331,7 +331,7 @@ router.get('/notifications/:userId', async (req, res) => {
         query += ' ORDER BY n.created_at DESC LIMIT $2';
         params.push(limit);
         
-        const result = await query(query, params);
+        const result = await db.query(query, params);
         
         console.log('✅ Notificações carregadas:', result.rows.length, 'registros');
         
@@ -368,7 +368,7 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
             RETURNING *
         `;
         
-        const result = await query(query, [notificationId, userId]);
+        const result = await db.query(query, [notificationId, userId]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ 
