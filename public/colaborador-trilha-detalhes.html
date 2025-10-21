@@ -967,6 +967,13 @@ a:hover {
                 try {
                     await loadScript('/js/chat-widget.js', 5000);
                     console.log('✅ Chat widget carregado com sucesso');
+                    
+                    // Inicializar chat widget automaticamente
+                    if (typeof HybridChatWidget !== 'undefined') {
+                        console.log('🚀 Inicializando chat widget automaticamente...');
+                        window.chatWidget = new HybridChatWidget();
+                        console.log('✅ Chat widget inicializado automaticamente');
+                    }
                 } catch (error) {
                     console.error('❌ Falha crítica ao carregar chat widget:', error);
                 }
