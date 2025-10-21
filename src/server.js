@@ -477,20 +477,20 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         }
       }
 
-              // Gerar resposta final com os resultados das ferramentas
-              const finalResponseGPT = await openai.chat.completions.create({
-                model: 'gpt-4o',
-                messages: [
-                  { role: 'system', content: systemMessage },
-                  { role: 'user', content: message },
-                  { role: 'assistant', content: responseMessage.content || 'Usando ferramentas...' },
-                  ...toolResults
-                ],
-                temperature: 0.7,
-                max_tokens: 500
-              });
+      // Gerar resposta final com os resultados das ferramentas
+      const finalResponseGPT = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemMessage },
+          { role: 'user', content: message },
+          { role: 'assistant', content: responseMessage.content || 'Usando ferramentas...' },
+          ...toolResults
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      });
 
-              finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
+      finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
     }
     
     res.json({
