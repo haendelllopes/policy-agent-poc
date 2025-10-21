@@ -1,10 +1,17 @@
 class PersonalizationEngine {
   // Detectar URL base baseada no ambiente
   getBaseUrl() {
-    // Em produção (Vercel), usar URL completa do Vercel
-    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+    // Detectar ambiente de forma mais robusta
+    const isProduction = process.env.VERCEL || 
+                        process.env.NODE_ENV === 'production' ||
+                        process.env.VERCEL_URL ||
+                        process.env.VERCEL_ENV === 'production';
+    
+    if (isProduction) {
+      // Em produção, usar URL completa do Vercel
       return 'https://navigator-gules.vercel.app';
     }
+    
     // Em desenvolvimento, usar localhost
     return 'http://localhost:3000';
   }
@@ -16,7 +23,18 @@ class PersonalizationEngine {
     try {
       // Detectar ambiente e usar URL apropriada
       const baseUrl = this.getBaseUrl();
-      const response = await axios.get(`${baseUrl}/api/agent/trilhas/colaborador/${userId}`);
+      console.log('🔍 PersonalizationEngine - Ambiente detectado:', {
+        VERCEL: process.env.VERCEL,
+        NODE_ENV: process.env.NODE_ENV,
+        VERCEL_URL: process.env.VERCEL_URL,
+        VERCEL_ENV: process.env.VERCEL_ENV,
+        baseUrl: baseUrl
+      });
+      
+      const fullUrl = `${baseUrl}/api/agent/trilhas/colaborador/${userId}`;
+      console.log('🌐 Fazendo requisição para:', fullUrl);
+      
+      const response = await axios.get(fullUrl);
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao carregar contexto:', error);
