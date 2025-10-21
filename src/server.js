@@ -300,6 +300,12 @@ ${userContext.profile.role === 'admin' ? `
 - Quando o usuário pedir análise, relatórios ou alertas, USE as ferramentas correspondentes
 - Não responda sem usar ferramentas quando elas são necessárias
 
+**COMO INTERPRETAR RESULTADOS DAS FERRAMENTAS:**
+- Se buscar_documentos retornar documentos, SEMPRE apresente-os ao usuário
+- Se buscar_trilhas_disponiveis retornar trilhas, liste todas as opções
+- Se analisar_performance_colaboradores retornar insights, compartilhe os dados
+- NUNCA diga "não encontrei" se a ferramenta retornou resultados válidos
+
 SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proativo!`;
 
     // Definir ferramentas disponíveis
