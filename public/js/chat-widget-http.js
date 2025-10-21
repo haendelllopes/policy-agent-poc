@@ -362,6 +362,28 @@ class ChatWidgetHTTP {
     }
   }
 
+  // Função para processar texto e converter formatação
+  processMessageText(text) {
+    if (!text) return '';
+    
+    // Converter quebras de linha em <br>
+    let processedText = text.replace(/\n/g, '<br>');
+    
+    // Converter **texto** em <strong>texto</strong>
+    processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Converter *texto* em <em>texto</em>
+    processedText = processedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Converter bullet points • em <li>
+    processedText = processedText.replace(/•\s*/g, '• ');
+    
+    // Adicionar espaçamento após emojis de seção
+    processedText = processedText.replace(/(📋|🕒|🏖️|📚|🎯|⚠️|✅|⏳|🚀|💡|🔍|📝|🎭|🤖|👤|😊|🚨|💙|🤗|😌|🎉|👍|👎|😞|😕)/g, '$1 ');
+    
+    return processedText;
+  }
+
   addMessage(text, sender) {
     const messagesContainer = document.getElementById('navi-chat-messages');
     if (!messagesContainer) {
@@ -411,9 +433,18 @@ class ChatWidgetHTTP {
       borderRadius: '12px',
       maxWidth: '80%',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-      wordWrap: 'break-word'
+      wordWrap: 'break-word',
+      lineHeight: '1.4'
     });
-    messageBalloon.textContent = text;
+    
+    // Processar texto para formatação
+    if (sender === 'navi') {
+      // Para mensagens do Navi, usar innerHTML com formatação
+      messageBalloon.innerHTML = this.processMessageText(text);
+    } else {
+      // Para mensagens do usuário, usar textContent (mais seguro)
+      messageBalloon.textContent = text;
+    }
     
     // Montar estrutura
     mainDiv.appendChild(avatarDiv);
