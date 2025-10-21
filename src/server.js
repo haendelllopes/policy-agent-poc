@@ -483,7 +483,11 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         messages: [
           { role: 'system', content: systemMessage },
           { role: 'user', content: message },
-          { role: 'assistant', content: responseMessage.content || 'Usando ferramentas...' },
+          { 
+            role: 'assistant', 
+            content: responseMessage.content || 'Usando ferramentas...',
+            tool_calls: responseMessage.tool_calls
+          },
           ...toolResults
         ],
         temperature: 0.7,
