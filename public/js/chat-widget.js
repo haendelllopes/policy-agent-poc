@@ -74,8 +74,21 @@ class ChatWidget {
   }
 
   connectWebSocket() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
+    // Detectar se está em desenvolvimento local
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    if (isLocalDev) {
+      // Desenvolvimento local - usar WebSocket
+      this.connectWebSocketLocal();
+    } else {
+      // Produção - usar HTTP polling (Vercel não suporta WebSockets)
+      this.connectHttpMode();
+    }
+  }
+
+  connectWebSocketLocal() {
+    const wsUrl = 'ws://localhost:3000/ws/chat';
+    console.log('🔌 Conectando WebSocket local:', wsUrl);
     
     this.ws = new WebSocket(wsUrl);
     
@@ -102,16 +115,27 @@ class ChatWidget {
       // Tentar reconectar após 3 segundos
       setTimeout(() => {
         if (!this.isConnected) {
-          this.connectWebSocket();
+          this.connectWebSocketLocal();
         }
       }, 3000);
     };
     
     this.ws.onerror = (error) => {
       console.error('❌ Erro WebSocket:', error);
+      this.isConnected = false;
       this.status.textContent = 'Erro de conexão';
+      this.sendBtn.disabled = true;
       this.updateAvatar('error');
     };
+  }
+
+  connectHttpMode() {
+    console.log('🌐 Modo HTTP ativado (Produção)');
+    this.isConnected = true;
+    this.status.textContent = 'Online (HTTP)';
+    this.sendBtn.disabled = false;
+    this.updateAvatar('online');
+    this.httpMode = true;
   }
 
   setupEventListeners() {
@@ -163,13 +187,18 @@ class ChatWidget {
     // Adicionar mensagem do usuário
     this.addMessage(text, 'user');
     
-    // Enviar via WebSocket
-    this.ws.send(JSON.stringify({
-      type: 'chat',
-      userId: this.userId,
-      text: text,
-      context: this.pageContext
-    }));
+    if (this.httpMode) {
+      // Modo HTTP (Produção)
+      this.sendMessageHttp(text);
+    } else {
+      // Modo WebSocket (Desenvolvimento)
+      this.ws.send(JSON.stringify({
+        type: 'chat',
+        userId: this.userId,
+        text: text,
+        context: this.pageContext
+      }));
+    }
     
     // Limpar input
     this.input.value = '';
@@ -177,6 +206,38 @@ class ChatWidget {
     
     // Mostrar indicador de digitação
     this.showTypingIndicator();
+  }
+
+  async sendMessageHttp(text) {
+    try {
+      const response = await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: this.userId,
+          text: text,
+          context: this.pageContext
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.handleMessage(data);
+      } else {
+        this.handleMessage({
+          type: 'error',
+          message: 'Erro ao enviar mensagem'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro HTTP:', error);
+      this.handleMessage({
+        type: 'error',
+        message: 'Erro de conexão'
+      });
+    }
   }
 
   handleMessage(data) {

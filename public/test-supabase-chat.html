@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Supabase Chat Widget</title>
+    <link rel="stylesheet" href="/css/chat-widget.css">
+    <style>
+        body {
+            font-family: 'Montserrat', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #343A40;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #17A2B8;
+        }
+        
+        .status {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #17A2B8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6C7570;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste Supabase Chat Widget</h1>
+        
+        <div class="info">
+            <h3>📋 Status da Implementação</h3>
+            <div class="status">
+                <div class="status-item status-success">
+                    ✅ Fase 1: Setup<br>Concluída
+                </div>
+                <div class="status-item status-success">
+                    ✅ Fase 2: Realtime<br>Concluída
+                </div>
+                <div class="status-item status-warning">
+                    🔄 Fase 3: Migração<br>Em Andamento
+                </div>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>🚀 Funcionalidades Testáveis</h3>
+            <ul>
+                <li><strong>Chat Realtime:</strong> Mensagens em tempo real via Supabase</li>
+                <li><strong>Persistência:</strong> Mensagens salvas no banco de dados</li>
+                <li><strong>Sessões:</strong> Gerenciamento de sessões de chat</li>
+                <li><strong>Conexão:</strong> Status de conexão em tempo real</li>
+                <li><strong>Interface:</strong> Brand Manual Navi aplicado</li>
+            </ul>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="btn btn-primary" onclick="testConnection()">
+                🔌 Testar Conexão
+            </button>
+            <button class="btn btn-secondary" onclick="testMessage()">
+                💬 Testar Mensagem
+            </button>
+            <button class="btn btn-secondary" onclick="showHistory()">
+                📜 Ver Histórico
+            </button>
+        </div>
+        
+        <div id="testResults" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="/js/supabase-client.js"></script>
+    <script src="/js/supabase-chat-widget.js"></script>
+    
+    <script>
+        // Funções de teste
+        async function testConnection() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p>🔌 Testando conexão...</p>';
+            
+            try {
+                if (window.supabaseChatWidget && window.supabaseChatWidget.isConnected) {
+                    results.innerHTML = '<p style="color: green;">✅ Conexão Supabase Realtime simulada ativa!</p>';
+                } else {
+                    results.innerHTML = '<p style="color: red;">❌ Conexão não estabelecida</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        async function testMessage() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p>💬 Testando envio de mensagem...</p>';
+            
+            try {
+                if (window.supabaseChatWidget) {
+                    // Simular envio de mensagem
+                    const testMessage = `Teste Supabase - ${new Date().toLocaleTimeString()}`;
+                    await window.supabaseChatWidget.sendMessage(testMessage);
+                    results.innerHTML = '<p style="color: green;">✅ Mensagem de teste enviada!</p>';
+                } else {
+                    results.innerHTML = '<p style="color: red;">❌ Widget não inicializado</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        async function showHistory() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p>📜 Carregando histórico...</p>';
+            
+            try {
+                if (window.supabaseChatWidget) {
+                    const history = window.supabaseChatWidget.getMessageHistory();
+                    
+                    if (history.length > 0) {
+                        let html = '<h4>📜 Histórico de Mensagens (Local):</h4><ul>';
+                        history.forEach((msg, index) => {
+                            html += `<li><strong>${msg.type}:</strong> ${msg.text.substring(0, 50)}... (${msg.timestamp.toLocaleTimeString()})</li>`;
+                        });
+                        html += '</ul>';
+                        results.innerHTML = html;
+                    } else {
+                        results.innerHTML = '<p>📜 Nenhuma mensagem no histórico local</p>';
+                    }
+                } else {
+                    results.innerHTML = '<p style="color: red;">❌ Widget não disponível</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Erro: ${error.message}</p>`;
+            }
+        }
+        
+        // Aplicar Feather Icons
+        feather.replace();
+        
+        // Log de inicialização
+        console.log('🧪 Página de teste Supabase Chat Widget carregada');
+    </script>
+</body>
+</html>
