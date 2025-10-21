@@ -396,7 +396,7 @@ ${userContext.profile.role === 'admin' ? `
 - buscar_trilhas_disponiveis: Lista trilhas do colaborador
 - iniciar_trilha: Inicia trilha específica
 - registrar_feedback: Registra feedback sobre trilhas
-- buscar_dados_colaborador: Busca informações pessoais (gestor, buddy, departamento, cargo)
+- buscar_dados_colaborador: Busca informações pessoais do colaborador atual (gestor, buddy, departamento, cargo) - SEMPRE use quando usuário perguntar sobre dados pessoais
 - buscar_documentos: Busca semântica em documentos (SEMPRE use quando usuário pedir documentos, políticas, manuais, procedimentos, etc.)
 
 **PARA ADMINISTRADORES:**
@@ -528,13 +528,11 @@ SEMPRE seja conversacional, personalizado e útil!`;
         type: 'function',
         function: {
           name: 'buscar_dados_colaborador',
-          description: 'Busca informações pessoais e organizacionais do colaborador (gestor, buddy, departamento, cargo)',
+          description: 'Busca informações pessoais e organizacionais do colaborador atual (gestor, buddy, departamento, cargo)',
           parameters: {
             type: 'object',
-            properties: {
-              colaborador_id: { type: 'string', description: 'ID do colaborador para buscar dados' }
-            },
-            required: ['colaborador_id']
+            properties: {},
+            required: []
           }
         }
       }
@@ -675,9 +673,11 @@ SEMPRE seja conversacional, personalizado e útil!`;
             case 'buscar_dados_colaborador':
               // Buscar dados reais do colaborador usando API existente
               try {
-                console.log('🔍 DEBUG: Buscando dados do colaborador:', functionArgs.colaborador_id);
+                // Usar o colaborador_id do contexto ou um ID padrão para demo
+                const colaboradorId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3'; // ID demo
+                console.log('🔍 DEBUG: Buscando dados do colaborador:', colaboradorId);
                 const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
-                const userResponse = await axios.get(`${baseUrl}/api/users/${functionArgs.colaborador_id}`, {
+                const userResponse = await axios.get(`${baseUrl}/api/users/${colaboradorId}`, {
                   headers: {
                     'x-tenant-subdomain': 'demo' // Usar tenant demo
                   }
