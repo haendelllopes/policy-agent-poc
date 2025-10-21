@@ -5,14 +5,26 @@ class PersonalizationEngine {
     const isProduction = process.env.VERCEL || 
                         process.env.NODE_ENV === 'production' ||
                         process.env.VERCEL_URL ||
-                        process.env.VERCEL_ENV === 'production';
+                        process.env.VERCEL_ENV === 'production' ||
+                        process.env.VERCEL_REGION; // Vercel sempre define isso em produção
+    
+    console.log('🔍 Detecção de ambiente:', {
+      VERCEL: process.env.VERCEL,
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL_URL: process.env.VERCEL_URL,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      VERCEL_REGION: process.env.VERCEL_REGION,
+      isProduction: isProduction
+    });
     
     if (isProduction) {
       // Em produção, usar URL completa do Vercel
+      console.log('🌐 Usando URL de produção:', 'https://navigator-gules.vercel.app');
       return 'https://navigator-gules.vercel.app';
     }
     
     // Em desenvolvimento, usar localhost
+    console.log('🌐 Usando URL de desenvolvimento:', 'http://localhost:3000');
     return 'http://localhost:3000';
   }
 
@@ -23,13 +35,6 @@ class PersonalizationEngine {
     try {
       // Detectar ambiente e usar URL apropriada
       const baseUrl = this.getBaseUrl();
-      console.log('🔍 PersonalizationEngine - Ambiente detectado:', {
-        VERCEL: process.env.VERCEL,
-        NODE_ENV: process.env.NODE_ENV,
-        VERCEL_URL: process.env.VERCEL_URL,
-        VERCEL_ENV: process.env.VERCEL_ENV,
-        baseUrl: baseUrl
-      });
       
       const fullUrl = `${baseUrl}/api/agent/trilhas/colaborador/${userId}`;
       console.log('🌐 Fazendo requisição para:', fullUrl);
@@ -38,6 +43,20 @@ class PersonalizationEngine {
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao carregar contexto:', error);
+      
+      // Se erro de conexão, tentar com URL absoluta como fallback
+      if (error.code === 'ECONNREFUSED' || error.message.includes('localhost')) {
+        console.log('🔄 Tentando fallback com URL absoluta...');
+        try {
+          const fallbackUrl = `https://navigator-gules.vercel.app/api/agent/trilhas/colaborador/${userId}`;
+          console.log('🌐 Tentando fallback:', fallbackUrl);
+          const response = await axios.get(fallbackUrl);
+          return response.data;
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback:', fallbackError);
+        }
+      }
+      
       return { 
         id: userId, 
         name: 'Usuário',
@@ -59,6 +78,18 @@ class PersonalizationEngine {
       return response.data.messages || [];
     } catch (error) {
       console.error('❌ Erro ao carregar histórico:', error);
+      
+      // Fallback para URL absoluta
+      if (error.code === 'ECONNREFUSED' || error.message.includes('localhost')) {
+        try {
+          const fallbackUrl = `https://navigator-gules.vercel.app/api/conversations/history/${userId}?limit=${limit}`;
+          const response = await axios.get(fallbackUrl);
+          return response.data.messages || [];
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback histórico:', fallbackError);
+        }
+      }
+      
       return [];
     }
   }
@@ -73,6 +104,18 @@ class PersonalizationEngine {
       return response.data.anotacoes || [];
     } catch (error) {
       console.error('❌ Erro ao carregar anotações:', error);
+      
+      // Fallback para URL absoluta
+      if (error.code === 'ECONNREFUSED' || error.message.includes('localhost')) {
+        try {
+          const fallbackUrl = `https://navigator-gules.vercel.app/api/agente/anotacoes?colaborador_id=${userId}&limit=${limit}`;
+          const response = await axios.get(fallbackUrl);
+          return response.data.anotacoes || [];
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback anotações:', fallbackError);
+        }
+      }
+      
       return [];
     }
   }
@@ -87,6 +130,18 @@ class PersonalizationEngine {
       return response.data.sentimentos || [];
     } catch (error) {
       console.error('❌ Erro ao carregar histórico de sentimentos:', error);
+      
+      // Fallback para URL absoluta
+      if (error.code === 'ECONNREFUSED' || error.message.includes('localhost')) {
+        try {
+          const fallbackUrl = `https://navigator-gules.vercel.app/api/sentimentos/history/${userId}?limit=${limit}`;
+          const response = await axios.get(fallbackUrl);
+          return response.data.sentimentos || [];
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback sentimentos:', fallbackError);
+        }
+      }
+      
       return [];
     }
   }
@@ -335,6 +390,21 @@ Analise padrões históricos e ofereça suporte personalizado!`;
       console.log('📊 Sentimento analisado em background para:', userId);
     } catch (error) {
       console.error('❌ Erro análise sentimento background:', error);
+      
+      // Fallback para URL absoluta
+      if (error.code === 'ECONNREFUSED' || error.message.includes('localhost')) {
+        try {
+          const fallbackUrl = 'https://navigator-gules.vercel.app/api/chat-analysis/sentiment';
+          await axios.post(fallbackUrl, {
+            userId: userId,
+            message: message,
+            source: 'chat_http'
+          });
+          console.log('📊 Sentimento analisado em background (fallback) para:', userId);
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback sentimento background:', fallbackError);
+        }
+      }
     }
   }
 
@@ -361,6 +431,28 @@ Analise padrões históricos e ofereça suporte personalizado!`;
       }
     } catch (error) {
       console.error('❌ Erro criação anotação automática:', error);
+      
+      // Fallback para URL absoluta
+      if (error.code === 'ECONNREFUSED' || error.message.includes('localhost')) {
+        try {
+          const isDifficulty = this.detectDifficulty(message);
+          const isFeedback = this.detectFeedback(message);
+          
+          if (isDifficulty || isFeedback) {
+            const fallbackUrl = 'https://navigator-gules.vercel.app/api/chat-analysis/annotations';
+            await axios.post(fallbackUrl, {
+              userId: userId,
+              message: message,
+              context: context,
+              autoDetected: true,
+              type: isDifficulty ? 'dificuldade_conteudo' : 'feedback_colaborador'
+            });
+            console.log('📝 Anotação automática criada (fallback) para:', userId);
+          }
+        } catch (fallbackError) {
+          console.error('❌ Erro no fallback anotação automática:', fallbackError);
+        }
+      }
     }
   }
 
