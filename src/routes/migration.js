@@ -52,6 +52,10 @@ router.post('/insert-mock-data', async (req, res) => {
         
         // Adicionar colunas necessárias em agente_anotacoes
         try {
+            // Primeiro, remover constraint existente se houver
+            await pool.query(`ALTER TABLE agente_anotacoes DROP CONSTRAINT IF EXISTS agente_anotacoes_tipo_check`);
+            
+            // Adicionar colunas
             await pool.query(`
                 ALTER TABLE agente_anotacoes 
                 ADD COLUMN IF NOT EXISTS severidade VARCHAR(20) CHECK (severidade IN ('baixa', 'media', 'alta', 'critica')),
@@ -61,9 +65,29 @@ router.post('/insert-mock-data', async (req, res) => {
                 ADD COLUMN IF NOT EXISTS proactive_score INTEGER DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS alerta_gerado BOOLEAN DEFAULT false
             `);
-            console.log('✅ Colunas adicionadas em agente_anotacoes');
+            
+            // Recriar constraint com novos tipos permitidos
+            await pool.query(`
+                ALTER TABLE agente_anotacoes 
+                ADD CONSTRAINT agente_anotacoes_tipo_check CHECK (tipo IN (
+                    'sentimento_trilha',
+                    'sentimento_empresa',
+                    'dificuldade_conteudo',
+                    'sugestao_colaborador',
+                    'padrao_identificado',
+                    'observacao_geral',
+                    'feedback_positivo',
+                    'alerta_risco_evasao',
+                    'alerta_inatividade',
+                    'alerta_sentimento_negativo',
+                    'alerta_trilha_atrasada',
+                    'alerta_baixo_engajamento'
+                ))
+            `);
+            
+            console.log('✅ Colunas e constraint atualizadas em agente_anotacoes');
         } catch (error) {
-            console.log('⚠️ Erro ao adicionar colunas em agente_anotacoes:', error.message);
+            console.log('⚠️ Erro ao atualizar agente_anotacoes:', error.message);
         }
         
         // Adicionar colunas necessárias em onboarding_improvements
