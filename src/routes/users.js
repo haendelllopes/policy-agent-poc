@@ -431,17 +431,61 @@ router.put('/:id', async (req, res) => {
       console.log('🔍 Parâmetro 8 (gestor_id):', queryParams[7], 'Tipo:', typeof queryParams[7]);
       console.log('🔍 Parâmetro 9 (buddy_id):', queryParams[8], 'Tipo:', typeof queryParams[8]);
       
-      const updateResult = await query(`
+      // Testar UPDATE em duas etapas para identificar o problema
+      console.log('🔧 Executando UPDATE em duas etapas...');
+      
+      // Primeira etapa: atualizar campos básicos
+      const basicUpdateResult = await query(`
         UPDATE users SET 
           name = $1, email = $2, phone = $3, 
           position = $4, department = $5, 
           position_id = $6, department_id = $7,
-          gestor_id = $8, buddy_id = $9,
-          start_date = $10, status = $11,
+          start_date = $8, status = $9,
           updated_at = NOW()
-        WHERE id = $12 AND tenant_id = $13
-        RETURNING id, name, gestor_id, buddy_id
-      `, queryParams);
+        WHERE id = $10 AND tenant_id = $11
+        RETURNING id, name
+      `, [
+        parse.data.name, parse.data.email, normalizedPhone, 
+        parse.data.position || null, parse.data.department || null,
+        parse.data.position_id || null, parse.data.department_id || null,
+        parse.data.start_date || null, parse.data.status || 'active',
+        userId, tenant.id
+      ]);
+      
+      console.log('✅ UPDATE básico executado:', basicUpdateResult.rows[0]);
+      
+      // Segunda etapa: atualizar gestor_id e buddy_id separadamente
+      console.log('🔧 Atualizando gestor_id...');
+      const gestorUpdateResult = await query(`
+        UPDATE users SET 
+          gestor_id = $1,
+          updated_at = NOW()
+        WHERE id = $2 AND tenant_id = $3
+        RETURNING id, gestor_id
+      `, [parse.data.gestor_id, userId, tenant.id]);
+      
+      console.log('✅ UPDATE gestor_id executado:', gestorUpdateResult.rows[0]);
+      
+      console.log('🔧 Atualizando buddy_id...');
+      const buddyUpdateResult = await query(`
+        UPDATE users SET 
+          buddy_id = $1,
+          updated_at = NOW()
+        WHERE id = $2 AND tenant_id = $3
+        RETURNING id, buddy_id
+      `, [parse.data.buddy_id, userId, tenant.id]);
+      
+      console.log('✅ UPDATE buddy_id executado:', buddyUpdateResult.rows[0]);
+      
+      // Combinar resultados
+      const updateResult = {
+        rows: [{
+          id: userId,
+          name: basicUpdateResult.rows[0].name,
+          gestor_id: gestorUpdateResult.rows[0].gestor_id,
+          buddy_id: buddyUpdateResult.rows[0].buddy_id
+        }]
+      };
       
       console.log('✅ UPDATE executado. Resultado:', updateResult.rows[0]);
       
