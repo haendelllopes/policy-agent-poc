@@ -432,6 +432,11 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                 const searchResponse = await axios.post(`${baseUrl}/api/documents/semantic-search`, {
                   query: functionArgs.query,
                   colaborador_id: functionArgs.colaborador_id || 'demo-user'
+                }, {
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-tenant-subdomain': 'demo' // Adicionar header do tenant
+                  }
                 });
                 
                 console.log('🔍 DEBUG: Resposta da busca:', searchResponse.data);
