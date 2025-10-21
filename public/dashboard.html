@@ -1539,7 +1539,7 @@ a:hover {
                         <div class="stat-icon">🎯</div>
                         <div class="stat-value" id="trilhasAtivas">
                             <div class="skeleton" style="width: 60px; height: 32px;"></div>
-                        </div>
+                    </div>
                         <div class="stat-label">Trilhas Ativas</div>
                         <div class="stat-trend" id="trilhasTrend"></div>
                     </div>
@@ -1547,7 +1547,7 @@ a:hover {
                         <div class="stat-icon">👥</div>
                         <div class="stat-value" id="usuariosOnboarding">
                             <div class="skeleton" style="width: 60px; height: 32px;"></div>
-                        </div>
+                    </div>
                         <div class="stat-label">Usuários em Onboarding</div>
                         <div class="stat-trend" id="usuariosTrend"></div>
                     </div>
@@ -1598,11 +1598,11 @@ a:hover {
                                         <option value="concluido">Concluídas</option>
                                         <option value="atrasado">Atrasadas</option>
                                     </select>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
                             <div class="chart-container">
                                 <canvas id="trilhasCargoChart"></canvas>
-                            </div>
+                        </div>
                         </div>
 
                         <!-- Sentimento por Cargo -->
@@ -1619,8 +1619,8 @@ a:hover {
                             </div>
                             <div class="chart-container">
                                 <canvas id="sentimentoCargoChart"></canvas>
-                            </div>
-                        </div>
+                    </div>
+                </div>
 
                         <!-- Alertas por Severidade -->
                         <div class="chart-card">
@@ -1661,7 +1661,7 @@ a:hover {
                 <!-- Seção de Tabelas com Paginação -->
                 <div class="tables-section">
                     <div class="tables-grid">
-                        <!-- Padrões Identificados -->
+                <!-- Padrões Identificados -->
                         <div class="table-card">
                             <div class="table-header">
                                 <h3>🔍 Padrões Identificados</h3>
@@ -1693,8 +1693,8 @@ a:hover {
                                 <span id="padroesPageInfo">Página 1 de 1</span>
                                 <button id="padroesNextBtn" onclick="loadPadroesPage('next')" disabled>Próxima</button>
                                 <button id="padroesLoadMoreBtn" onclick="loadMorePadroes()" class="btn-outline">Carregar Mais</button>
-                            </div>
-                        </div>
+                    </div>
+                </div>
 
                         <!-- Alertas Críticos -->
                         <div class="table-card">
@@ -1706,7 +1706,7 @@ a:hover {
                                         <option value="critica">Críticos</option>
                                         <option value="alta">Altos</option>
                                         <option value="media">Médios</option>
-                                    </select>
+                            </select>
                                     <button class="btn-sm btn-outline" onclick="exportAlertas()">
                                         <i data-feather="download"></i>
                                     </button>
@@ -1746,12 +1746,12 @@ a:hover {
                                         <option value="pendente">Pendentes</option>
                                         <option value="aprovada">Aprovadas</option>
                                         <option value="rejeitada">Rejeitadas</option>
-                                    </select>
+                            </select>
                                     <button class="btn-sm btn-outline" onclick="exportAcoes()">
                                         <i data-feather="download"></i>
                                     </button>
-                                </div>
-                            </div>
+                        </div>
+                    </div>
                             <div class="table-container">
                                 <table class="data-table">
                                     <thead>
@@ -2289,9 +2289,9 @@ a:hover {
                     </div>
                     <div class="modal-body" id="modalBody"></div>
                     <div class="modal-footer" id="modalFooter"></div>
+                    </div>
                 </div>
             </div>
-        </div>
         </div>
     </main>
 
@@ -2374,6 +2374,15 @@ a:hover {
             }
         }
         
+        // Função para detectar seção atual
+        function getCurrentSection() {
+            const activeSection = document.querySelector('.section.active');
+            if (activeSection) {
+                return activeSection.id.replace('-section', '');
+            }
+            return 'insights'; // Default para insights
+        }
+        
         // Show section - função global para navegação entre seções
         window.showSection = function(section) {
             // Hide all sections
@@ -2417,7 +2426,10 @@ a:hover {
             // SEMPRE atualizar dados quando navegar para insights (dashboard)
             if (section === 'insights') {
                 console.log('🔄 Navegando para dashboard - atualizando dados...');
-                loadDashboardData();
+                // Usar setTimeout para garantir que a seção seja exibida primeiro
+                setTimeout(async () => {
+                    await loadDashboardData();
+                }, 100);
             }
         }
         
@@ -2802,6 +2814,13 @@ a:hover {
                 console.log('⏰ Atualizando relógio...');
                 updateTime();
                 setInterval(updateTime, 1000);
+                
+                // Carregar dados do dashboard se estiver na seção insights
+                const currentSection = getCurrentSection();
+                if (currentSection === 'insights') {
+                    console.log('📊 Carregando dados do dashboard inicial...');
+                    await loadDashboardData();
+                }
                 
                 console.log('✅ Dashboard carregado com sucesso!');
             } catch (error) {
@@ -3760,9 +3779,9 @@ a:hover {
         }
         
         function changeItemsPerPage() {
-        // Placeholder for items per page
-        console.log('Alterar itens por página...');
-    }
+            // Placeholder for items per page
+            console.log('Alterar itens por página...');
+        }
 
     // ===== SISTEMA DE NOTIFICAÇÕES =====
     
@@ -4309,8 +4328,8 @@ a:hover {
             }
         }, 2000);
     });
-    
-</script>
+        
+    </script>
     
         <!-- Chat Widget Integration (WebSocket Version) -->
         <link href="css/chat-widget.css" rel="stylesheet">
