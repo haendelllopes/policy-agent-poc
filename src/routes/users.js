@@ -417,6 +417,20 @@ router.put('/:id', async (req, res) => {
       console.log('🔧 Executando UPDATE para userId:', userId, 'tenantId:', tenant.id);
       console.log('🔧 Valores: gestor_id =', parse.data.gestor_id, 'buddy_id =', parse.data.buddy_id);
       
+      // Debug: verificar todos os parâmetros antes da query
+      const queryParams = [
+        parse.data.name, parse.data.email, normalizedPhone, 
+        parse.data.position || null, parse.data.department || null,
+        parse.data.position_id || null, parse.data.department_id || null,
+        parse.data.gestor_id, parse.data.buddy_id,
+        parse.data.start_date || null, parse.data.status || 'active',
+        userId, tenant.id
+      ];
+      
+      console.log('🔍 Parâmetros da query:', queryParams);
+      console.log('🔍 Parâmetro 8 (gestor_id):', queryParams[7], 'Tipo:', typeof queryParams[7]);
+      console.log('🔍 Parâmetro 9 (buddy_id):', queryParams[8], 'Tipo:', typeof queryParams[8]);
+      
       const updateResult = await query(`
         UPDATE users SET 
           name = $1, email = $2, phone = $3, 
@@ -427,14 +441,7 @@ router.put('/:id', async (req, res) => {
           updated_at = NOW()
         WHERE id = $12 AND tenant_id = $13
         RETURNING id, name, gestor_id, buddy_id
-      `, [
-        parse.data.name, parse.data.email, normalizedPhone, 
-        parse.data.position || null, parse.data.department || null,
-        parse.data.position_id || null, parse.data.department_id || null,
-        parse.data.gestor_id, parse.data.buddy_id,
-        parse.data.start_date || null, parse.data.status || 'active',
-        userId, tenant.id
-      ]);
+      `, queryParams);
       
       console.log('✅ UPDATE executado. Resultado:', updateResult.rows[0]);
       
