@@ -448,7 +448,7 @@ class HybridChatWidget {
 
       if (isProduction || this.httpMode) {
         // Modo HTTP para produção
-        const response = await fetch('/api/chat/send', {
+        const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: this.userId, text: text, context: this.pageContext })
