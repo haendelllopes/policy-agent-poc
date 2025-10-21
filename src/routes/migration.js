@@ -66,26 +66,7 @@ router.post('/insert-mock-data', async (req, res) => {
                 ADD COLUMN IF NOT EXISTS alerta_gerado BOOLEAN DEFAULT false
             `);
             
-            // Recriar constraint com novos tipos permitidos
-            await pool.query(`
-                ALTER TABLE agente_anotacoes 
-                ADD CONSTRAINT agente_anotacoes_tipo_check CHECK (tipo IN (
-                    'sentimento_trilha',
-                    'sentimento_empresa',
-                    'dificuldade_conteudo',
-                    'sugestao_colaborador',
-                    'padrao_identificado',
-                    'observacao_geral',
-                    'feedback_positivo',
-                    'alerta_risco_evasao',
-                    'alerta_inatividade',
-                    'alerta_sentimento_negativo',
-                    'alerta_trilha_atrasada',
-                    'alerta_baixo_engajamento'
-                ))
-            `);
-            
-            console.log('✅ Colunas e constraint atualizadas em agente_anotacoes');
+            console.log('✅ Colunas adicionadas em agente_anotacoes (sem constraint de tipo)');
         } catch (error) {
             console.log('⚠️ Erro ao atualizar agente_anotacoes:', error.message);
         }
