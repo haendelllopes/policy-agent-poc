@@ -92,6 +92,25 @@ class HybridChatWidget {
   async detectBestSystem() {
     console.log('🔍 Detectando melhor sistema disponível...');
     
+    // Timeout geral para detecção (máximo 3 segundos)
+    const detectionPromise = this.performDetection();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Detection timeout')), 3000);
+    });
+    
+    try {
+      await Promise.race([detectionPromise, timeoutPromise]);
+    } catch (error) {
+      console.log('⚠️ Timeout na detecção, usando HTTP como fallback');
+      this.currentMode = 'http';
+      this.supabaseAvailable = false;
+    }
+    
+    // Conectar ao sistema escolhido
+    await this.connectToSystem();
+  }
+
+  async performDetection() {
     // Tentar Supabase primeiro
     if (await this.trySupabase()) {
       this.currentMode = 'supabase';
@@ -103,24 +122,26 @@ class HybridChatWidget {
       this.supabaseAvailable = false;
       console.log('✅ Modo HTTP ativado (fallback)');
     }
-    
-    // Conectar ao sistema escolhido
-    await this.connectToSystem();
   }
 
   async trySupabase() {
     try {
-      // Aguardar Supabase estar disponível
-      await new Promise(resolve => {
-        const checkSupabase = () => {
-          if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
-            resolve();
-          } else {
-            setTimeout(checkSupabase, 100);
-          }
-        };
-        checkSupabase();
-      });
+      // Aguardar Supabase estar disponível com timeout agressivo
+      await Promise.race([
+        new Promise(resolve => {
+          const checkSupabase = () => {
+            if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+              resolve();
+            } else {
+              setTimeout(checkSupabase, 100);
+            }
+          };
+          checkSupabase();
+        }),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Supabase timeout')), 1000); // Timeout de 1s
+        })
+      ]);
 
       // Verificar se Supabase JS está disponível
       if (typeof createClient === 'undefined') {
@@ -199,51 +220,78 @@ class HybridChatWidget {
         this.updateAvatar('online');
         console.log('✅ Conectado via HTTP (Produção)');
       } else {
-        // Tentar WebSocket local
-        await this.connectWebSocketLocal();
+        // Tentar WebSocket local primeiro
+        try {
+          await this.connectWebSocketLocal();
+        } catch (wsError) {
+          console.log('⚠️ WebSocket local falhou, usando HTTP');
+          // Fallback para HTTP local
+          this.httpMode = true;
+          this.isConnected = true;
+          this.updateStatus('Online (HTTP Local)');
+          this.sendBtn.disabled = false;
+          this.updateAvatar('online');
+          console.log('✅ Conectado via HTTP (Local)');
+        }
       }
     } catch (error) {
       console.error('❌ Erro na conexão HTTP:', error);
+      // Fallback final - sempre conectar via HTTP
+      this.httpMode = true;
+      this.isConnected = true;
+      this.updateStatus('Online (HTTP Fallback)');
+      this.sendBtn.disabled = false;
+      this.updateAvatar('online');
+      console.log('✅ Conectado via HTTP (Fallback Final)');
     }
   }
 
   async connectWebSocketLocal() {
-    try {
-      const wsUrl = 'ws://localhost:3000/ws/chat';
-      console.log('🔌 Conectando WebSocket local:', wsUrl);
-      
-      this.ws = new WebSocket(wsUrl);
-      
-      this.ws.onopen = () => {
-        this.isConnected = true;
-        this.updateStatus('Online (WebSocket)');
-        this.sendBtn.disabled = false;
-        this.updateAvatar('online');
-        console.log('✅ Conectado via WebSocket local');
-      };
-      
-      this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        this.handleMessage(data);
-      };
-      
-      this.ws.onclose = () => {
-        this.isConnected = false;
-        this.updateStatus('Desconectado');
-        this.updateAvatar('offline');
-        console.log('🔌 WebSocket desconectado');
-      };
-      
-      this.ws.onerror = (error) => {
-        console.error('❌ Erro WebSocket:', error);
-        // Fallback para HTTP
-        this.currentMode = 'http';
-        this.connectHttp();
-      };
-      
-    } catch (error) {
-      console.error('❌ Erro ao conectar WebSocket:', error);
-    }
+    return new Promise((resolve, reject) => {
+      try {
+        const wsUrl = 'ws://localhost:3000/ws/chat';
+        console.log('🔌 Conectando WebSocket local:', wsUrl);
+        
+        this.ws = new WebSocket(wsUrl);
+        
+        const timeout = setTimeout(() => {
+          reject(new Error('WebSocket connection timeout'));
+        }, 5000);
+        
+        this.ws.onopen = () => {
+          clearTimeout(timeout);
+          this.isConnected = true;
+          this.updateStatus('Online (WebSocket)');
+          this.sendBtn.disabled = false;
+          this.updateAvatar('online');
+          console.log('✅ Conectado via WebSocket local');
+          resolve();
+        };
+        
+        this.ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          this.handleMessage(data);
+        };
+        
+        this.ws.onclose = () => {
+          clearTimeout(timeout);
+          this.isConnected = false;
+          this.updateStatus('Desconectado');
+          this.updateAvatar('offline');
+          console.log('🔌 WebSocket desconectado');
+        };
+        
+        this.ws.onerror = (error) => {
+          clearTimeout(timeout);
+          console.error('❌ Erro WebSocket:', error);
+          reject(error);
+        };
+        
+      } catch (error) {
+        console.error('❌ Erro ao conectar WebSocket:', error);
+        reject(error);
+      }
+    });
   }
 
   createWidget() {
