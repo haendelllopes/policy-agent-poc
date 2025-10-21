@@ -24,8 +24,28 @@ router.get('/metrics/:tenantId', async (req, res) => {
         
         console.log('📊 Buscando métricas do dashboard para tenant:', tenantId);
         
-        // Usar a função otimizada do banco
-        const query = 'SELECT get_dashboard_data($1) as data';
+        // Query direta para buscar métricas
+        const query = `
+            SELECT 
+                (SELECT COUNT(*) FROM trilhas WHERE tenant_id = $1) as trilhas_ativas,
+                (SELECT COUNT(*) FROM users WHERE tenant_id = $1) as total_usuarios,
+                (SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND created_at > NOW() - INTERVAL '30 days') as usuarios_onboarding,
+                (SELECT COUNT(*) FROM onboarding_improvements WHERE tenant_id = $1 AND status = 'sugerida') as melhorias_sugeridas,
+                (SELECT COUNT(*) FROM onboarding_improvements WHERE tenant_id = $1 AND status = 'pendente_aprovacao') as acoes_pendentes,
+                (SELECT AVG(CASE 
+                    WHEN sentimento = 'muito_positivo' THEN 5
+                    WHEN sentimento = 'positivo' THEN 4
+                    WHEN sentimento = 'neutro' THEN 3
+                    WHEN sentimento = 'negativo' THEN 2
+                    WHEN sentimento = 'muito_negativo' THEN 1
+                    ELSE 3
+                END) FROM agente_anotacoes WHERE tenant_id = $1 AND created_at > NOW() - INTERVAL '7 days') as sentimento_medio,
+                (SELECT COUNT(*) FROM agente_anotacoes WHERE tenant_id = $1 AND alerta_gerado = true AND status = 'ativo') as alertas_ativos,
+                (SELECT COUNT(*) FROM agente_anotacoes WHERE tenant_id = $1 AND severidade = 'critica' AND status = 'ativo') as alertas_criticos,
+                (SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND risk_score > 70) as colaboradores_alto_risco,
+                (SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND risk_score > 50) as colaboradores_risco
+        `;
+        
         const result = await pool.query(query, [tenantId]);
         
         if (result.rows.length === 0) {
@@ -35,7 +55,58 @@ router.get('/metrics/:tenantId', async (req, res) => {
             });
         }
         
-        const dashboardData = result.rows[0].data;
+        const metrics = result.rows[0];
+        
+        // Construir resposta no formato esperado pelo frontend
+        const dashboardData = {
+            tenant_id: tenantId,
+            timestamp: new Date().toISOString(),
+            
+            // Métricas principais
+            trilhasAtivas: parseInt(metrics.trilhas_ativas) || 0,
+            usuariosOnboarding: parseInt(metrics.usuarios_onboarding) || 0,
+            melhoriasSugeridas: parseInt(metrics.melhorias_sugeridas) || 0,
+            sentimentoMedio: parseFloat(metrics.sentimento_medio) || 0,
+            alertasAtivos: parseInt(metrics.alertas_ativos) || 0,
+            colaboradoresRisco: parseInt(metrics.colaboradores_alto_risco) || 0,
+            
+            // Tendências (mock por enquanto)
+            trilhasTrend: '+12%',
+            usuariosTrend: '+8%',
+            melhoriasTrend: '+15%',
+            sentimentoTrend: '+0.3',
+            alertasTrend: '-25%',
+            riscoTrend: '-50%',
+            
+            // Dados para gráficos (mock por enquanto)
+            graficos: {
+                trilhasPorCargo: [
+                    { cargo: 'Desenvolvedor', ativas: 8, concluidas: 12, atrasadas: 2 },
+                    { cargo: 'Designer', ativas: 6, concluidas: 8, atrasadas: 1 },
+                    { cargo: 'Product Manager', ativas: 4, concluidas: 6, atrasadas: 1 }
+                ],
+                sentimentoPorCargo: [
+                    { cargo: 'Desenvolvedor', sentimento: 4.2 },
+                    { cargo: 'Designer', sentimento: 4.5 },
+                    { cargo: 'Product Manager', sentimento: 4.1 }
+                ],
+                alertasPorSeveridade: [
+                    { severidade: 'Crítico', quantidade: parseInt(metrics.alertas_criticos) || 0 },
+                    { severidade: 'Alto', quantidade: 5 },
+                    { severidade: 'Médio', quantidade: 8 },
+                    { severidade: 'Baixo', quantidade: 12 }
+                ],
+                tendenciaEngajamento: [
+                    { dia: 'Seg', engajamento: 85 },
+                    { dia: 'Ter', engajamento: 78 },
+                    { dia: 'Qua', engajamento: 92 },
+                    { dia: 'Qui', engajamento: 88 },
+                    { dia: 'Sex', engajamento: 95 },
+                    { dia: 'Sáb', engajamento: 82 },
+                    { dia: 'Dom', engajamento: 89 }
+                ]
+            }
+        };
         
         console.log('✅ Métricas carregadas com sucesso:', {
             trilhasAtivas: dashboardData.trilhasAtivas,
