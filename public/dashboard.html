@@ -2808,8 +2808,10 @@ a:hover {
             }
         });
         
-        // ===== FUNÇÕES DO DASHBOARD UNIFICADO =====
-        
+    </script>
+    
+    <!-- ===== FUNÇÕES DO DASHBOARD UNIFICADO (ESCOPO GLOBAL) ===== -->
+    <script>
         // Variáveis globais para o dashboard unificado
         let dashboardData = {
             metrics: {},
@@ -2831,7 +2833,10 @@ a:hover {
                 console.log('🔄 Carregando dados do dashboard unificado...');
                 
                 // Atualizar timestamp
-                document.getElementById('lastUpdate').textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+                const lastUpdateEl = document.getElementById('lastUpdate');
+                if (lastUpdateEl) {
+                    lastUpdateEl.textContent = `Última atualização: ${new Date().toLocaleTimeString()}`;
+                }
                 
                 // Carregar métricas principais
                 await loadDashboardMetrics();
@@ -3377,8 +3382,9 @@ a:hover {
         }
         
         // ===== FIM DAS FUNÇÕES DO DASHBOARD UNIFICADO =====
-
-        // Registration Routine Functions
+    </script>
+    
+    <script>
         let currentRoutine = null;
         let editingItemId = null;
         
@@ -3663,7 +3669,6 @@ a:hover {
     // ===== SISTEMA DE NOTIFICAÇÕES =====
     
     let notificationInterval = null;
-    let autoRefreshInterval = null;
     let proactiveData = {
         alerts: [],
         actions: [],
