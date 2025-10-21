@@ -288,10 +288,13 @@ app.post('/api/chat', async (req, res) => {
     const { message, userId, context } = req.body;
     
     // Validar se message existe
-    if (!message) {
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.error('❌ Validação falhou:', { message, userId, context });
       return res.status(400).json({ 
-        error: 'Campo "message" é obrigatório',
-        received: { message, userId, context }
+        error: 'Campo "message" é obrigatório e deve ser uma string não vazia',
+        received: { message, userId, context },
+        messageType: typeof message,
+        messageLength: message ? message.length : 0
       });
     }
     
