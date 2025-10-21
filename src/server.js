@@ -457,10 +457,12 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                 });
                 
                 console.log('🔍 DEBUG: Resposta da busca:', searchResponse.data);
-                console.log('🔍 DEBUG: Documentos encontrados:', searchResponse.data.documents?.length || 0);
                 
-                const documentos = searchResponse.data.documents || [];
+                // A resposta é um array direto, não um objeto com propriedade documents
+                const documentos = Array.isArray(searchResponse.data) ? searchResponse.data : (searchResponse.data.documents || []);
                 const documentosEncontrados = documentos.length;
+                
+                console.log('🔍 DEBUG: Documentos encontrados:', documentosEncontrados);
                 
                 toolResult = {
                   status: 'sucesso',
