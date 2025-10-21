@@ -2856,26 +2856,31 @@ a:hover {
         // Carregar métricas principais
         async function loadDashboardMetrics() {
             try {
-                const response = await fetch('/api/proactive/dashboard-metrics');
-                const data = await response.json();
+                // Usar dados mock por enquanto (endpoint não implementado ainda)
+                console.log('📊 Carregando métricas mock...');
                 
-                // Atualizar cards de métricas
-                updateMetricCard('trilhasAtivas', data.trilhasAtivas || 0, data.trilhasTrend || '+0%');
-                updateMetricCard('usuariosOnboarding', data.usuariosOnboarding || 0, data.usuariosTrend || '+0%');
-                updateMetricCard('melhoriasSugeridas', data.melhoriasSugeridas || 0, data.melhoriasTrend || '+0%');
-                updateMetricCard('sentimentoMedio', data.sentimentoMedio || '--', data.sentimentoTrend || '+0%');
-                updateMetricCard('alertasAtivos', data.alertasAtivos || 0, data.alertasTrend || '+0%');
-                updateMetricCard('colaboradoresRisco', data.colaboradoresRisco || 0, data.riscoTrend || '+0%');
+                // Simular carregamento com delay
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
-            } catch (error) {
-                console.error('❌ Erro ao carregar métricas:', error);
-                // Usar dados mock em caso de erro
+                // Atualizar cards de métricas com dados mock
                 updateMetricCard('trilhasAtivas', 12, '+15%');
                 updateMetricCard('usuariosOnboarding', 8, '+8%');
                 updateMetricCard('melhoriasSugeridas', 5, '+12%');
                 updateMetricCard('sentimentoMedio', '4.2', '+0.3');
                 updateMetricCard('alertasAtivos', 3, '-25%');
                 updateMetricCard('colaboradoresRisco', 2, '-50%');
+                
+                console.log('✅ Métricas mock carregadas com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar métricas:', error);
+                // Fallback com dados básicos
+                updateMetricCard('trilhasAtivas', 0, '+0%');
+                updateMetricCard('usuariosOnboarding', 0, '+0%');
+                updateMetricCard('melhoriasSugeridas', 0, '+0%');
+                updateMetricCard('sentimentoMedio', '--', '+0%');
+                updateMetricCard('alertasAtivos', 0, '+0%');
+                updateMetricCard('colaboradoresRisco', 0, '+0%');
             }
         }
         
@@ -2918,6 +2923,12 @@ a:hover {
             const canvas = document.getElementById('trilhasCargoChart');
             if (!canvas) return;
             
+            // Verificar se Chart.js está disponível
+            if (typeof Chart === 'undefined') {
+                console.warn('⚠️ Chart.js não está carregado ainda');
+                return;
+            }
+            
             const ctx = canvas.getContext('2d');
             const filter = document.getElementById('trilhasCargoFilter')?.value || 'ativo';
             
@@ -2934,7 +2945,7 @@ a:hover {
             };
             
             // Destruir gráfico existente se houver
-            if (window.trilhasCargoChart) {
+            if (window.trilhasCargoChart && typeof window.trilhasCargoChart.destroy === 'function') {
                 window.trilhasCargoChart.destroy();
             }
             
@@ -2963,6 +2974,12 @@ a:hover {
             const canvas = document.getElementById('sentimentoCargoChart');
             if (!canvas) return;
             
+            // Verificar se Chart.js está disponível
+            if (typeof Chart === 'undefined') {
+                console.warn('⚠️ Chart.js não está carregado ainda');
+                return;
+            }
+            
             const ctx = canvas.getContext('2d');
             
             // Dados mock para demonstração
@@ -2979,7 +2996,7 @@ a:hover {
                 }]
             };
             
-            if (window.sentimentoCargoChart) {
+            if (window.sentimentoCargoChart && typeof window.sentimentoCargoChart.destroy === 'function') {
                 window.sentimentoCargoChart.destroy();
             }
             
@@ -3009,6 +3026,12 @@ a:hover {
             const canvas = document.getElementById('alertasSeveridadeChart');
             if (!canvas) return;
             
+            // Verificar se Chart.js está disponível
+            if (typeof Chart === 'undefined') {
+                console.warn('⚠️ Chart.js não está carregado ainda');
+                return;
+            }
+            
             const ctx = canvas.getContext('2d');
             
             // Dados mock para demonstração
@@ -3021,7 +3044,7 @@ a:hover {
                 }]
             };
             
-            if (window.alertasSeveridadeChart) {
+            if (window.alertasSeveridadeChart && typeof window.alertasSeveridadeChart.destroy === 'function') {
                 window.alertasSeveridadeChart.destroy();
             }
             
@@ -3045,6 +3068,12 @@ a:hover {
             const canvas = document.getElementById('engajamentoChart');
             if (!canvas) return;
             
+            // Verificar se Chart.js está disponível
+            if (typeof Chart === 'undefined') {
+                console.warn('⚠️ Chart.js não está carregado ainda');
+                return;
+            }
+            
             const ctx = canvas.getContext('2d');
             
             // Dados mock para demonstração
@@ -3061,7 +3090,7 @@ a:hover {
                 }]
             };
             
-            if (window.engajamentoChart) {
+            if (window.engajamentoChart && typeof window.engajamentoChart.destroy === 'function') {
                 window.engajamentoChart.destroy();
             }
             
