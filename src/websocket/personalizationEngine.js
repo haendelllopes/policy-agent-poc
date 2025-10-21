@@ -1,9 +1,9 @@
 class PersonalizationEngine {
   // Detectar URL base baseada no ambiente
   getBaseUrl() {
-    // Em produção (Vercel), usar URL relativa
+    // Em produção (Vercel), usar URL completa do Vercel
     if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-      return ''; // URL relativa
+      return 'https://navigator-gules.vercel.app';
     }
     // Em desenvolvimento, usar localhost
     return 'http://localhost:3000';
