@@ -442,11 +442,24 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                 console.log('🔍 DEBUG: Resposta da busca:', searchResponse.data);
                 console.log('🔍 DEBUG: Documentos encontrados:', searchResponse.data.documents?.length || 0);
                 
+                const documentos = searchResponse.data.documents || [];
+                const documentosEncontrados = documentos.length;
+                
                 toolResult = {
                   status: 'sucesso',
-                  documentos_encontrados: searchResponse.data.documents?.length || 0,
-                  documentos: searchResponse.data.documents || [],
-                  query: functionArgs.query
+                  documentos_encontrados: documentosEncontrados,
+                  documentos: documentos,
+                  query: functionArgs.query,
+                  // Adicionar resposta customizada se documentos foram encontrados
+                  resposta_customizada: documentosEncontrados > 0 ? 
+                    `Encontrei ${documentosEncontrados} documento(s) sobre "${functionArgs.query}":\n\n` +
+                    documentos.map((doc, index) => 
+                      `${index + 1}. **${doc.title}**\n` +
+                      `   - Categoria: ${doc.category || 'N/A'}\n` +
+                      `   - Resumo: ${doc.ai_summary?.substring(0, 200)}...\n` +
+                      `   - Arquivo: ${doc.file_name}\n`
+                    ).join('\n') : 
+                    `Nenhum documento encontrado para "${functionArgs.query}"`
                 };
                 
                 console.log('🔍 DEBUG: Tool result:', toolResult);
@@ -514,7 +527,24 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       });
 
       console.log('🔍 DEBUG: Resposta final do GPT:', finalResponseGPT.choices[0].message.content);
-      finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
+      
+      // Verificar se temos uma resposta customizada para documentos
+      const documentoToolResult = toolResults.find(result => 
+        result.name === 'buscar_documentos' && 
+        JSON.parse(result.content).resposta_customizada
+      );
+      
+      if (documentoToolResult) {
+        const toolData = JSON.parse(documentoToolResult.content);
+        if (toolData.documentos_encontrados > 0) {
+          finalResponse = toolData.resposta_customizada;
+          console.log('🔍 DEBUG: Usando resposta customizada para documentos:', finalResponse);
+        } else {
+          finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
+        }
+      } else {
+        finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
+      }
     }
     
     res.json({
