@@ -359,42 +359,67 @@ class ChatWidgetHTTP {
 
   addMessage(text, sender) {
     const messagesContainer = document.getElementById('navi-chat-messages');
+    if (!messagesContainer) {
+      console.error('❌ Container de mensagens não encontrado!');
+      return;
+    }
+    
     const messageDiv = document.createElement('div');
-    messageDiv.style.marginBottom = '16px';
+    Object.assign(messageDiv.style, {
+      marginBottom: '16px'
+    });
     
     const avatar = sender === 'navi' ? '🤖' : '👤';
-    const bgColor = sender === 'navi' ? 'white' : '#17A2B8';
-    const textColor = sender === 'navi' ? '#000' : '#fff';
-    const flexDirection = sender === 'user' ? 'flex-direction: row-reverse;' : '';
+    const isUser = sender === 'user';
     
-    messageDiv.innerHTML = `
-      <div style="display: flex; align-items: flex-start; ${flexDirection}">
-        <div style="
-          width: 32px;
-          height: 32px;
-          background: ${sender === 'navi' ? '#17A2B8' : '#6c757d'};
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 12px;
-          font-size: 16px;
-        ">${avatar}</div>
-        <div style="
-          background: ${bgColor};
-          color: ${textColor};
-          padding: 12px;
-          border-radius: 12px;
-          max-width: 80%;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        ">
-          ${text}
-        </div>
-      </div>
-    `;
+    // Criar container principal
+    const mainDiv = document.createElement('div');
+    Object.assign(mainDiv.style, {
+      display: 'flex',
+      alignItems: 'flex-start',
+      flexDirection: isUser ? 'row-reverse' : 'row'
+    });
     
+    // Criar avatar
+    const avatarDiv = document.createElement('div');
+    Object.assign(avatarDiv.style, {
+      width: '32px',
+      height: '32px',
+      background: sender === 'navi' ? '#17A2B8' : '#6c757d',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: '12px',
+      fontSize: '16px',
+      color: 'white',
+      flexShrink: '0'
+    });
+    avatarDiv.textContent = avatar;
+    
+    // Criar balão de mensagem
+    const messageBalloon = document.createElement('div');
+    Object.assign(messageBalloon.style, {
+      background: sender === 'navi' ? 'white' : '#17A2B8',
+      color: sender === 'navi' ? '#000' : '#fff',
+      padding: '12px',
+      borderRadius: '12px',
+      maxWidth: '80%',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      wordWrap: 'break-word'
+    });
+    messageBalloon.textContent = text;
+    
+    // Montar estrutura
+    mainDiv.appendChild(avatarDiv);
+    mainDiv.appendChild(messageBalloon);
+    messageDiv.appendChild(mainDiv);
     messagesContainer.appendChild(messageDiv);
+    
+    // Scroll para baixo
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    console.log(`✅ Mensagem adicionada: ${sender} - ${text.substring(0, 50)}...`);
   }
 
   showLoading() {
