@@ -451,7 +451,7 @@ class HybridChatWidget {
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: this.userId, text: text, context: this.pageContext })
+          body: JSON.stringify({ userId: this.userId, message: text, context: this.pageContext })
         });
 
         if (response.ok) {

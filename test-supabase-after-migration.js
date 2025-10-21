@@ -1,35 +1,36 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-console.log('🔧 Verificando e corrigindo políticas RLS...');
+console.log('🧪 Testando Supabase Realtime após migração...');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
 );
 
-async function fixRLSPolicies() {
+async function testAfterMigration() {
     try {
-        console.log('\n📋 Verificando políticas RLS atuais...');
+        console.log('\n📊 Verificando estrutura das tabelas...');
         
-        // Teste 1: Verificar se RLS está habilitado
-        const { data: rlsCheck, error: rlsError } = await supabase
+        // Teste 1: Verificar se chat_messages tem a estrutura correta
+        const { data: messages, error: messagesError } = await supabase
             .from('chat_messages')
             .select('*')
             .limit(1);
         
-        if (rlsError) {
-            console.log('❌ RLS bloqueando acesso:', rlsError.message);
+        if (messagesError) {
+            console.log('❌ Erro ao acessar chat_messages:', messagesError.message);
         } else {
-            console.log('✅ RLS permitindo acesso');
+            console.log('✅ Tabela chat_messages acessível');
         }
         
-        // Teste 2: Tentar inserir com usuário específico
-        console.log('\n✍️ Testando inserção com usuário específico...');
+        // Teste 2: Testar inserção com estrutura completa
+        console.log('\n✍️ Testando inserção com estrutura completa...');
         const testMessage = {
             user_id: '3ba1e64a-88f1-4aa0-aa9a-4615a5b7e1f2',
-            message: 'Teste RLS',
-            message_type: 'user'
+            message: 'Teste de Realtime após migração',
+            message_type: 'user',
+            context: { test: true }
         };
         
         const { data: insertData, error: insertError } = await supabase
@@ -41,6 +42,7 @@ async function fixRLSPolicies() {
             console.log('❌ Erro na inserção:', insertError.message);
         } else {
             console.log('✅ Inserção funcionando');
+            console.log('📋 Dados inseridos:', insertData);
             
             // Limpar teste
             await supabase
@@ -50,12 +52,12 @@ async function fixRLSPolicies() {
             console.log('🧹 Teste removido');
         }
         
-        // Teste 3: Testar Realtime com delay maior
-        console.log('\n📡 Testando Realtime com delay maior...');
+        // Teste 3: Testar Realtime subscription
+        console.log('\n📡 Testando Realtime subscription...');
         let messageReceived = false;
         
         const channel = supabase
-            .channel('test-realtime-rls')
+            .channel('test-realtime')
             .on('postgres_changes', 
                 { event: 'INSERT', schema: 'public', table: 'chat_messages' },
                 (payload) => {
@@ -67,13 +69,13 @@ async function fixRLSPolicies() {
         
         console.log('✅ Subscription criada');
         
-        // Aguardar mais tempo para a subscription se conectar
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        // Aguardar um pouco para a subscription se conectar
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Inserir mensagem para testar Realtime
         const realtimeTestMessage = {
             user_id: '3ba1e64a-88f1-4aa0-aa9a-4615a5b7e1f2',
-            message: 'Teste Realtime RLS',
+            message: 'Teste Realtime',
             message_type: 'user'
         };
         
@@ -87,14 +89,13 @@ async function fixRLSPolicies() {
         } else {
             console.log('✅ Mensagem inserida para teste Realtime');
             
-            // Aguardar mais tempo para receber via Realtime
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // Aguardar um pouco para receber via Realtime
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             if (messageReceived) {
                 console.log('🎉 Realtime funcionando perfeitamente!');
             } else {
-                console.log('⚠️ Realtime ainda não está funcionando');
-                console.log('💡 Possível causa: RLS bloqueando Realtime');
+                console.log('⚠️ Realtime pode não estar funcionando');
             }
             
             // Limpar teste
@@ -109,11 +110,36 @@ async function fixRLSPolicies() {
         supabase.removeChannel(channel);
         console.log('🔌 Subscription cancelada');
         
-        console.log('\n🎉 Teste RLS concluído!');
+        // Teste 4: Verificar outras tabelas
+        console.log('\n📋 Verificando outras tabelas...');
+        
+        const { data: sessions, error: sessionsError } = await supabase
+            .from('chat_sessions')
+            .select('*')
+            .limit(1);
+        
+        if (sessionsError) {
+            console.log('❌ Erro ao acessar chat_sessions:', sessionsError.message);
+        } else {
+            console.log('✅ Tabela chat_sessions acessível');
+        }
+        
+        const { data: connections, error: connectionsError } = await supabase
+            .from('chat_connections')
+            .select('*')
+            .limit(1);
+        
+        if (connectionsError) {
+            console.log('❌ Erro ao acessar chat_connections:', connectionsError.message);
+        } else {
+            console.log('✅ Tabela chat_connections acessível');
+        }
+        
+        console.log('\n🎉 Teste completo concluído!');
         
     } catch (error) {
         console.error('❌ Erro geral:', error.message);
     }
 }
 
-fixRLSPolicies();
+testAfterMigration();

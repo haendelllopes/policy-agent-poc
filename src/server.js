@@ -287,6 +287,14 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { message, userId, context } = req.body;
     
+    // Validar se message existe
+    if (!message) {
+      return res.status(400).json({ 
+        error: 'Campo "message" é obrigatório',
+        received: { message, userId, context }
+      });
+    }
+    
     console.log('💬 Chat HTTP - Mensagem recebida:', { message, userId, context });
     console.log('🔑 Debug OPENAI_API_KEY:', {
       exists: !!process.env.OPENAI_API_KEY,
