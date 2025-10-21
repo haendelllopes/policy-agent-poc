@@ -380,7 +380,57 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       }
     ];
 
-    // Chamar GPT-4o com ferramentas
+    // Verificar se é uma busca de documentos ANTES de chamar GPT-4o
+    const isDocumentSearch = message.toLowerCase().includes('documento') || 
+                            message.toLowerCase().includes('política') || 
+                            message.toLowerCase().includes('manual') || 
+                            message.toLowerCase().includes('buscar') || 
+                            message.toLowerCase().includes('encontrar') ||
+                            message.toLowerCase().includes('procurar');
+
+    if (isDocumentSearch) {
+      console.log('🔍 DETECTADO: Busca de documentos - executando diretamente');
+      
+      try {
+        // Executar busca de documentos diretamente
+        const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+        const searchResponse = await axios.post(`${baseUrl}/api/documents/semantic-search`, {
+          query: message,
+          limit: 5
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-tenant-subdomain': 'demo'
+          }
+        });
+        
+        const documentos = searchResponse.data || [];
+        const documentosEncontrados = documentos.length;
+        
+        if (documentosEncontrados > 0) {
+          const respostaCustomizada = `Encontrei ${documentosEncontrados} documento(s) relacionados à sua busca:\n\n` +
+            documentos.map((doc, index) => 
+              `${index + 1}. **${doc.title}**\n` +
+              `   - Categoria: ${doc.category || 'N/A'}\n` +
+              `   - Resumo: ${doc.ai_summary?.substring(0, 200)}...\n` +
+              `   - Arquivo: ${doc.file_name}\n`
+            ).join('\n');
+          
+          console.log('✅ Busca direta executada com sucesso:', documentosEncontrados, 'documentos');
+          return res.json({
+            message: respostaCustomizada,
+            timestamp: new Date().toISOString(),
+            status: 'success'
+          });
+        } else {
+          console.log('⚠️ Nenhum documento encontrado na busca direta');
+        }
+      } catch (error) {
+        console.error('❌ Erro na busca direta:', error);
+      }
+    }
+
+    // Chamar GPT-4o com ferramentas (apenas se não for busca de documentos)
     console.log('🚀 Fazendo chamada para OpenAI GPT-4o...');
     console.log('🔍 DEBUG: Mensagem do usuário:', message);
     console.log('🔍 DEBUG: Ferramentas disponíveis:', tools.map(t => t.function.name));
@@ -392,12 +442,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         { role: 'user', content: message }
       ],
       tools: tools,
-      tool_choice: message.toLowerCase().includes('documento') || 
-                   message.toLowerCase().includes('política') || 
-                   message.toLowerCase().includes('manual') || 
-                   message.toLowerCase().includes('buscar') || 
-                   message.toLowerCase().includes('encontrar') ? 
-                   { type: 'function', function: { name: 'buscar_documentos' } } : 'auto',
+      tool_choice: 'auto',
       temperature: 0.7,
       max_tokens: 500
     });
