@@ -329,11 +329,8 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     console.log('🤖 OpenAI client criado com sucesso');
     
-    // Extrair colaborador_id da URL se disponível
-    const colaboradorIdFromUrl = req.body.colaborador_id || context?.colaborador_id;
-    
-    // Usar colaborador_id real ou ID demo válido para salvar conversas
-    const realUserId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
+    // Usar userId enviado pelo frontend
+    const realUserId = userId || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
     
     // 1. ANÁLISE DE SENTIMENTO EM TEMPO REAL
     console.log('🎭 Analisando sentimento da mensagem...');
