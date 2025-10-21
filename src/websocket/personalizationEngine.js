@@ -1,11 +1,22 @@
 class PersonalizationEngine {
+  // Detectar URL base baseada no ambiente
+  getBaseUrl() {
+    // Em produção (Vercel), usar URL relativa
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+      return ''; // URL relativa
+    }
+    // Em desenvolvimento, usar localhost
+    return 'http://localhost:3000';
+  }
+
   // Usar APIs existentes - NÃO criar novas queries
   async loadUserContext(userId) {
     const axios = require('axios');
     
     try {
-      // Usar endpoint existente do backend
-      const response = await axios.get(`http://localhost:3000/api/agent/trilhas/colaborador/${userId}`);
+      // Detectar ambiente e usar URL apropriada
+      const baseUrl = this.getBaseUrl();
+      const response = await axios.get(`${baseUrl}/api/agent/trilhas/colaborador/${userId}`);
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao carregar contexto:', error);
@@ -25,7 +36,8 @@ class PersonalizationEngine {
     const axios = require('axios');
     
     try {
-      const response = await axios.get(`http://localhost:3000/api/conversations/history/${userId}?limit=${limit}`);
+      const baseUrl = this.getBaseUrl();
+      const response = await axios.get(`${baseUrl}/api/conversations/history/${userId}?limit=${limit}`);
       return response.data.messages || [];
     } catch (error) {
       console.error('❌ Erro ao carregar histórico:', error);
@@ -38,7 +50,8 @@ class PersonalizationEngine {
     const axios = require('axios');
     
     try {
-      const response = await axios.get(`http://localhost:3000/api/agente/anotacoes?colaborador_id=${userId}&limit=${limit}`);
+      const baseUrl = this.getBaseUrl();
+      const response = await axios.get(`${baseUrl}/api/agente/anotacoes?colaborador_id=${userId}&limit=${limit}`);
       return response.data.anotacoes || [];
     } catch (error) {
       console.error('❌ Erro ao carregar anotações:', error);
@@ -51,7 +64,8 @@ class PersonalizationEngine {
     const axios = require('axios');
     
     try {
-      const response = await axios.get(`http://localhost:3000/api/sentimentos/history/${userId}?limit=${limit}`);
+      const baseUrl = this.getBaseUrl();
+      const response = await axios.get(`${baseUrl}/api/sentimentos/history/${userId}?limit=${limit}`);
       return response.data.sentimentos || [];
     } catch (error) {
       console.error('❌ Erro ao carregar histórico de sentimentos:', error);
@@ -264,6 +278,104 @@ Analise padrões históricos e ofereça suporte personalizado!`;
       'muito_negativo': { tom: 'EXTREMAMENTE EMPÁTICO e ACOLHEDOR', emoji: '💙' }
     };
     return tones[sentimento] || tones['neutro'];
+  }
+
+  // Análise background assíncrona (não bloqueia resposta principal)
+  async performBackgroundAnalysis(userId, message, context) {
+    try {
+      console.log('🔄 Iniciando análise background para usuário:', userId);
+      
+      // 1. Análise de sentimento (assíncrona)
+      await this.analyzeSentimentBackground(userId, message);
+      
+      // 2. Criação de anotações automáticas (assíncrona)
+      await this.createAutomaticNotes(userId, message, context);
+      
+      // 3. Análise de padrões (assíncrona)
+      await this.updatePatternAnalysis(userId, message);
+      
+      console.log('✅ Análise background concluída para usuário:', userId);
+      
+    } catch (error) {
+      console.error('❌ Erro na análise background:', error);
+    }
+  }
+
+  // Análise de sentimento em background
+  async analyzeSentimentBackground(userId, message) {
+    try {
+      const axios = require('axios');
+      
+      // Chamar endpoint de análise de sentimento
+      const baseUrl = this.getBaseUrl();
+      await axios.post(`${baseUrl}/api/chat-analysis/sentiment`, {
+        userId: userId,
+        message: message,
+        source: 'chat_http'
+      });
+      
+      console.log('📊 Sentimento analisado em background para:', userId);
+    } catch (error) {
+      console.error('❌ Erro análise sentimento background:', error);
+    }
+  }
+
+  // Criação automática de anotações
+  async createAutomaticNotes(userId, message, context) {
+    try {
+      const axios = require('axios');
+      
+      // Detectar se mensagem indica dificuldade ou feedback
+      const isDifficulty = this.detectDifficulty(message);
+      const isFeedback = this.detectFeedback(message);
+      
+      if (isDifficulty || isFeedback) {
+        const baseUrl = this.getBaseUrl();
+        await axios.post(`${baseUrl}/api/chat-analysis/annotations`, {
+          userId: userId,
+          message: message,
+          context: context,
+          autoDetected: true,
+          type: isDifficulty ? 'dificuldade_conteudo' : 'feedback_colaborador'
+        });
+        
+        console.log('📝 Anotação automática criada para:', userId);
+      }
+    } catch (error) {
+      console.error('❌ Erro criação anotação automática:', error);
+    }
+  }
+
+  // Atualizar análise de padrões
+  async updatePatternAnalysis(userId, message) {
+    try {
+      // Simular atualização de padrões (pode ser expandido)
+      console.log('🔍 Padrões atualizados para:', userId);
+    } catch (error) {
+      console.error('❌ Erro atualização padrões:', error);
+    }
+  }
+
+  // Detectar dificuldades na mensagem
+  detectDifficulty(message) {
+    const difficultyKeywords = [
+      'dificuldade', 'problema', 'não consigo', 'não entendo', 
+      'confuso', 'complicado', 'difícil', 'não sei como'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return difficultyKeywords.some(keyword => lowerMessage.includes(keyword));
+  }
+
+  // Detectar feedback na mensagem
+  detectFeedback(message) {
+    const feedbackKeywords = [
+      'feedback', 'sugestão', 'melhorar', 'gostaria', 
+      'poderia', 'seria bom', 'acho que', 'sugiro'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    return feedbackKeywords.some(keyword => lowerMessage.includes(keyword));
   }
 }
 
