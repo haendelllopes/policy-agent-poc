@@ -42,11 +42,10 @@ class MonitoringService {
         erros: []
       };
 
-      // Buscar todos os tenants ativos
+      // Buscar todos os tenants (removendo filtro active que não existe)
       const tenantsQuery = `
         SELECT id, name 
         FROM tenants 
-        WHERE active = true
         ORDER BY created_at ASC
       `;
       
@@ -161,7 +160,6 @@ class MonitoringService {
       const tenantsQuery = `
         SELECT id, name 
         FROM tenants 
-        WHERE active = true
       `;
       
       const tenantsResult = await query(tenantsQuery);
@@ -263,7 +261,6 @@ class MonitoringService {
       const tenantsQuery = `
         SELECT id, name 
         FROM tenants 
-        WHERE active = true
       `;
       
       const tenantsResult = await query(tenantsQuery);
@@ -505,7 +502,6 @@ class MonitoringService {
         FROM users u
         LEFT JOIN conversation_history ch ON ch.user_id = u.id
         WHERE u.tenant_id = $1
-          AND u.active = true
           AND (
             u.ultima_atividade_em < NOW() - INTERVAL '5 days' OR
             MAX(ch.created_at) < NOW() - INTERVAL '5 days'
@@ -553,7 +549,6 @@ class MonitoringService {
           u.created_at as data_admissao
         FROM users u
         WHERE u.tenant_id = $1
-          AND u.active = true
         ORDER BY u.name
       `;
 

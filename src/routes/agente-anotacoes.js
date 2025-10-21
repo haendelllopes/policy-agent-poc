@@ -493,7 +493,7 @@ router.post('/alertas/urgencia-critica', authenticate, async (req, res) => {
     // 1. Buscar administradores do tenant
     const admins = await query(
       `SELECT id, name, email FROM users 
-       WHERE tenant_id = $1 AND role = 'admin' AND active = true`,
+       WHERE tenant_id = $1 AND role = 'admin'`,
       [req.tenantId]
     );
 
@@ -502,7 +502,7 @@ router.post('/alertas/urgencia-critica', authenticate, async (req, res) => {
       await query(
         `INSERT INTO notifications (tenant_id, user_id, type, title, message, priority, metadata, created_at)
          SELECT $1, id, 'urgencia_critica', $2, $3, 'alta', $4, NOW()
-         FROM users WHERE tenant_id = $1 AND role = 'admin' AND active = true`,
+         FROM users WHERE tenant_id = $1 AND role = 'admin'`,
         [
           req.tenantId,
           `Urgência Crítica: ${tipo}`,

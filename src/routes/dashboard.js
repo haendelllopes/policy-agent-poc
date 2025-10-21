@@ -123,7 +123,6 @@ router.get('/insights/:tenantId', async (req, res) => {
                         u.ultima_atividade_em
                     FROM users u
                     WHERE u.tenant_id = $1 
-                        AND u.active = true
                         AND u.risk_score > 50
                     ORDER BY u.risk_score DESC
                     LIMIT $2 OFFSET $3

@@ -59,7 +59,6 @@ class ProactiveEngine {
         FROM users u
         LEFT JOIN colaborador_trilhas ct ON ct.colaborador_id = u.id
         WHERE u.tenant_id = $1
-          AND u.active = true
           ${departamento ? 'AND u.department = $2' : ''}
         GROUP BY u.id, u.name, u.email, u.department, u.position, u.sentimento_atual, u.risk_score, u.created_at
         ORDER BY u.risk_score DESC NULLS LAST

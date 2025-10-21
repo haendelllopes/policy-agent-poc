@@ -54,7 +54,6 @@ class RiskDetectionService {
           u.created_at as data_admissao
         FROM users u
         WHERE u.tenant_id = $1
-          AND u.active = true
           ${departamento ? 'AND u.department = $2' : ''}
           ${incluirInativos ? '' : 'AND u.ultima_atividade_em > NOW() - INTERVAL \'7 days\''}
         ORDER BY u.risk_score DESC NULLS LAST, u.name
