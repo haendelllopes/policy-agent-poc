@@ -78,34 +78,8 @@ router.get('/metrics/:tenantId', async (req, res) => {
             alertasTrend: '-25%',
             riscoTrend: '-50%',
             
-            // Dados para gráficos (mock por enquanto)
-            graficos: {
-                trilhasPorCargo: [
-                    { cargo: 'Desenvolvedor', ativas: 8, concluidas: 12, atrasadas: 2 },
-                    { cargo: 'Designer', ativas: 6, concluidas: 8, atrasadas: 1 },
-                    { cargo: 'Product Manager', ativas: 4, concluidas: 6, atrasadas: 1 }
-                ],
-                sentimentoPorCargo: [
-                    { cargo: 'Desenvolvedor', sentimento: 4.2 },
-                    { cargo: 'Designer', sentimento: 4.5 },
-                    { cargo: 'Product Manager', sentimento: 4.1 }
-                ],
-                alertasPorSeveridade: [
-                    { severidade: 'Crítico', quantidade: parseInt(metrics.alertas_criticos) || 0 },
-                    { severidade: 'Alto', quantidade: 5 },
-                    { severidade: 'Médio', quantidade: 8 },
-                    { severidade: 'Baixo', quantidade: 12 }
-                ],
-                tendenciaEngajamento: [
-                    { dia: 'Seg', engajamento: 85 },
-                    { dia: 'Ter', engajamento: 78 },
-                    { dia: 'Qua', engajamento: 92 },
-                    { dia: 'Qui', engajamento: 88 },
-                    { dia: 'Sex', engajamento: 95 },
-                    { dia: 'Sáb', engajamento: 82 },
-                    { dia: 'Dom', engajamento: 89 }
-                ]
-            }
+            // Dados para gráficos (dados reais do banco)
+            graficos: await getGraficosReais(tenantId, pool)
         };
         
         console.log('✅ Métricas carregadas com sucesso:', {
@@ -422,5 +396,224 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
         });
     }
 });
+
+// ============================================
+// FUNÇÃO AUXILIAR: Buscar dados reais para gráficos
+// ============================================
+async function getGraficosReais(tenantId, pool) {
+    try {
+        // 1. Trilhas por Cargo (dados reais)
+        const trilhasPorCargoQuery = `
+            SELECT 
+                COALESCE(p.name, 'Sem Cargo') as cargo,
+                COUNT(DISTINCT ut.trilha_id) as ativas,
+                COUNT(CASE WHEN ut.status = 'concluido' THEN 1 END) as concluidas,
+                COUNT(CASE WHEN ut.status = 'atrasado' THEN 1 END) as atrasadas
+            FROM users u
+            LEFT JOIN positions p ON u.position_id = p.id
+            LEFT JOIN user_trilhas ut ON u.id = ut.user_id
+            WHERE u.tenant_id = $1
+            GROUP BY p.name
+            ORDER BY ativas DESC
+        `;
+        const trilhasPorCargo = await pool.query(trilhasPorCargoQuery, [tenantId]);
+
+        // 2. Sentimento por Cargo (dados reais)
+        const sentimentoPorCargoQuery = `
+            SELECT 
+                COALESCE(p.name, 'Sem Cargo') as cargo,
+                AVG(CASE 
+                    WHEN aa.sentimento = 'muito_positivo' THEN 5
+                    WHEN aa.sentimento = 'positivo' THEN 4
+                    WHEN aa.sentimento = 'neutro' THEN 3
+                    WHEN aa.sentimento = 'negativo' THEN 2
+                    WHEN aa.sentimento = 'muito_negativo' THEN 1
+                    ELSE 3
+                END) as sentimento_medio
+            FROM users u
+            LEFT JOIN positions p ON u.position_id = p.id
+            LEFT JOIN agente_anotacoes aa ON u.id = aa.colaborador_id
+            WHERE u.tenant_id = $1 
+                AND aa.created_at > NOW() - INTERVAL '30 days'
+            GROUP BY p.name
+            ORDER BY sentimento_medio DESC
+        `;
+        const sentimentoPorCargo = await pool.query(sentimentoPorCargoQuery, [tenantId]);
+
+        // 3. Alertas por Severidade (dados reais)
+        const alertasPorSeveridadeQuery = `
+            SELECT 
+                COALESCE(severidade, 'sem_severidade') as severidade,
+                COUNT(*) as quantidade
+            FROM agente_anotacoes
+            WHERE tenant_id = $1 
+                AND alerta_gerado = true 
+                AND status = 'ativo'
+            GROUP BY severidade
+            ORDER BY 
+                CASE severidade 
+                    WHEN 'critica' THEN 1
+                    WHEN 'alta' THEN 2
+                    WHEN 'media' THEN 3
+                    WHEN 'baixa' THEN 4
+                    ELSE 5
+                END
+        `;
+        const alertasPorSeveridade = await pool.query(alertasPorSeveridadeQuery, [tenantId]);
+
+        // 4. Tendência de Engajamento (últimos 7 dias)
+        const tendenciaEngajamentoQuery = `
+            SELECT 
+                TO_CHAR(created_at, 'Dy') as dia,
+                COUNT(*) as engajamento
+            FROM agente_anotacoes
+            WHERE tenant_id = $1 
+                AND created_at > NOW() - INTERVAL '7 days'
+            GROUP BY TO_CHAR(created_at, 'Dy'), TO_CHAR(created_at, 'D')
+            ORDER BY TO_CHAR(created_at, 'D')
+        `;
+        const tendenciaEngajamento = await pool.query(tendenciaEngajamentoQuery, [tenantId]);
+
+        // 5. Padrões Identificados (dados reais)
+        const padroesIdentificadosQuery = `
+            SELECT 
+                aa.id,
+                aa.titulo,
+                aa.anotacao,
+                aa.tipo,
+                aa.sentimento,
+                aa.severidade,
+                aa.created_at,
+                u.name as colaborador_nome
+            FROM agente_anotacoes aa
+            LEFT JOIN users u ON aa.colaborador_id = u.id
+            WHERE aa.tenant_id = $1 
+                AND aa.tipo = 'padrao_identificado'
+            ORDER BY aa.created_at DESC
+            LIMIT 10
+        `;
+        const padroesIdentificados = await pool.query(padroesIdentificadosQuery, [tenantId]);
+
+        // 6. Alertas Críticos (dados reais)
+        const alertasCriticosQuery = `
+            SELECT 
+                aa.id,
+                aa.titulo,
+                aa.anotacao,
+                aa.severidade,
+                aa.status,
+                aa.proactive_score,
+                aa.created_at,
+                u.name as colaborador_nome
+            FROM agente_anotacoes aa
+            LEFT JOIN users u ON aa.colaborador_id = u.id
+            WHERE aa.tenant_id = $1 
+                AND aa.severidade = 'critica' 
+                AND aa.status = 'ativo'
+            ORDER BY aa.created_at DESC
+            LIMIT 10
+        `;
+        const alertasCriticos = await pool.query(alertasCriticosQuery, [tenantId]);
+
+        // 7. Ações Pendentes (dados reais)
+        const acoesPendentesQuery = `
+            SELECT 
+                oi.id,
+                oi.titulo,
+                oi.descricao,
+                oi.status,
+                oi.tipo_acao,
+                oi.justificativa_ia,
+                oi.created_at,
+                u.name as colaborador_nome
+            FROM onboarding_improvements oi
+            LEFT JOIN users u ON oi.alvo_colaborador_id = u.id
+            WHERE oi.tenant_id = $1 
+                AND oi.status = 'pendente_aprovacao'
+            ORDER BY oi.created_at DESC
+            LIMIT 10
+        `;
+        const acoesPendentes = await pool.query(acoesPendentesQuery, [tenantId]);
+
+        // 8. Colaboradores em Risco (dados reais)
+        const colaboradoresRiscoQuery = `
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.risk_score,
+                u.risk_score_atualizado_em,
+                u.ultima_atividade_em,
+                p.name as cargo
+            FROM users u
+            LEFT JOIN positions p ON u.position_id = p.id
+            WHERE u.tenant_id = $1 
+                AND u.risk_score > 50
+            ORDER BY u.risk_score DESC
+            LIMIT 10
+        `;
+        const colaboradoresRisco = await pool.query(colaboradoresRiscoQuery, [tenantId]);
+
+        return {
+            trilhasPorCargo: trilhasPorCargo.rows.map(row => ({
+                cargo: row.cargo,
+                ativas: parseInt(row.ativas) || 0,
+                concluidas: parseInt(row.concluidas) || 0,
+                atrasadas: parseInt(row.atrasadas) || 0
+            })),
+            sentimentoPorCargo: sentimentoPorCargo.rows.map(row => ({
+                cargo: row.cargo,
+                sentimento: parseFloat(row.sentimento_medio) || 0
+            })),
+            alertasPorSeveridade: alertasPorSeveridade.rows.map(row => ({
+                severidade: row.severidade === 'critica' ? 'Crítico' : 
+                           row.severidade === 'alta' ? 'Alto' :
+                           row.severidade === 'media' ? 'Médio' : 'Baixo',
+                quantidade: parseInt(row.quantidade) || 0
+            })),
+            tendenciaEngajamento: tendenciaEngajamento.rows.map(row => ({
+                dia: row.dia,
+                engajamento: parseInt(row.engajamento) || 0
+            })),
+            padroesIdentificados: padroesIdentificados.rows,
+            alertasCriticos: alertasCriticos.rows,
+            acoesPendentes: acoesPendentes.rows,
+            colaboradoresRisco: colaboradoresRisco.rows
+        };
+
+    } catch (error) {
+        console.error('❌ Erro ao buscar dados reais dos gráficos:', error);
+        // Retornar dados mock em caso de erro
+        return {
+            trilhasPorCargo: [
+                { cargo: 'Desenvolvedor', ativas: 0, concluidas: 0, atrasadas: 0 },
+                { cargo: 'Designer', ativas: 0, concluidas: 0, atrasadas: 0 }
+            ],
+            sentimentoPorCargo: [
+                { cargo: 'Desenvolvedor', sentimento: 0 },
+                { cargo: 'Designer', sentimento: 0 }
+            ],
+            alertasPorSeveridade: [
+                { severidade: 'Crítico', quantidade: 0 },
+                { severidade: 'Alto', quantidade: 0 },
+                { severidade: 'Médio', quantidade: 0 },
+                { severidade: 'Baixo', quantidade: 0 }
+            ],
+            tendenciaEngajamento: [
+                { dia: 'Seg', engajamento: 0 },
+                { dia: 'Ter', engajamento: 0 },
+                { dia: 'Qua', engajamento: 0 },
+                { dia: 'Qui', engajamento: 0 },
+                { dia: 'Sex', engajamento: 0 },
+                { dia: 'Sáb', engajamento: 0 },
+                { dia: 'Dom', engajamento: 0 }
+            ],
+            padroesIdentificados: [],
+            alertasCriticos: [],
+            acoesPendentes: [],
+            colaboradoresRisco: []
+        };
+    }
+}
 
 module.exports = router;
