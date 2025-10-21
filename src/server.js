@@ -315,6 +315,9 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     console.log('🤖 OpenAI client criado com sucesso');
     
+    // Extrair colaborador_id da URL se disponível
+    const colaboradorIdFromUrl = req.body.colaborador_id || context?.colaborador_id;
+    
     // Usar colaborador_id real ou ID demo válido para salvar conversas
     const realUserId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
     
@@ -334,8 +337,6 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     const conversationHistory = await loadConversationHistory(realUserId, 10);
     
     // 3. CONTEXTO DINÂMICO BASEADO EM SENTIMENTO E HISTÓRICO
-    // Extrair colaborador_id da URL se disponível
-    const colaboradorIdFromUrl = req.body.colaborador_id || context?.colaborador_id;
     
     const userContext = {
       profile: {
