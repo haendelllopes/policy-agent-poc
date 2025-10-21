@@ -390,6 +390,11 @@ router.put('/:id', async (req, res) => {
       console.log('⚠️ Buddy ID está vazio, convertendo para null');
       parse.data.buddy_id = null;
     }
+    
+    // Debug: verificar valores finais antes da query
+    console.log('🔍 Valores finais antes da query:');
+    console.log('  gestor_id:', parse.data.gestor_id, 'Tipo:', typeof parse.data.gestor_id);
+    console.log('  buddy_id:', parse.data.buddy_id, 'Tipo:', typeof parse.data.buddy_id);
 
     const normalizedPhone = normalizePhone(parse.data.phone);
     
@@ -426,7 +431,7 @@ router.put('/:id', async (req, res) => {
         parse.data.name, parse.data.email, normalizedPhone, 
         parse.data.position || null, parse.data.department || null,
         parse.data.position_id || null, parse.data.department_id || null,
-        parse.data.gestor_id || null, parse.data.buddy_id || null,
+        parse.data.gestor_id, parse.data.buddy_id,
         parse.data.start_date || null, parse.data.status || 'active',
         userId, tenant.id
       ]);
