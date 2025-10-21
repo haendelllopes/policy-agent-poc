@@ -15,10 +15,10 @@ const pool = new Pool({
 });
 
 // ============================================
-// POST /api/migration/insert-mock-data
-// Inserir dados mock para dashboard
+// GET /api/migration/insert-mock-data
+// Inserir dados mock para dashboard (público)
 // ============================================
-router.post('/insert-mock-data', async (req, res) => {
+router.get('/insert-mock-data', async (req, res) => {
     try {
         console.log('🚀 Iniciando inserção de dados mock via endpoint...');
         
