@@ -9,6 +9,77 @@ const { v4: uuidv4 } = require('uuid');
 const mammoth = require('mammoth');
 const OpenAI = require('openai');
 const axios = require('axios');
+const openaiSentimentService = require('./services/openaiSentimentService');
+
+// Funções auxiliares para personalização
+async function loadConversationHistory(userId, limit = 10) {
+  try {
+    if (!await usePostgres()) {
+      console.log('📝 Modo demo: usando histórico vazio');
+      return [];
+    }
+    
+    const result = await query(`
+      SELECT role, content, created_at, sentiment, sentiment_intensity
+      FROM conversation_history 
+      WHERE user_id = $1 
+      ORDER BY created_at DESC 
+      LIMIT $2
+    `, [userId, limit]);
+    
+    console.log(`📝 Histórico carregado: ${result.rows.length} mensagens para ${userId}`);
+    return result.rows.reverse(); // Reverter para ordem cronológica
+  } catch (error) {
+    console.error('❌ Erro ao carregar histórico:', error);
+    return [];
+  }
+}
+
+async function saveConversation(userId, message, response, sentiment = null, sentimentIntensity = null) {
+  try {
+    if (!await usePostgres()) {
+      console.log('📝 Modo demo: conversa não salva');
+      return;
+    }
+    
+    const sessionId = `chat-${Date.now()}`;
+    
+    // Salvar mensagem do usuário
+    await query(`
+      INSERT INTO conversation_history (id, user_id, session_id, role, content, sentiment, sentiment_intensity, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [
+      uuidv4(),
+      userId,
+      sessionId,
+      'user',
+      message,
+      sentiment,
+      sentimentIntensity,
+      new Date()
+    ]);
+    
+    // Salvar resposta do assistente
+    await query(`
+      INSERT INTO conversation_history (id, user_id, session_id, role, content, sentiment, sentiment_intensity, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [
+      uuidv4(),
+      userId,
+      sessionId,
+      'assistant',
+      response,
+      null, // Resposta não tem sentimento
+      null,
+      new Date()
+    ]);
+    
+    console.log(`✅ Conversa salva para ${userId}`);
+  } catch (error) {
+    console.error('❌ Erro ao salvar conversa:', error);
+  }
+}
+
 // pdf-parse não funciona no Vercel (requer @napi-rs/canvas)
 // const pdfParse = require('pdf-parse');
 const { openDatabase, migrate, persistDatabase, runExec, runQuery } = require('./db');
@@ -244,20 +315,37 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     console.log('🤖 OpenAI client criado com sucesso');
     
-    // Simular contexto do usuário baseado no userId
+    // 1. ANÁLISE DE SENTIMENTO EM TEMPO REAL
+    console.log('🎭 Analisando sentimento da mensagem...');
+    let sentimentAnalysis = { sentimento: 'neutro', intensidade: 0.5 };
+    
+    try {
+      sentimentAnalysis = await openaiSentimentService.analyzeSentiment(message, context?.page || 'chat');
+      console.log('🎭 Sentimento detectado:', sentimentAnalysis);
+    } catch (error) {
+      console.error('❌ Erro na análise de sentimento:', error);
+    }
+    
+    // 2. CARREGAR HISTÓRICO DE CONVERSAS
+    console.log('📝 Carregando histórico de conversas...');
+    const conversationHistory = await loadConversationHistory(userId, 10);
+    
+    // 3. CONTEXTO DINÂMICO BASEADO EM SENTIMENTO E HISTÓRICO
     const userContext = {
       profile: {
         name: userId === 'admin-demo' ? 'Administrador' : 'Colaborador',
         position: userId === 'admin-demo' ? 'Gerente' : 'Desenvolvedor',
         department: userId === 'admin-demo' ? 'Administração' : 'Tecnologia',
-        sentimento_atual: 'neutro',
-        sentimento_intensidade: 50,
-        role: userId === 'admin-demo' ? 'admin' : 'colaborador'
+        sentimento_atual: sentimentAnalysis.sentimento,
+        sentimento_intensidade: Math.round(sentimentAnalysis.intensidade * 100),
+        role: userId === 'admin-demo' ? 'admin' : 'colaborador',
+        tom_detectado: sentimentAnalysis.fatores_detectados?.tom || 'neutro'
       },
-      conversationHistory: []
+      conversationHistory: conversationHistory,
+      sentimentAnalysis: sentimentAnalysis
     };
     
-    // Gerar mensagem do sistema baseada no contexto
+    // Gerar mensagem do sistema baseada no contexto dinâmico
     const systemMessage = `Você é o **Navi**, assistente de onboarding inteligente e proativo.
 
 🎯 **CONTEXTO ATUAL:**
@@ -265,11 +353,23 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
 - **Cargo:** ${userContext.profile.position}
 - **Departamento:** ${userContext.profile.department}
 - **Tipo:** ${userContext.profile.role === 'admin' ? 'ADMINISTRADOR' : 'COLABORADOR'}
-- **Sentimento:** ${userContext.profile.sentimento_atual} (${userContext.profile.sentimento_intensidade}%)
+- **Sentimento Atual:** ${userContext.profile.sentimento_atual} (${userContext.profile.sentimento_intensidade}%)
+- **Tom Detectado:** ${userContext.profile.tom_detectado}
 - **Página atual:** ${context?.page || 'Dashboard'}
 ${context?.trilha_visualizando ? `- **Trilha Visualizando:** ${context.trilha_visualizando}` : ''}
 
-🎭 **TOM DE VOZ:** Amigável e prestativo 😊
+📝 **HISTÓRICO DE CONVERSAS:** ${conversationHistory.length} mensagens anteriores
+${conversationHistory.length > 0 ? `
+**Últimas interações:**
+${conversationHistory.slice(-4).map(msg => `- ${msg.role}: ${msg.content.substring(0, 50)}...`).join('\n')}
+` : ''}
+
+🎭 **TOM DE VOZ ADAPTATIVO:** 
+${userContext.profile.sentimento_atual === 'muito_positivo' ? 'Empolgado e motivador! 🚀' : 
+  userContext.profile.sentimento_atual === 'positivo' ? 'Alegre e prestativo 😊' :
+  userContext.profile.sentimento_atual === 'negativo' ? 'Calmo e compreensivo 🤗' :
+  userContext.profile.sentimento_atual === 'muito_negativo' ? 'Gentil e paciente 💙' :
+  'Amigável e equilibrado 😌'}
 
 ${userContext.profile.role === 'admin' ? `
 🎯 **MODO ADMINISTRADOR ATIVADO:**
@@ -387,12 +487,29 @@ SEMPRE seja conversacional, personalizado e útil!`;
     console.log('🔍 DEBUG: Mensagem do usuário:', message);
     console.log('🔍 DEBUG: Ferramentas disponíveis:', tools.map(t => t.function.name));
     
+    // Preparar mensagens com histórico
+    const messages = [
+      { role: 'system', content: systemMessage }
+    ];
+    
+    // Adicionar histórico de conversas se disponível
+    if (conversationHistory.length > 0) {
+      conversationHistory.forEach(msg => {
+        messages.push({
+          role: msg.role,
+          content: msg.content
+        });
+      });
+    }
+    
+    // Adicionar mensagem atual
+    messages.push({ role: 'user', content: message });
+    
+    console.log(`📝 Enviando ${messages.length} mensagens (incluindo histórico)`);
+    
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemMessage },
-        { role: 'user', content: message }
-      ],
+      messages: messages,
       tools: tools,
       tool_choice: message.toLowerCase().includes('documento') || 
                    message.toLowerCase().includes('política') || 
@@ -521,11 +638,28 @@ SEMPRE seja conversacional, personalizado e útil!`;
       // Gerar resposta final com os resultados das ferramentas
       console.log('🔍 DEBUG: Tool results sendo enviados para GPT:', JSON.stringify(toolResults, null, 2));
       
+      // Preparar mensagens finais com histórico
+      const finalMessages = [
+        { role: 'system', content: systemMessage }
+      ];
+      
+      // Adicionar histórico de conversas
+      if (conversationHistory.length > 0) {
+        conversationHistory.forEach(msg => {
+          finalMessages.push({
+            role: msg.role,
+            content: msg.content
+          });
+        });
+      }
+      
+      // Adicionar mensagem atual e resposta com ferramentas
+      finalMessages.push({ role: 'user', content: message });
+      
       const finalResponseGPT = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
-          { role: 'system', content: systemMessage },
-          { role: 'user', content: message },
+          ...finalMessages,
           { 
             role: 'assistant', 
             content: responseMessage.content || 'Usando ferramentas...',
@@ -541,10 +675,29 @@ SEMPRE seja conversacional, personalizado e útil!`;
       finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
     }
     
+    // 4. SALVAR CONVERSAS NO BANCO DE DADOS
+    console.log('💾 Salvando conversa no banco de dados...');
+    await saveConversation(
+      userId, 
+      message, 
+      finalResponse, 
+      sentimentAnalysis.sentimento, 
+      sentimentAnalysis.intensidade
+    );
+    
     res.json({
       message: finalResponse,
       timestamp: new Date().toISOString(),
-      status: 'success'
+      status: 'success',
+      sentiment: {
+        detected: sentimentAnalysis.sentimento,
+        intensity: sentimentAnalysis.intensidade,
+        tone: sentimentAnalysis.fatores_detectados?.tom || 'neutro'
+      },
+      conversationHistory: {
+        loaded: conversationHistory.length,
+        saved: true
+      }
     });
     
   } catch (error) {
