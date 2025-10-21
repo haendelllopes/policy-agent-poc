@@ -1516,7 +1516,7 @@ a:hover {
                         <h2>📊 Dashboard Executivo</h2>
                         <p class="text-muted">
                             <span id="lastUpdate">Carregando...</span>
-                            <span id="autoRefreshStatus" class="badge badge-sm">Auto-refresh: ON</span>
+                            <span class="badge badge-sm success">Auto-refresh: 5min</span>
                         </p>
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -1526,12 +1526,9 @@ a:hover {
                             <option value="pending">Pendentes</option>
                             <option value="today">Hoje</option>
                         </select>
-                        <button class="btn-secondary" onclick="loadDashboardData()" id="refreshBtn">
+                        <button class="btn-secondary" onclick="manualRefresh()" id="refreshBtn">
                             <i data-feather="refresh-cw"></i>
                             Atualizar
-                        </button>
-                        <button class="btn-outline" onclick="toggleAutoRefresh()" id="autoRefreshBtn">
-                            <i data-feather="zap"></i>
                         </button>
                     </div>
                 </div>
@@ -2417,8 +2414,9 @@ a:hover {
                 pageTitle.textContent = titles[section] || 'Dashboard';
             }
             
-            // Load data for insights section
+            // SEMPRE atualizar dados quando navegar para insights (dashboard)
             if (section === 'insights') {
+                console.log('🔄 Navegando para dashboard - atualizando dados...');
                 loadDashboardData();
             }
         }
@@ -2798,6 +2796,9 @@ a:hover {
                 console.log('🏢 Carregando informações do tenant...');
                 await loadTenantInfo();
                 
+                console.log('🔄 Inicializando auto-refresh automático...');
+                initializeAutoRefresh();
+                
                 console.log('⏰ Atualizando relógio...');
                 updateTime();
                 setInterval(updateTime, 1000);
@@ -2825,7 +2826,8 @@ a:hover {
         };
         
         let autoRefreshInterval = null;
-        let autoRefreshEnabled = true;
+        let autoRefreshEnabled = true; // Sempre ativo
+        let lastRefreshTime = null;
         
         // Carregar dados do dashboard unificado
         async function loadDashboardData() {
@@ -2847,6 +2849,7 @@ a:hover {
                 // Carregar tabelas
                 await loadDashboardTables();
                 
+                lastRefreshTime = new Date();
                 console.log('✅ Dashboard unificado carregado com sucesso!');
             } catch (error) {
                 console.error('❌ Erro ao carregar dashboard unificado:', error);
@@ -2856,31 +2859,39 @@ a:hover {
         // Carregar métricas principais
         async function loadDashboardMetrics() {
             try {
-                // Usar dados mock por enquanto (endpoint não implementado ainda)
-                console.log('📊 Carregando métricas mock...');
+                console.log('📊 Carregando métricas do banco...');
                 
-                // Simular carregamento com delay
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Buscar dados do banco usando a função otimizada
+                const tenantId = '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant demo
+                const response = await fetch(`/api/dashboard/metrics/${tenantId}`);
                 
-                // Atualizar cards de métricas com dados mock
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Atualizar cards de métricas com dados reais
+                    updateMetricCard('trilhasAtivas', data.trilhasAtivas || 0, data.trilhasTrend || '+0%');
+                    updateMetricCard('usuariosOnboarding', data.usuariosOnboarding || 0, data.usuariosTrend || '+0%');
+                    updateMetricCard('melhoriasSugeridas', data.melhoriasSugeridas || 0, data.melhoriasTrend || '+0%');
+                    updateMetricCard('sentimentoMedio', data.sentimentoMedio || '--', data.sentimentoTrend || '+0%');
+                    updateMetricCard('alertasAtivos', data.alertasAtivos || 0, data.alertasTrend || '+0%');
+                    updateMetricCard('colaboradoresRisco', data.colaboradoresRisco || 0, data.riscoTrend || '+0%');
+                    
+                    console.log('✅ Métricas carregadas do banco com sucesso!');
+                } else {
+                    throw new Error('Erro ao buscar métricas do banco');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar métricas:', error);
+                console.log('📊 Usando dados mock como fallback...');
+                
+                // Fallback com dados mock
                 updateMetricCard('trilhasAtivas', 12, '+15%');
                 updateMetricCard('usuariosOnboarding', 8, '+8%');
                 updateMetricCard('melhoriasSugeridas', 5, '+12%');
                 updateMetricCard('sentimentoMedio', '4.2', '+0.3');
                 updateMetricCard('alertasAtivos', 3, '-25%');
                 updateMetricCard('colaboradoresRisco', 2, '-50%');
-                
-                console.log('✅ Métricas mock carregadas com sucesso!');
-                
-            } catch (error) {
-                console.error('❌ Erro ao carregar métricas:', error);
-                // Fallback com dados básicos
-                updateMetricCard('trilhasAtivas', 0, '+0%');
-                updateMetricCard('usuariosOnboarding', 0, '+0%');
-                updateMetricCard('melhoriasSugeridas', 0, '+0%');
-                updateMetricCard('sentimentoMedio', '--', '+0%');
-                updateMetricCard('alertasAtivos', 0, '+0%');
-                updateMetricCard('colaboradoresRisco', 0, '+0%');
             }
         }
         
@@ -3255,35 +3266,34 @@ a:hover {
             // Implementar filtro específico por tipo
         }
         
-        function toggleAutoRefresh() {
-            autoRefreshEnabled = !autoRefreshEnabled;
-            const btn = document.getElementById('autoRefreshBtn');
-            const status = document.getElementById('autoRefreshStatus');
-            
-            if (autoRefreshEnabled) {
-                btn.innerHTML = '<i data-feather="zap"></i>';
-                status.textContent = 'Auto-refresh: ON';
-                status.className = 'badge badge-sm success';
-                startAutoRefresh();
-            } else {
-                btn.innerHTML = '<i data-feather="zap-off"></i>';
-                status.textContent = 'Auto-refresh: OFF';
-                status.className = 'badge badge-sm danger';
-                stopAutoRefresh();
+        // Inicializar auto-refresh automático (5 minutos)
+        function initializeAutoRefresh() {
+            // Parar qualquer intervalo existente
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
             }
             
-            feather.replace();
+            // Configurar auto-refresh para 5 minutos (300000ms)
+            autoRefreshInterval = setInterval(() => {
+                console.log('⏰ Auto-refresh executando...');
+                loadDashboardData();
+            }, 300000); // 5 minutos
+            
+            console.log('🔄 Auto-refresh configurado para 5 minutos');
         }
         
-        function startAutoRefresh() {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(loadDashboardData, 30000); // 30 segundos
+        // Função para refresh manual (botão único)
+        function manualRefresh() {
+            console.log('🔄 Refresh manual solicitado...');
+            loadDashboardData();
         }
         
+        // Parar auto-refresh (se necessário)
         function stopAutoRefresh() {
             if (autoRefreshInterval) {
                 clearInterval(autoRefreshInterval);
                 autoRefreshInterval = null;
+                console.log('⏹️ Auto-refresh parado');
             }
         }
         

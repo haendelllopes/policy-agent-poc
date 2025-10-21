@@ -3461,6 +3461,7 @@ const chatHttpRoutes = require('./routes/chat-http');
 const cronRoutes = require('./routes/cron');
 const proactiveRoutes = require('./routes/proactive');
 const notificationRoutes = require('./routes/notifications');
+const dashboardRoutes = require('./routes/dashboard');
 
 // Importar helpers
 const { 
@@ -3512,6 +3513,7 @@ app.use('/api/chat', chatHttpRoutes);
 app.use('/api/cron', cronRoutes);
 app.use('/api/proactive', proactiveRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http, cron, proactive, notifications');
 
