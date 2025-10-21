@@ -550,15 +550,22 @@ SEMPRE seja conversacional, personalizado e útil!`;
       }
     ];
 
-    // Detectar perguntas sobre gestor e responder diretamente
+    // Detectar perguntas sobre gestor/buddy e responder diretamente
     const isGestorQuestion = message.toLowerCase().includes('gestor') && 
                             (message.toLowerCase().includes('quem') || 
                              message.toLowerCase().includes('nome') ||
                              message.toLowerCase().includes('meu'));
+    
+    const isBuddyQuestion = message.toLowerCase().includes('buddy') && 
+                           (message.toLowerCase().includes('quem') || 
+                            message.toLowerCase().includes('nome') ||
+                            message.toLowerCase().includes('meu'));
+    
+    const isPersonalDataQuestion = isGestorQuestion || isBuddyQuestion;
 
-    if (isGestorQuestion && userId !== 'admin-demo') {
+    if (isPersonalDataQuestion && userId !== 'admin-demo') {
       try {
-        console.log('🔧 Detectada pergunta sobre gestor - buscando dados diretamente');
+        console.log('🔧 Detectada pergunta sobre dados pessoais - buscando dados diretamente');
         const colaboradorId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
         const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
         const userResponse = await axios.get(`${baseUrl}/api/users/${colaboradorId}`, {
@@ -586,12 +593,35 @@ SEMPRE seja conversacional, personalizado e útil!`;
           }
         }
         
+        // Buscar informações do buddy se buddy_id existir
+        let buddyInfo = null;
+        if (userResponse.data.buddy_id) {
+          try {
+            console.log('🔍 DEBUG: Buscando dados do buddy:', userResponse.data.buddy_id);
+            const buddyResponse = await axios.get(`${baseUrl}/api/users/${userResponse.data.buddy_id}`, {
+              headers: {
+                'x-tenant-subdomain': 'demo'
+              }
+            });
+            buddyInfo = buddyResponse.data;
+            console.log('🔍 DEBUG: Dados do buddy encontrados:', buddyInfo);
+          } catch (error) {
+            console.error('❌ Erro ao buscar dados do buddy:', error);
+          }
+        }
+        
         // Resposta personalizada direta e simples
         let personalizedResponse;
-        if (gestorInfo) {
+        if (isGestorQuestion && gestorInfo) {
           personalizedResponse = `Seu gestor é o **${gestorInfo.name}**! Ele é ${gestorInfo.position} no departamento de ${gestorInfo.department}. 😊`;
-        } else {
+        } else if (isBuddyQuestion && buddyInfo) {
+          personalizedResponse = `Seu buddy é o **${buddyInfo.name}**! Ele é ${buddyInfo.position} no departamento de ${buddyInfo.department}. 😊`;
+        } else if (isGestorQuestion && !gestorInfo) {
           personalizedResponse = `Infelizmente não tenho essa informação sobre seu gestor no sistema ainda. Recomendo falar com o RH ou consultar o organograma da empresa! 😊`;
+        } else if (isBuddyQuestion && !buddyInfo) {
+          personalizedResponse = `Infelizmente não tenho essa informação sobre seu buddy no sistema ainda. Recomendo falar com o RH! 😊`;
+        } else {
+          personalizedResponse = `Infelizmente não tenho essa informação no sistema ainda. Recomendo falar com o RH! 😊`;
         }
 
         // Salvar conversa
