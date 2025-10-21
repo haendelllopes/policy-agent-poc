@@ -23,7 +23,16 @@ class HybridChatWidget {
   }
 
   generateUserId() {
-    // Tentar pegar do localStorage primeiro
+    // Primeiro, tentar pegar colaborador_id da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const colaboradorIdFromUrl = urlParams.get('colaborador_id');
+    
+    if (colaboradorIdFromUrl) {
+      console.log('✅ Usando colaborador_id da URL:', colaboradorIdFromUrl);
+      return colaboradorIdFromUrl;
+    }
+    
+    // Se não houver na URL, tentar pegar do localStorage
     const loggedUserId = localStorage.getItem('user_id') || 
                         localStorage.getItem('colaborador_id');
     
@@ -388,15 +397,18 @@ class HybridChatWidget {
     // Adicionar mensagem do usuário
     this.addMessage(text, 'user');
 
+    // Mostrar indicador de digitação
+    this.showTypingIndicator();
+
     if (this.currentMode === 'supabase') {
       await this.sendMessageSupabase(text);
     } else {
       await this.sendMessageHttp(text);
     }
 
+    // Limpar input após envio
     this.input.value = '';
     this.input.style.height = 'auto';
-    this.showTypingIndicator();
   }
 
   async sendMessageSupabase(text) {
