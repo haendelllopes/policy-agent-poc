@@ -286,7 +286,7 @@ ${userContext.profile.role === 'admin' ? `
 - buscar_trilhas_disponiveis: Lista trilhas do colaborador
 - iniciar_trilha: Inicia trilha específica
 - registrar_feedback: Registra feedback sobre trilhas
-- buscar_documentos: Busca semântica em documentos
+- buscar_documentos: Busca semântica em documentos (SEMPRE use quando usuário pedir documentos, políticas, manuais, procedimentos, etc.)
 
 **PARA ADMINISTRADORES:**
 - analisar_performance_colaboradores: Analisa performance e identifica riscos
@@ -299,6 +299,14 @@ ${userContext.profile.role === 'admin' ? `
 - Para administradores, seja proativo em usar as ferramentas de análise
 - Quando o usuário pedir análise, relatórios ou alertas, USE as ferramentas correspondentes
 - Não responda sem usar ferramentas quando elas são necessárias
+
+**QUANDO USAR CADA FERRAMENTA:**
+- buscar_documentos: SEMPRE que usuário mencionar "documentos", "políticas", "manuais", "procedimentos", "regulamentos", "normas", "buscar", "encontrar documentos"
+- buscar_trilhas_disponiveis: Quando usuário perguntar sobre trilhas disponíveis, "quais trilhas posso fazer", "minhas trilhas"
+- iniciar_trilha: Quando usuário quiser começar uma trilha específica
+- registrar_feedback: Quando usuário quiser dar feedback sobre trilhas
+
+**IMPORTANTE:** Se o usuário pedir documentos, políticas, manuais ou qualquer busca de conteúdo, SEMPRE use buscar_documentos primeiro!
 
 **COMO INTERPRETAR RESULTADOS DAS FERRAMENTAS:**
 - Se buscar_documentos retornar documentos, SEMPRE apresente-os ao usuário
