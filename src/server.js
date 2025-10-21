@@ -380,57 +380,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       }
     ];
 
-    // Verificar se é uma busca de documentos ANTES de chamar GPT-4o
-    const isDocumentSearch = message.toLowerCase().includes('documento') || 
-                            message.toLowerCase().includes('política') || 
-                            message.toLowerCase().includes('manual') || 
-                            message.toLowerCase().includes('buscar') || 
-                            message.toLowerCase().includes('encontrar') ||
-                            message.toLowerCase().includes('procurar');
-
-    if (isDocumentSearch) {
-      console.log('🔍 DETECTADO: Busca de documentos - executando diretamente');
-      
-      try {
-        // Executar busca de documentos diretamente
-        const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
-        const searchResponse = await axios.post(`${baseUrl}/api/documents/semantic-search`, {
-          query: message,
-          limit: 5
-        }, {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-tenant-subdomain': 'demo'
-          }
-        });
-        
-        const documentos = searchResponse.data || [];
-        const documentosEncontrados = documentos.length;
-        
-        if (documentosEncontrados > 0) {
-          const respostaCustomizada = `Encontrei ${documentosEncontrados} documento(s) relacionados à sua busca:\n\n` +
-            documentos.map((doc, index) => 
-              `${index + 1}. **${doc.title}**\n` +
-              `   - Categoria: ${doc.category || 'N/A'}\n` +
-              `   - Resumo: ${doc.ai_summary?.substring(0, 200)}...\n` +
-              `   - Arquivo: ${doc.file_name}\n`
-            ).join('\n');
-          
-          console.log('✅ Busca direta executada com sucesso:', documentosEncontrados, 'documentos');
-          return res.json({
-            message: respostaCustomizada,
-            timestamp: new Date().toISOString(),
-            status: 'success'
-          });
-        } else {
-          console.log('⚠️ Nenhum documento encontrado na busca direta');
-        }
-      } catch (error) {
-        console.error('❌ Erro na busca direta:', error);
-      }
-    }
-
-    // Chamar GPT-4o com ferramentas (apenas se não for busca de documentos)
+    // Chamar GPT-4o com ferramentas
     console.log('🚀 Fazendo chamada para OpenAI GPT-4o...');
     console.log('🔍 DEBUG: Mensagem do usuário:', message);
     console.log('🔍 DEBUG: Ferramentas disponíveis:', tools.map(t => t.function.name));
@@ -442,7 +392,12 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         { role: 'user', content: message }
       ],
       tools: tools,
-      tool_choice: 'auto',
+      tool_choice: message.toLowerCase().includes('documento') || 
+                   message.toLowerCase().includes('política') || 
+                   message.toLowerCase().includes('manual') || 
+                   message.toLowerCase().includes('buscar') || 
+                   message.toLowerCase().includes('encontrar') ? 
+                   { type: 'function', function: { name: 'buscar_documentos' } } : 'auto',
       temperature: 0.7,
       max_tokens: 500
     });
@@ -2255,12 +2210,27 @@ app.post('/api/documents/semantic-search', async (req, res) => {
       const sampleDocs = await query('SELECT id, title, category, analysis_status, ai_classification, ai_summary, description FROM documents WHERE tenant_id = $1 LIMIT 5', [tenant.id]);
       console.log('Sample documents:', sampleDocs.rows);
       
-      // Primeiro, tentar busca semântica com embeddings
+      // Primeiro, tentar busca semântica com embeddings (com logs detalhados)
       try {
-      const { generateEmbedding } = require('./document-analyzer');
-      const queryEmbedding = await generateEmbedding(searchQuery);
-      
-      // Busca semântica usando embeddings
+        console.log('🔍 Attempting semantic search with embeddings...');
+        console.log('🔍 Search query:', searchQuery);
+        console.log('🔍 Tenant ID:', tenant.id);
+        
+        const { generateEmbedding } = require('./document-analyzer');
+        console.log('🔍 Document analyzer loaded successfully');
+        
+        // Gerar embedding com timeout
+        console.log('🔍 Generating embedding...');
+        const queryEmbedding = await Promise.race([
+          generateEmbedding(searchQuery),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Embedding generation timeout after 15s')), 15000)
+          )
+        ]);
+        console.log('🔍 Embedding generated successfully, length:', queryEmbedding?.length);
+        
+        // Busca semântica usando embeddings
+        console.log('🔍 Executing semantic search query...');
         const embeddingResult = await query(`
         SELECT 
           id, title, category, ai_classification, ai_summary, sentiment_score, 
@@ -2274,7 +2244,7 @@ app.post('/api/documents/semantic-search', async (req, res) => {
         LIMIT $3
       `, [tenant.id, JSON.stringify(queryEmbedding), limit]);
       
-        console.log('Embedding search results:', embeddingResult.rows.length);
+        console.log('🔍 Embedding search results:', embeddingResult.rows.length);
         
         // Se encontrou resultados com embeddings, retorna
         if (embeddingResult.rows.length > 0) {
@@ -2282,11 +2252,14 @@ app.post('/api/documents/semantic-search', async (req, res) => {
         ...doc,
         similarity_score: 1 - doc.similarity_distance
       }));
-          console.log('Returning embedding results:', documents);
+          console.log('✅ Returning embedding results:', documents.length, 'documents');
           return res.json(documents);
+        } else {
+          console.log('⚠️ No embedding results found, falling back to text search');
         }
       } catch (embeddingError) {
-        console.log('Embedding search failed, falling back to text search:', embeddingError.message);
+        console.error('❌ Embedding search failed:', embeddingError.message);
+        console.error('❌ Error details:', embeddingError);
       }
       
       // Fallback: busca por texto simples
