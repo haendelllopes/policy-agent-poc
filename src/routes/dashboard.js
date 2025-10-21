@@ -6,13 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-
-// Configuração do banco
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-});
+const { query } = require('../db-pg'); // Usar a conexão existente
 
 // ============================================
 // GET /api/dashboard/metrics/:tenantId
@@ -46,7 +40,7 @@ router.get('/metrics/:tenantId', async (req, res) => {
                 (SELECT COUNT(*) FROM users WHERE tenant_id = $1 AND risk_score > 50) as colaboradores_risco
         `;
         
-        const result = await pool.query(query, [tenantId]);
+        const result = await query(query, [tenantId]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ 
@@ -58,7 +52,7 @@ router.get('/metrics/:tenantId', async (req, res) => {
         const metrics = result.rows[0];
         
         // Buscar dados reais dos gráficos
-        const graficosReais = await getGraficosReais(tenantId, pool);
+        const graficosReais = await getGraficosReais(tenantId, query);
         
         // Construir resposta no formato esperado pelo frontend
         const dashboardData = {
@@ -199,7 +193,7 @@ router.get('/insights/:tenantId', async (req, res) => {
                 params = [tenantId, limit, offset];
         }
         
-        const result = await pool.query(query, params);
+        const result = await query(query, params);
         
         console.log(`✅ Insights carregados (${type}):`, result.rows.length, 'registros');
         
@@ -275,7 +269,7 @@ router.post('/action/:actionId', async (req, res) => {
                 });
         }
         
-        const result = await pool.query(query, params);
+        const result = await query(query, params);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ 
@@ -337,7 +331,7 @@ router.get('/notifications/:userId', async (req, res) => {
         query += ' ORDER BY n.created_at DESC LIMIT $2';
         params.push(limit);
         
-        const result = await pool.query(query, params);
+        const result = await query(query, params);
         
         console.log('✅ Notificações carregadas:', result.rows.length, 'registros');
         
@@ -374,7 +368,7 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
             RETURNING *
         `;
         
-        const result = await pool.query(query, [notificationId, userId]);
+        const result = await query(query, [notificationId, userId]);
         
         if (result.rows.length === 0) {
             return res.status(404).json({ 
@@ -403,7 +397,7 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
 // ============================================
 // FUNÇÃO AUXILIAR: Buscar dados reais para gráficos
 // ============================================
-async function getGraficosReais(tenantId, pool) {
+async function getGraficosReais(tenantId, queryFn) {
     try {
         // 1. Trilhas por Cargo (dados reais)
         const trilhasPorCargoQuery = `
@@ -419,7 +413,7 @@ async function getGraficosReais(tenantId, pool) {
             GROUP BY p.name
             ORDER BY ativas DESC
         `;
-        const trilhasPorCargo = await pool.query(trilhasPorCargoQuery, [tenantId]);
+        const trilhasPorCargo = await queryFn(trilhasPorCargoQuery, [tenantId]);
 
         // 2. Sentimento por Cargo (dados reais)
         const sentimentoPorCargoQuery = `
@@ -441,7 +435,7 @@ async function getGraficosReais(tenantId, pool) {
             GROUP BY p.name
             ORDER BY sentimento_medio DESC
         `;
-        const sentimentoPorCargo = await pool.query(sentimentoPorCargoQuery, [tenantId]);
+        const sentimentoPorCargo = await queryFn(sentimentoPorCargoQuery, [tenantId]);
 
         // 3. Alertas por Severidade (dados reais)
         const alertasPorSeveridadeQuery = `
@@ -462,7 +456,7 @@ async function getGraficosReais(tenantId, pool) {
                     ELSE 5
                 END
         `;
-        const alertasPorSeveridade = await pool.query(alertasPorSeveridadeQuery, [tenantId]);
+        const alertasPorSeveridade = await queryFn(alertasPorSeveridadeQuery, [tenantId]);
 
         // 4. Tendência de Engajamento (últimos 7 dias)
         const tendenciaEngajamentoQuery = `
@@ -475,7 +469,7 @@ async function getGraficosReais(tenantId, pool) {
             GROUP BY TO_CHAR(created_at, 'Dy'), TO_CHAR(created_at, 'D')
             ORDER BY TO_CHAR(created_at, 'D')
         `;
-        const tendenciaEngajamento = await pool.query(tendenciaEngajamentoQuery, [tenantId]);
+        const tendenciaEngajamento = await queryFn(tendenciaEngajamentoQuery, [tenantId]);
 
         // 5. Padrões Identificados (dados reais)
         const padroesIdentificadosQuery = `
@@ -495,7 +489,7 @@ async function getGraficosReais(tenantId, pool) {
             ORDER BY aa.created_at DESC
             LIMIT 10
         `;
-        const padroesIdentificados = await pool.query(padroesIdentificadosQuery, [tenantId]);
+        const padroesIdentificados = await queryFn(padroesIdentificadosQuery, [tenantId]);
 
         // 6. Alertas Críticos (dados reais)
         const alertasCriticosQuery = `
@@ -516,7 +510,7 @@ async function getGraficosReais(tenantId, pool) {
             ORDER BY aa.created_at DESC
             LIMIT 10
         `;
-        const alertasCriticos = await pool.query(alertasCriticosQuery, [tenantId]);
+        const alertasCriticos = await queryFn(alertasCriticosQuery, [tenantId]);
 
         // 7. Ações Pendentes (dados reais)
         const acoesPendentesQuery = `
@@ -536,7 +530,7 @@ async function getGraficosReais(tenantId, pool) {
             ORDER BY oi.created_at DESC
             LIMIT 10
         `;
-        const acoesPendentes = await pool.query(acoesPendentesQuery, [tenantId]);
+        const acoesPendentes = await queryFn(acoesPendentesQuery, [tenantId]);
 
         // 8. Colaboradores em Risco (dados reais)
         const colaboradoresRiscoQuery = `
@@ -555,7 +549,7 @@ async function getGraficosReais(tenantId, pool) {
             ORDER BY u.risk_score DESC
             LIMIT 10
         `;
-        const colaboradoresRisco = await pool.query(colaboradoresRiscoQuery, [tenantId]);
+        const colaboradoresRisco = await queryFn(colaboradoresRiscoQuery, [tenantId]);
 
         return {
             trilhasPorCargo: trilhasPorCargo.rows.map(row => ({

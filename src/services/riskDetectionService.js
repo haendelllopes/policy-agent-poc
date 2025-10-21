@@ -114,7 +114,7 @@ class RiskDetectionService {
       if (risk.score >= scoreMinimo) {
         colaboradoresEmRisco.push({
           id: colaborador.id,
-          name: colaborador.nome,
+          name: colaborador.name,
           email: colaborador.email,
           score: risk.score,
           nivel_risco: risk.nivel_risco,
