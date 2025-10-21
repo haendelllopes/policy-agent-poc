@@ -569,19 +569,52 @@ SEMPRE seja conversacional, personalizado e útil!`;
         
         console.log('🔍 DEBUG: Dados do colaborador encontrados:', userResponse.data);
         
+        // Buscar informações do gestor se gestor_id existir
+        let gestorInfo = null;
+        if (userResponse.data.gestor_id) {
+          try {
+            console.log('🔍 DEBUG: Buscando dados do gestor:', userResponse.data.gestor_id);
+            const gestorResponse = await axios.get(`${baseUrl}/api/users/${userResponse.data.gestor_id}`, {
+              headers: {
+                'x-tenant-subdomain': 'demo'
+              }
+            });
+            gestorInfo = gestorResponse.data;
+            console.log('🔍 DEBUG: Dados do gestor encontrados:', gestorInfo);
+          } catch (error) {
+            console.error('❌ Erro ao buscar dados do gestor:', error);
+          }
+        }
+        
         // Resposta personalizada direta
-        const personalizedResponse = `Olá ${userResponse.data.name}! 😊
+        let personalizedResponse;
+        if (gestorInfo) {
+          personalizedResponse = `Oi! 😊 
+
+Sobre seu gestor, ele é o **${gestorInfo.name}**! Ele trabalha como ${gestorInfo.position} no departamento de ${gestorInfo.department}.
 
 📋 **Suas informações:**
-• **Nome:** ${userResponse.data.name}
-• **Cargo:** ${userResponse.data.position}
-• **Departamento:** ${userResponse.data.department}
-• **Data de admissão:** ${new Date(userResponse.data.start_date).toLocaleDateString('pt-BR')}
-
-🤔 **Sobre seu gestor:**
-Infelizmente não tenho informações específicas sobre quem é seu gestor direto no sistema atual. Recomendo verificar com o RH ou consultar o organograma da empresa.
+• Você é o ${userResponse.data.name}
+• Trabalha como ${userResponse.data.position} 
+• No departamento de ${userResponse.data.department}
+• Desde ${new Date(userResponse.data.start_date).toLocaleDateString('pt-BR')}
 
 Posso ajudar com outras informações sobre suas trilhas de onboarding! 🚀`;
+        } else {
+          personalizedResponse = `Oi! 😊 
+
+Sobre seu gestor... Infelizmente não tenho essa informação específica no sistema ainda. 
+
+📋 **Suas informações:**
+• Você é o ${userResponse.data.name}
+• Trabalha como ${userResponse.data.position} 
+• No departamento de ${userResponse.data.department}
+• Desde ${new Date(userResponse.data.start_date).toLocaleDateString('pt-BR')}
+
+Para descobrir quem é seu gestor, recomendo falar com o RH ou dar uma olhada no organograma da empresa.
+
+Posso te ajudar com outras coisas, tipo suas trilhas de onboarding! 🚀`;
+        }
 
         // Salvar conversa
         await saveConversation(
@@ -1778,6 +1811,8 @@ app.get('/api/users/:id', async (req, res) => {
       department: user.department,
       start_date: user.start_date,
       status: user.status || 'active',
+      gestor_id: user.gestor_id,
+      buddy_id: user.buddy_id,
       created_at: user.created_at,
       updated_at: user.updated_at
     });
