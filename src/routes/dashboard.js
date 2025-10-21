@@ -57,6 +57,9 @@ router.get('/metrics/:tenantId', async (req, res) => {
         
         const metrics = result.rows[0];
         
+        // Buscar dados reais dos gráficos
+        const graficosReais = await getGraficosReais(tenantId, pool);
+        
         // Construir resposta no formato esperado pelo frontend
         const dashboardData = {
             tenant_id: tenantId,
@@ -79,7 +82,7 @@ router.get('/metrics/:tenantId', async (req, res) => {
             riscoTrend: '-50%',
             
             // Dados para gráficos (dados reais do banco)
-            graficos: await getGraficosReais(tenantId, pool)
+            graficos: graficosReais
         };
         
         console.log('✅ Métricas carregadas com sucesso:', {
