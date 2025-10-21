@@ -471,14 +471,17 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                   query: functionArgs.query,
                   // Adicionar resposta customizada se documentos foram encontrados
                   resposta_customizada: documentosEncontrados > 0 ? 
-                    `Encontrei ${documentosEncontrados} documento(s) sobre "${functionArgs.query}":\n\n` +
+                    `📚 **Encontrei ${documentosEncontrados} documento(s) sobre "${functionArgs.query}":**\n\n` +
                     documentos.map((doc, index) => 
-                      `${index + 1}. **${doc.title}**\n` +
-                      `   - Categoria: ${doc.category || 'N/A'}\n` +
-                      `   - Resumo: ${doc.ai_summary?.substring(0, 200)}...\n` +
-                      `   - Arquivo: ${doc.file_name}\n`
+                      `**${index + 1}. ${doc.title}**\n` +
+                      `📁 **Arquivo:** ${doc.file_name}\n` +
+                      `🏷️ **Categoria:** ${doc.category || 'N/A'}\n` +
+                      `🤖 **Classificação IA:** ${doc.ai_classification || 'N/A'}\n` +
+                      `📊 **Similaridade:** ${(doc.similarity_score * 100).toFixed(1)}%\n` +
+                      `📝 **Resumo:** ${doc.ai_summary?.substring(0, 150)}...\n` +
+                      `\n---\n`
                     ).join('\n') : 
-                    `Nenhum documento encontrado para "${functionArgs.query}"`
+                    `❌ Nenhum documento encontrado para "${functionArgs.query}"`
                 };
                 
                 console.log('🔍 DEBUG: Tool result:', toolResult);
