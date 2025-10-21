@@ -44,13 +44,15 @@ async function saveConversation(userId, message, response, sentiment = null, sen
     }
     
     const sessionId = `chat-${Date.now()}`;
+    const tenantId = '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant Demonstração
     
     // Salvar mensagem do usuário
     await query(`
-      INSERT INTO conversation_history (id, user_id, session_id, role, content, sentiment, sentiment_intensity, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO conversation_history (id, tenant_id, user_id, session_id, role, content, sentiment, sentiment_intensity, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [
       uuidv4(),
+      tenantId,
       userId,
       sessionId,
       'user',
@@ -62,10 +64,11 @@ async function saveConversation(userId, message, response, sentiment = null, sen
     
     // Salvar resposta do assistente
     await query(`
-      INSERT INTO conversation_history (id, user_id, session_id, role, content, sentiment, sentiment_intensity, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO conversation_history (id, tenant_id, user_id, session_id, role, content, sentiment, sentiment_intensity, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [
       uuidv4(),
+      tenantId,
       userId,
       sessionId,
       'assistant',
@@ -75,7 +78,7 @@ async function saveConversation(userId, message, response, sentiment = null, sen
       new Date()
     ]);
     
-    console.log(`✅ Conversa salva para ${userId}`);
+    console.log(`✅ Conversa salva para ${userId} no tenant ${tenantId}`);
   } catch (error) {
     console.error('❌ Erro ao salvar conversa:', error);
   }
