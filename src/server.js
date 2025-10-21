@@ -392,7 +392,12 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         { role: 'user', content: message }
       ],
       tools: tools,
-      tool_choice: 'auto',
+      tool_choice: message.toLowerCase().includes('documento') || 
+                   message.toLowerCase().includes('política') || 
+                   message.toLowerCase().includes('manual') || 
+                   message.toLowerCase().includes('buscar') || 
+                   message.toLowerCase().includes('encontrar') ? 
+                   { type: 'function', function: { name: 'buscar_documentos' } } : 'auto',
       temperature: 0.7,
       max_tokens: 500
     });
