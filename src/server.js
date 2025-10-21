@@ -331,6 +331,9 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     const conversationHistory = await loadConversationHistory(userId, 10);
     
     // 3. CONTEXTO DINÂMICO BASEADO EM SENTIMENTO E HISTÓRICO
+    // Extrair colaborador_id da URL se disponível
+    const colaboradorIdFromUrl = req.body.colaborador_id || context?.colaborador_id;
+    
     const userContext = {
       profile: {
         name: userId === 'admin-demo' ? 'Administrador' : 'Colaborador',
@@ -339,7 +342,8 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
         sentimento_atual: sentimentAnalysis.sentimento,
         sentimento_intensidade: Math.round(sentimentAnalysis.intensidade * 100),
         role: userId === 'admin-demo' ? 'admin' : 'colaborador',
-        tom_detectado: sentimentAnalysis.fatores_detectados?.tom || 'neutro'
+        tom_detectado: sentimentAnalysis.fatores_detectados?.tom || 'neutro',
+        colaborador_id: colaboradorIdFromUrl // Adicionar ID do colaborador para uso nas ferramentas
       },
       conversationHistory: conversationHistory,
       sentimentAnalysis: sentimentAnalysis
@@ -392,6 +396,7 @@ ${userContext.profile.role === 'admin' ? `
 - buscar_trilhas_disponiveis: Lista trilhas do colaborador
 - iniciar_trilha: Inicia trilha específica
 - registrar_feedback: Registra feedback sobre trilhas
+- buscar_dados_colaborador: Busca informações pessoais (gestor, buddy, departamento, cargo)
 - buscar_documentos: Busca semântica em documentos (SEMPRE use quando usuário pedir documentos, políticas, manuais, procedimentos, etc.)
 
 **PARA ADMINISTRADORES:**
@@ -412,7 +417,9 @@ ${userContext.profile.role === 'admin' ? `
 - iniciar_trilha: Quando usuário quiser começar uma trilha específica
 - registrar_feedback: Quando usuário quiser dar feedback sobre trilhas
 
-**IMPORTANTE:** Se o usuário pedir documentos, políticas, manuais ou qualquer busca de conteúdo, SEMPRE use buscar_documentos primeiro!
+**IMPORTANTE:** 
+- Se o usuário pedir documentos, políticas, manuais ou qualquer busca de conteúdo, SEMPRE use buscar_documentos primeiro!
+- Se o usuário perguntar sobre gestor, buddy, departamento, cargo ou informações pessoais, SEMPRE use buscar_dados_colaborador primeiro!
 
 **QUANDO ENCONTRAR DOCUMENTOS:**
 - NÃO copie o texto completo dos documentos
@@ -424,8 +431,9 @@ ${userContext.profile.role === 'admin' ? `
 
 **COMO INTERPRETAR RESULTADOS DAS FERRAMENTAS:**
 - Se buscar_documentos retornar documentos, SEMPRE apresente-os ao usuário de forma conversacional e natural
+- Se buscar_dados_colaborador retornar dados, SEMPRE use essas informações para personalizar a resposta
 - Use os dados encontrados para responder de forma personalizada e útil
-- Seja conversacional, não apenas liste os documentos
+- Seja conversacional, não apenas liste os dados
 - Responda como um assistente humano, não como um robô
 - Use os resumos e classificações para dar contexto relevante
 - Faça perguntas de follow-up quando apropriado
@@ -507,12 +515,26 @@ SEMPRE seja conversacional, personalizado e útil!`;
             properties: {
               departamento: { type: 'string', description: 'Departamento específico (opcional)' },
               periodo: { type: 'string', description: 'Período de análise (7d, 30d, 90d)', default: '30d' },
-              criterios: { 
-                type: 'array', 
+              criterios: {
+                type: 'array',
                 description: 'Critérios específicos de análise',
                 items: { type: 'string' }
               }
             }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'buscar_dados_colaborador',
+          description: 'Busca informações pessoais e organizacionais do colaborador (gestor, buddy, departamento, cargo)',
+          parameters: {
+            type: 'object',
+            properties: {
+              colaborador_id: { type: 'string', description: 'ID do colaborador para buscar dados' }
+            },
+            required: ['colaborador_id']
           }
         }
       }
@@ -649,6 +671,34 @@ SEMPRE seja conversacional, personalizado e útil!`;
                   { name: 'Maria Oliveira', status: 'baixa_performance', motivo: 'feedback_negativo_recorrente' }
                 ]
               };
+              break;
+            case 'buscar_dados_colaborador':
+              // Buscar dados reais do colaborador usando API existente
+              try {
+                console.log('🔍 DEBUG: Buscando dados do colaborador:', functionArgs.colaborador_id);
+                const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                const userResponse = await axios.get(`${baseUrl}/api/users/${functionArgs.colaborador_id}`, {
+                  headers: {
+                    'x-tenant-subdomain': 'demo' // Usar tenant demo
+                  }
+                });
+                
+                console.log('🔍 DEBUG: Dados do colaborador encontrados:', userResponse.data);
+                
+                toolResult = {
+                  status: 'sucesso',
+                  colaborador_encontrado: true,
+                  dados_colaborador: userResponse.data,
+                  resumo: `Colaborador: ${userResponse.data.name}, Cargo: ${userResponse.data.position}, Departamento: ${userResponse.data.department}`
+                };
+              } catch (error) {
+                console.error('❌ Erro ao buscar dados do colaborador:', error);
+                toolResult = {
+                  status: 'erro',
+                  colaborador_encontrado: false,
+                  erro: `Erro ao buscar dados: ${error.message}`
+                };
+              }
               break;
             default:
               toolResult = { error: `Ferramenta não encontrada: ${functionName}` };
