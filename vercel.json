@@ -1,5 +1,19 @@
 {
   "version": 2,
   "buildCommand": "echo 'No build needed'",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/cron/monitoramento-continuo",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/analise-horaria",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/relatorio-diario",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }

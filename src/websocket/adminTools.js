@@ -9,6 +9,9 @@
  */
 
 const axios = require('axios');
+const proactiveEngine = require('../services/proactiveEngine');
+const riskDetectionService = require('../services/riskDetectionService');
+const monitoringService = require('../services/monitoringService');
 
 class AdminTools {
   constructor() {
@@ -22,34 +25,22 @@ class AdminTools {
    */
   async analisarPerformanceColaboradores(params = {}) {
     try {
-      const { departamento, periodo = '30d', criterios = [] } = params;
+      const { tenantId, departamento, periodo = 30 } = params;
       
-      console.log('🔍 Analisando performance de colaboradores...', { departamento, periodo });
+      console.log('🔍 Analisando performance de colaboradores...', { tenantId, departamento, periodo });
 
-      // 1. Buscar dados de colaboradores
-      const colaboradoresResponse = await axios.get(`${this.baseUrl}/users`);
-      const colaboradores = colaboradoresResponse.data;
-
-      // 2. Buscar dados de trilhas e progresso
-      const trilhasResponse = await axios.get(`${this.baseUrl}/trilhas`);
-      const trilhas = trilhasResponse.data;
-
-      // 3. Buscar dados de sentimentos
-      const sentimentosResponse = await axios.get(`${this.baseUrl}/sentimentos`);
-      const sentimentos = sentimentosResponse.data;
-
-      // 4. Análise de performance
-      const analise = this.processarAnalisePerformance(colaboradores, trilhas, sentimentos, {
-        departamento,
-        periodo,
-        criterios
-      });
+      // Usar o ProactiveEngine real em vez de mocks
+      const analise = await proactiveEngine.analisarPerformanceColaboradores(
+        tenantId, 
+        departamento, 
+        periodo
+      );
 
       return {
         sucesso: true,
         dados: analise,
         timestamp: new Date().toISOString(),
-        resumo: `Análise concluída: ${analise.colaboradores_analisados} colaboradores, ${analise.riscos_identificados} riscos encontrados`
+        resumo: `Análise concluída: ${analise.total_colaboradores} colaboradores, ${analise.colaboradores_risco} riscos encontrados`
       };
 
     } catch (error) {
@@ -68,36 +59,20 @@ class AdminTools {
    */
   async gerarRelatorioOnboarding(params = {}) {
     try {
-      const { tipo_relatorio = 'operacional', periodo = '30d', formato = 'resumo' } = params;
+      const { tenantId, tipo_relatorio = 'operacional', periodo = 30 } = params;
       
-      console.log('📊 Gerando relatório de onboarding...', { tipo_relatorio, periodo });
+      console.log('📊 Gerando relatório de onboarding...', { tenantId, tipo_relatorio, periodo });
 
-      // 1. Coletar dados necessários
-      const dados = await this.coletarDadosRelatorio(periodo);
-
-      // 2. Processar relatório baseado no tipo
-      let relatorio;
-      switch (tipo_relatorio) {
-        case 'executivo':
-          relatorio = this.gerarRelatorioExecutivo(dados);
-          break;
-        case 'operacional':
-          relatorio = this.gerarRelatorioOperacional(dados);
-          break;
-        case 'departamental':
-          relatorio = this.gerarRelatorioDepartamental(dados);
-          break;
-        default:
-          relatorio = this.gerarRelatorioOperacional(dados);
-      }
+      // Usar o ProactiveEngine real para gerar relatório executivo
+      const relatorio = await proactiveEngine.gerarRelatorioExecutivo(tenantId, periodo);
 
       return {
         sucesso: true,
         relatorio: relatorio,
         tipo: tipo_relatorio,
         periodo: periodo,
-        formato: formato,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        resumo: `Relatório ${tipo_relatorio} gerado com sucesso`
       };
 
     } catch (error) {
@@ -116,25 +91,38 @@ class AdminTools {
    */
   async criarAlertasPersonalizados(params = {}) {
     try {
-      const { tipo_alerta, criterios = {}, frequencia = 'diario' } = params;
+      const { tenantId, tipo_alerta, criterios = {} } = params;
       
-      console.log('⚠️ Criando alertas personalizados...', { tipo_alerta, frequencia });
+      console.log('⚠️ Criando alertas personalizados...', { tenantId, tipo_alerta });
 
-      // 1. Analisar dados para identificar situações de alerta
-      const situacoesAlerta = await this.identificarSituacoesAlerta(tipo_alerta, criterios);
+      // Usar o RiskDetectionService real para detectar colaboradores em risco
+      const colaboradoresRisco = await riskDetectionService.detectarColaboradoresEmRisco(tenantId, {
+        scoreMinimo: criterios.scoreMinimo || 60,
+        departamento: criterios.departamento,
+        diasAnalise: criterios.diasAnalise || 30
+      });
 
-      // 2. Criar alertas baseados nas situações encontradas
-      const alertas = this.processarAlertas(situacoesAlerta, tipo_alerta, criterios);
-
-      // 3. Configurar frequência e notificações
-      const configuracao = this.configurarNotificacoes(frequencia, alertas);
+      // Criar alertas para colaboradores em risco
+      const alertas = [];
+      for (const colaborador of colaboradoresRisco) {
+        if (colaborador.score >= (criterios.scoreMinimo || 60)) {
+          alertas.push({
+            tipo: tipo_alerta || 'alerta_risco_evasao',
+            colaborador_id: colaborador.id,
+            colaborador_nome: colaborador.name,
+            score: colaborador.score,
+            fatores: colaborador.principais_fatores,
+            severidade: colaborador.score >= 80 ? 'critica' : colaborador.score >= 60 ? 'alta' : 'media'
+          });
+        }
+      }
 
       return {
         sucesso: true,
         alertas: alertas,
-        configuracao: configuracao,
-        total_alertas: alertas.length,
-        timestamp: new Date().toISOString()
+        total_criados: alertas.length,
+        timestamp: new Date().toISOString(),
+        resumo: `${alertas.length} alertas personalizados criados`
       };
 
     } catch (error) {
@@ -153,25 +141,19 @@ class AdminTools {
    */
   async identificarGargalosTrilhas(params = {}) {
     try {
-      const { trilha_id, analise_profunda = false } = params;
+      const { tenantId, trilhaId, periodo = 30 } = params;
       
-      console.log('🔍 Identificando gargalos em trilhas...', { trilha_id, analise_profunda });
+      console.log('🔍 Identificando gargalos em trilhas...', { tenantId, trilhaId, periodo });
 
-      // 1. Buscar dados da trilha específica ou todas
-      const dadosTrilhas = await this.buscarDadosTrilhas(trilha_id);
-
-      // 2. Analisar padrões de dificuldade
-      const gargalos = this.analisarGargalos(dadosTrilhas, analise_profunda);
-
-      // 3. Gerar sugestões de melhoria
-      const sugestoes = this.gerarSugestoesMelhoria(gargalos);
+      // Usar o ProactiveEngine real para identificar gargalos
+      const gargalos = await proactiveEngine.identificarGargalosTrilhas(tenantId, trilhaId, periodo);
 
       return {
         sucesso: true,
         gargalos: gargalos,
-        sugestoes: sugestoes,
-        trilha_analisada: trilha_id || 'todas',
-        timestamp: new Date().toISOString()
+        total_gargalos: gargalos.length,
+        timestamp: new Date().toISOString(),
+        resumo: `${gargalos.length} gargalos identificados na trilha`
       };
 
     } catch (error) {

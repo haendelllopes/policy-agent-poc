@@ -941,6 +941,250 @@ a:hover {
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
         }
+
+        /* ===== ESTILOS PARA SEÇÃO DE PROATIVIDADE ===== */
+        
+        /* Badge pulsante para alertas */
+        .badge-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Cards de métricas com hover effects */
+        .stat-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        /* Cores por severidade */
+        .stat-card.critical { border-left: 4px solid #ef4444; }
+        .stat-card.warning { border-left: 4px solid #f59e0b; }
+        .stat-card.info { border-left: 4px solid #3b82f6; }
+        .stat-card.success { border-left: 4px solid #10b981; }
+
+        /* Timeline de atividades */
+        .activity-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .activity-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -23px;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: #e5e7eb;
+        }
+
+        .activity-dot {
+            position: absolute;
+            left: -30px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+
+        /* Cards expansíveis */
+        .expandable-card {
+            transition: max-height 0.3s ease;
+            overflow: hidden;
+        }
+
+        .expandable-card.collapsed {
+            max-height: 80px;
+        }
+
+        /* Score de risco visual */
+        .risk-score-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .risk-score-fill {
+            height: 100%;
+            transition: width 0.5s ease, background-color 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .risk-score-fill.low { background: linear-gradient(90deg, #10b981, #34d399); }
+        .risk-score-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .risk-score-fill.high { background: linear-gradient(90deg, #f97316, #fb923c); }
+        .risk-score-fill.critical { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+        /* Botões de ação inline */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .action-card:hover .action-buttons {
+            opacity: 1;
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            animation: skeleton-loading 1s linear infinite alternate;
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 10px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        /* Hover effects para notificações */
+        .notification-bell:hover {
+            background-color: var(--navi-accent-teal-light);
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid var(--navi-border);
+            border-radius: var(--navi-radius-md);
+            box-shadow: var(--navi-shadow-lg);
+            width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .notification-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .notification-item:hover {
+            background-color: #f9fafb;
+        }
+
+        .notification-item.unread {
+            background-color: var(--navi-accent-teal-light);
+        }
+
+        .notification-item.unread:hover {
+            background-color: var(--navi-accent-teal-medium);
+        }
     </style>
 </head>
 <body>
@@ -1019,6 +1263,13 @@ a:hover {
                 </a>
             </li>
             <li class="nav-item">
+                <a href="#proatividade-section" class="nav-link" data-section="proatividade-section" data-tooltip="Monitoramento Proativo">
+                    <i data-feather="activity" class="nav-icon"></i>
+                    <span class="nav-text">Proatividade</span>
+                    <span id="alertasBadge" class="badge badge-pulse" style="display: none;">0</span>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="configurador.html" class="nav-link" data-tooltip="Configurações">
                     <i data-feather="settings" class="nav-icon"></i>
                     <span class="nav-text">Configurações</span>
@@ -1032,7 +1283,24 @@ a:hover {
         <!-- Top Bar -->
         <header class="top-bar">
             <h1 id="pageTitle">Insights do Navî</h1>
-            <div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <!-- Sino de Notificações -->
+                <div class="notification-bell" onclick="toggleNotifications()" style="position: relative; cursor: pointer; padding: 0.5rem; border-radius: 6px; transition: background-color 0.2s;">
+                    <i data-feather="bell" style="width: 20px; height: 20px; color: var(--navi-secondary-grey);"></i>
+                    <span id="notificationBadge" class="badge" style="position: absolute; top: 0; right: 0; background: var(--navi-danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; min-width: 16px; text-align: center; display: none;">0</span>
+                </div>
+                
+                <!-- Dropdown de Notificações -->
+                <div id="notificationDropdown" class="notification-dropdown" style="display: none; position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--navi-border); border-radius: var(--navi-radius-md); box-shadow: var(--navi-shadow-lg); width: 350px; max-height: 400px; overflow-y: auto; z-index: 1000;">
+                    <div class="notification-header" style="padding: 1rem; border-bottom: 1px solid var(--navi-border); display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; font-size: 14px; color: var(--navi-primary-dark);">Notificações</h4>
+                        <button onclick="marcarTodasLidas()" style="background: none; border: none; color: var(--navi-accent-teal); font-size: 12px; cursor: pointer;">Marcar todas como lidas</button>
+                    </div>
+                    <div id="notificationList" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Notificações serão carregadas aqui -->
+                    </div>
+                </div>
+                
                 <span id="currentTime"></span>
             </div>
         </header>
@@ -1262,6 +1530,149 @@ a:hover {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Proatividade Section -->
+            <div id="proatividade-section" class="section">
+                <!-- Header dinâmico com status em tempo real -->
+                <div class="section-header">
+                    <div>
+                        <h2>🎯 Monitoramento Proativo</h2>
+                        <p class="text-muted">
+                            <span id="lastUpdate">Carregando...</span>
+                            <span id="autoRefreshStatus" class="badge badge-sm">Auto-refresh: ON</span>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="proactive-filter" onchange="filterProactiveData()" class="form-select">
+                            <option value="all">Todos</option>
+                            <option value="critical">Críticos</option>
+                            <option value="pending">Pendentes</option>
+                            <option value="today">Hoje</option>
+                        </select>
+                        <button class="btn-secondary" onclick="loadProactiveData()" id="refreshBtn">
+                            <i data-feather="refresh-cw"></i>
+                            Atualizar
+                        </button>
+                        <button class="btn-outline" onclick="toggleAutoRefresh()" id="autoRefreshBtn">
+                            <i data-feather="zap"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cards de métricas interativos com animação -->
+                <div class="stats-grid">
+                    <div class="stat-card critical" onclick="filterByType('critical')" data-tooltip="Clique para filtrar">
+                        <div class="stat-icon">🚨</div>
+                        <div class="stat-value" id="alertasAtivos">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Alertas Ativos</div>
+                        <div class="stat-trend" id="alertasTrend"></div>
+                    </div>
+                    <div class="stat-card warning" onclick="filterByType('risk')" data-tooltip="Clique para filtrar">
+                        <div class="stat-icon">⚠️</div>
+                        <div class="stat-value" id="colaboradoresRisco">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Colaboradores em Risco</div>
+                        <div class="stat-trend" id="riscoTrend"></div>
+                    </div>
+                    <div class="stat-card info" onclick="filterByType('pending')" data-tooltip="Clique para filtrar">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-value" id="acoesPendentes">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Ações Pendentes</div>
+                        <div class="stat-trend" id="pendenteTrend"></div>
+                    </div>
+                    <div class="stat-card success" onclick="showResolvedHistory()" data-tooltip="Ver histórico">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="alertasResolvidos">
+                            <div class="skeleton" style="width: 60px; height: 32px;"></div>
+                        </div>
+                        <div class="stat-label">Resolvidos (7 dias)</div>
+                        <div class="stat-trend positive">+12% vs semana passada</div>
+                    </div>
+                </div>
+
+                <!-- Layout em 2 colunas responsivo -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <!-- Coluna Esquerda: Alertas e Ações -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- Alertas Críticos com Timeline -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>🚨 Alertas Críticos</h3>
+                                <span class="badge badge-danger" id="alertasCriticosCount">0</span>
+                            </div>
+                            <div id="alertasCriticos" class="activity-timeline">
+                                <!-- Loading skeleton -->
+                                <div class="skeleton" style="height: 80px; margin-bottom: 10px;"></div>
+                                <div class="skeleton" style="height: 80px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Ações Pendentes com aprovação inline -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>⏳ Ações Aguardando Aprovação</h3>
+                                <span class="badge badge-warning" id="acoesPendentesCount">0</span>
+                            </div>
+                            <div id="acoesPendentesLista">
+                                <!-- Renderizado dinamicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Riscos e Insights -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <!-- Top 5 Colaboradores em Risco -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>⚠️ Top 5 Riscos</h3>
+                                <button class="btn-link" onclick="showAllRisks()">Ver todos</button>
+                            </div>
+                            <div id="topRiscos">
+                                <!-- Lista com score visual -->
+                            </div>
+                        </div>
+
+                        <!-- Insights da IA -->
+                        <div class="card bg-gradient">
+                            <div class="card-header">
+                                <h3>💡 Insights do Navi</h3>
+                            </div>
+                            <div id="aiInsights">
+                                <div class="insight-item">
+                                    <p class="insight-text">Analisando padrões...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Atividade Recente -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>📊 Atividade Recente</h3>
+                            </div>
+                            <div id="recentActivity" class="activity-timeline">
+                                <!-- Timeline de eventos -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de detalhes (overlay) -->
+                <div id="detailsModal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="modalTitle"></h3>
+                            <button onclick="closeModal()" class="btn-close">&times;</button>
+                        </div>
+                        <div class="modal-body" id="modalBody"></div>
+                        <div class="modal-footer" id="modalFooter"></div>
                     </div>
                 </div>
             </div>
@@ -2056,11 +2467,558 @@ a:hover {
         }
         
         function changeItemsPerPage() {
-            // Placeholder for items per page
-            console.log('Alterar itens por página...');
-        }
+        // Placeholder for items per page
+        console.log('Alterar itens por página...');
+    }
+
+    // ===== SISTEMA DE NOTIFICAÇÕES =====
+    
+    let notificationInterval = null;
+    let autoRefreshInterval = null;
+    let proactiveData = {
+        alerts: [],
+        actions: [],
+        risks: [],
+        insights: []
+    };
+
+    // Toggle dropdown de notificações
+    function toggleNotifications() {
+        const dropdown = document.getElementById('notificationDropdown');
+        const isVisible = dropdown.style.display !== 'none';
         
-    </script>
+        if (isVisible) {
+            dropdown.style.display = 'none';
+        } else {
+            dropdown.style.display = 'block';
+            loadNotifications();
+        }
+    }
+
+    // Carregar notificações
+    async function loadNotifications() {
+        try {
+            if (!currentUser) return;
+            
+            const response = await fetch(`${API_BASE}/api/notifications/unread/${currentUser.id}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                renderNotifications(data.notifications);
+                updateNotificationBadge(data.count);
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar notificações:', error);
+        }
+    }
+
+    // Renderizar notificações
+    function renderNotifications(notifications) {
+        const container = document.getElementById('notificationList');
+        
+        if (notifications.length === 0) {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #6b7280;">Nenhuma notificação</div>';
+            return;
+        }
+
+        container.innerHTML = notifications.map(notif => `
+            <div class="notification-item ${notif.lida ? '' : 'unread'}" onclick="handleNotificationClick('${notif.id}')">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <div style="color: ${notif.tipo_info.color}; font-size: 16px;">${notif.tipo_info.icon}</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">${notif.titulo}</div>
+                        <div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">${notif.mensagem}</div>
+                        <div style="font-size: 12px; color: #9ca3af;">${formatTimeAgo(notif.created_at)}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Atualizar badge de notificações
+    function updateNotificationBadge(count) {
+        const badge = document.getElementById('notificationBadge');
+        if (count > 0) {
+            badge.textContent = count;
+            badge.style.display = 'block';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    // Marcar notificação como lida
+    async function handleNotificationClick(notificationId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id })
+            });
+            
+            if (response.ok) {
+                loadNotifications(); // Recarregar notificações
+            }
+        } catch (error) {
+            console.error('❌ Erro ao marcar notificação como lida:', error);
+        }
+    }
+
+    // Marcar todas como lidas
+    async function marcarTodasLidas() {
+        try {
+            if (!currentUser) return;
+            
+            const response = await fetch(`${API_BASE}/api/notifications/read-all/${currentUser.id}`, {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                loadNotifications();
+                showToast(`${data.count} notificações marcadas como lidas`, 'success');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao marcar todas como lidas:', error);
+        }
+    }
+
+    // Iniciar polling de notificações
+    function startNotificationPolling() {
+        if (notificationInterval) clearInterval(notificationInterval);
+        
+        notificationInterval = setInterval(async () => {
+            if (currentUser) {
+                try {
+                    const response = await fetch(`${API_BASE}/api/notifications/count/${currentUser.id}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        updateNotificationBadge(data.count);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro no polling de notificações:', error);
+                }
+            }
+        }, 30000); // 30 segundos
+    }
+
+    // ===== SISTEMA DE PROATIVIDADE =====
+
+    // Carregar dados de proatividade
+    async function loadProactiveData() {
+        try {
+            if (!currentTenant) return;
+            
+            const startTime = Date.now();
+            showLoadingState();
+            
+            const [dashboardData, insightsData] = await Promise.all([
+                fetch(`${API_BASE}/api/proactive/dashboard/${currentTenant.id}`).then(r => r.json()),
+                fetch(`${API_BASE}/api/proactive/insights/${currentTenant.id}`).then(r => r.json())
+            ]);
+            
+            if (dashboardData.success) {
+                proactiveData = {
+                    alerts: dashboardData.alerts || [],
+                    actions: dashboardData.acoes || [],
+                    risks: dashboardData.colaboradores_risco || [],
+                    insights: insightsData.success ? insightsData.insights : []
+                };
+                
+                renderProactiveDashboard();
+                
+                const loadTime = Date.now() - startTime;
+                updateLastUpdate(loadTime);
+                showToast('Dados atualizados com sucesso', 'success');
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar dados de proatividade:', error);
+            showToast('Erro ao carregar dados', 'error');
+        }
+    }
+
+    // Renderizar dashboard de proatividade
+    function renderProactiveDashboard() {
+        renderMetrics();
+        renderAlerts();
+        renderActions();
+        renderRisks();
+        renderInsights();
+    }
+
+    // Renderizar métricas
+    function renderMetrics() {
+        const { alerts, actions, risks } = proactiveData;
+        
+        // Alertas ativos
+        const alertasAtivos = alerts.filter(a => a.status === 'ativo').length;
+        animateValue('alertasAtivos', alertasAtivos);
+        
+        // Colaboradores em risco
+        const riscosAltos = risks.filter(r => r.score >= 60).length;
+        animateValue('colaboradoresRisco', riscosAltos);
+        
+        // Ações pendentes
+        const pendentes = actions.filter(a => a.status === 'pendente_aprovacao').length;
+        animateValue('acoesPendentes', pendentes);
+        
+        // Badges nos cards
+        document.getElementById('alertasCriticosCount').textContent = alertasAtivos;
+        document.getElementById('acoesPendentesCount').textContent = pendentes;
+    }
+
+    // Renderizar alertas
+    function renderAlerts() {
+        const container = document.getElementById('alertasCriticos');
+        const alertas = proactiveData.alerts
+            .filter(a => a.status === 'ativo' && a.severidade === 'critica')
+            .slice(0, 5);
+
+        if (alertas.length === 0) {
+            container.innerHTML = '<p class="text-muted">Nenhum alerta crítico no momento 🎉</p>';
+            return;
+        }
+
+        container.innerHTML = alertas.map(alerta => `
+            <div class="activity-item action-card" data-id="${alerta.id}">
+                <div class="activity-dot" style="color: #ef4444;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 4px 0; font-size: 14px;">${alerta.titulo}</h4>
+                        <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px;">${alerta.anotacao}</p>
+                        <div style="display: flex; gap: 8px; font-size: 12px; color: #9ca3af;">
+                            <span>👤 ${alerta.colaborador_nome}</span>
+                            <span>⏰ ${formatTimeAgo(alerta.created_at)}</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-sm btn-primary" onclick="viewAlertDetails('${alerta.id}')">
+                            Ver
+                        </button>
+                        <button class="btn-sm btn-success" onclick="resolveAlert('${alerta.id}')">
+                            Resolver
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Renderizar ações pendentes
+    function renderActions() {
+        const container = document.getElementById('acoesPendentesLista');
+        const acoes = proactiveData.actions.filter(a => a.status === 'pendente_aprovacao').slice(0, 5);
+
+        if (acoes.length === 0) {
+            container.innerHTML = '<p class="text-muted">Nenhuma ação pendente</p>';
+            return;
+        }
+
+        container.innerHTML = acoes.map(acao => `
+            <div class="action-card" style="padding: 16px; border-bottom: 1px solid #e5e7eb;">
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <span class="badge badge-${getActionTypeBadge(acao.tipo_acao)}">${acao.tipo_acao}</span>
+                            <h4 style="margin: 0; font-size: 14px;">${acao.titulo}</h4>
+                        </div>
+                        <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 13px;">${acao.descricao}</p>
+                        <details style="font-size: 12px; color: #9ca3af;">
+                            <summary style="cursor: pointer;">Ver justificativa da IA</summary>
+                            <p style="margin: 8px 0 0 0; padding: 8px; background: #f9fafb; border-radius: 4px;">
+                                ${acao.justificativa_ia || 'Nenhuma justificativa disponível'}
+                            </p>
+                        </details>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-sm btn-success" onclick="approveAction('${acao.id}')">
+                            <i data-feather="check"></i> Aprovar
+                        </button>
+                        <button class="btn-sm btn-danger" onclick="rejectAction('${acao.id}')">
+                            <i data-feather="x"></i> Rejeitar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        feather.replace();
+    }
+
+    // Renderizar riscos
+    function renderRisks() {
+        const container = document.getElementById('topRiscos');
+        const topRisks = proactiveData.risks
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+
+        container.innerHTML = topRisks.map(risk => `
+            <div class="risk-item" style="padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer;"
+                 onclick="viewRiskDetails('${risk.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="font-size: 14px;">${risk.name}</strong>
+                    <span class="badge badge-${getRiskLevel(risk.score)}">${risk.score}</span>
+                </div>
+                <div class="risk-score-bar">
+                    <div class="risk-score-fill ${getRiskLevel(risk.score)}" 
+                         style="width: ${risk.score}%;"></div>
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 12px; color: #6b7280;">
+                    ${risk.principais_fatores ? risk.principais_fatores.slice(0, 2).join(', ') : 'Sem fatores identificados'}
+                </p>
+            </div>
+        `).join('');
+    }
+
+    // Renderizar insights
+    function renderInsights() {
+        const container = document.getElementById('aiInsights');
+        
+        if (!proactiveData.insights || proactiveData.insights.length === 0) {
+            container.innerHTML = '<div class="insight-item"><p class="insight-text">Analisando padrões...</p></div>';
+            return;
+        }
+
+        container.innerHTML = proactiveData.insights.insights.map(insight => `
+            <div class="insight-item">
+                <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--navi-primary-dark);">${insight.titulo}</h4>
+                <p class="insight-text" style="margin: 0; font-size: 13px; color: #6b7280;">${insight.descricao}</p>
+                <div style="margin-top: 8px;">
+                    <span class="badge badge-${insight.impacto === 'alto' ? 'danger' : insight.impacto === 'medio' ? 'warning' : 'info'}">${insight.impacto}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ===== FUNÇÕES AUXILIARES =====
+
+    // Animar valores
+    function animateValue(elementId, endValue) {
+        const element = document.getElementById(elementId);
+        const startValue = parseInt(element.textContent) || 0;
+        const duration = 500;
+        const startTime = Date.now();
+
+        const animate = () => {
+            const currentTime = Date.now();
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
+            element.textContent = currentValue;
+
+            if (progress < 1) requestAnimationFrame(animate);
+        };
+
+        animate();
+    }
+
+    // Mostrar estado de loading
+    function showLoadingState() {
+        // Implementar skeleton loading se necessário
+    }
+
+    // Atualizar última atualização
+    function updateLastUpdate(loadTime) {
+        const element = document.getElementById('lastUpdate');
+        element.textContent = `Atualizado há ${Math.round(loadTime / 1000)}s`;
+    }
+
+    // Mostrar toast
+    function showToast(message, type = 'info') {
+        // Implementar toast notifications
+        console.log(`Toast ${type}: ${message}`);
+    }
+
+    // Formatar tempo relativo
+    function formatTimeAgo(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'agora';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}min atrás`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h atrás`;
+        return `${Math.floor(diffInSeconds / 86400)}d atrás`;
+    }
+
+    // Obter badge de tipo de ação
+    function getActionTypeBadge(tipo) {
+        const badges = {
+            'contatar_colaborador': 'primary',
+            'escalar_rh': 'warning',
+            'ajustar_trilha': 'info',
+            'criar_ticket': 'danger'
+        };
+        return badges[tipo] || 'secondary';
+    }
+
+    // Obter nível de risco
+    function getRiskLevel(score) {
+        if (score >= 80) return 'critical';
+        if (score >= 60) return 'high';
+        if (score >= 30) return 'medium';
+        return 'low';
+    }
+
+    // ===== FUNÇÕES DE AÇÃO =====
+
+    // Aprovar ação
+    async function approveAction(actionId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/proactive/actions/${actionId}/approve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ observacoes: 'Aprovado via dashboard' })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast('Ação aprovada com sucesso', 'success');
+                loadProactiveData();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao aprovar ação:', error);
+            showToast('Erro ao aprovar ação', 'error');
+        }
+    }
+
+    // Rejeitar ação
+    async function rejectAction(actionId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/proactive/actions/${actionId}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motivo_rejeicao: 'Rejeitado via dashboard' })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast('Ação rejeitada', 'success');
+                loadProactiveData();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao rejeitar ação:', error);
+            showToast('Erro ao rejeitar ação', 'error');
+        }
+    }
+
+    // Resolver alerta
+    async function resolveAlert(alertId) {
+        try {
+            const response = await fetch(`${API_BASE}/api/proactive/alerts/${alertId}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    resolucao: 'Resolvido via dashboard',
+                    resolvido_por: currentUser.id
+                })
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                showToast('Alerta resolvido', 'success');
+                loadProactiveData();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao resolver alerta:', error);
+            showToast('Erro ao resolver alerta', 'error');
+        }
+    }
+
+    // Ver detalhes do alerta
+    function viewAlertDetails(alertId) {
+        const alerta = proactiveData.alerts.find(a => a.id === alertId);
+        if (alerta) {
+            showModal('Detalhes do Alerta', `
+                <h4>${alerta.titulo}</h4>
+                <p>${alerta.anotacao}</p>
+                <p><strong>Colaborador:</strong> ${alerta.colaborador_nome}</p>
+                <p><strong>Severidade:</strong> ${alerta.severidade}</p>
+                <p><strong>Score:</strong> ${alerta.proactive_score}</p>
+            `);
+        }
+    }
+
+    // Ver detalhes do risco
+    function viewRiskDetails(riskId) {
+        const risk = proactiveData.risks.find(r => r.id === riskId);
+        if (risk) {
+            showModal('Detalhes do Risco', `
+                <h4>${risk.name}</h4>
+                <p><strong>Score de Risco:</strong> ${risk.score}</p>
+                <p><strong>Nível:</strong> ${risk.nivel_risco}</p>
+                <p><strong>Fatores:</strong> ${risk.principais_fatores.join(', ')}</p>
+            `);
+        }
+    }
+
+    // Mostrar modal
+    function showModal(title, content) {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalBody').innerHTML = content;
+        document.getElementById('detailsModal').style.display = 'flex';
+    }
+
+    // Fechar modal
+    function closeModal() {
+        document.getElementById('detailsModal').style.display = 'none';
+    }
+
+    // Filtrar dados por tipo
+    function filterByType(type) {
+        console.log(`Filtrando por tipo: ${type}`);
+        // Implementar filtros específicos
+    }
+
+    // Filtrar dados de proatividade
+    function filterProactiveData() {
+        const filter = document.getElementById('proactive-filter').value;
+        console.log(`Filtrando dados: ${filter}`);
+        // Implementar filtros
+    }
+
+    // Toggle auto refresh
+    function toggleAutoRefresh() {
+        const btn = document.getElementById('autoRefreshBtn');
+        const status = document.getElementById('autoRefreshStatus');
+        
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+            btn.style.color = '#6b7280';
+            status.textContent = 'Auto-refresh: OFF';
+        } else {
+            autoRefreshInterval = setInterval(loadProactiveData, 30000);
+            btn.style.color = 'var(--navi-accent-teal)';
+            status.textContent = 'Auto-refresh: ON';
+        }
+    }
+
+    // Mostrar histórico resolvido
+    function showResolvedHistory() {
+        console.log('Mostrando histórico de alertas resolvidos');
+        // Implementar histórico
+    }
+
+    // Mostrar todos os riscos
+    function showAllRisks() {
+        console.log('Mostrando todos os riscos');
+        // Implementar visualização completa
+    }
+
+    // ===== INICIALIZAÇÃO =====
+
+    // Inicializar sistema de proatividade quando a página carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aguardar carregamento dos dados básicos
+        setTimeout(() => {
+            if (currentTenant) {
+                loadProactiveData();
+                startNotificationPolling();
+            }
+        }, 2000);
+    });
+    
+</script>
     
         <!-- Chat Widget Integration (WebSocket Version) -->
         <link href="css/chat-widget.css" rel="stylesheet">

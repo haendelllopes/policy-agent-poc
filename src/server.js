@@ -3458,6 +3458,9 @@ const agentN8nRoutes = require('./routes/agent-n8n');
 const conversationsRoutes = require('./routes/conversations');
 const chatAnalysisRoutes = require('./routes/chat-analysis');
 const chatHttpRoutes = require('./routes/chat-http');
+const cronRoutes = require('./routes/cron');
+const proactiveRoutes = require('./routes/proactive');
+const notificationRoutes = require('./routes/notifications');
 
 // Importar helpers
 const { 
@@ -3506,8 +3509,11 @@ app.use('/api/agent-n8n', agentN8nRoutes);
 app.use('/api/conversations', conversationsRoutes);
 app.use('/api/chat', chatAnalysisRoutes);
 app.use('/api/chat', chatHttpRoutes);
+app.use('/api/cron', cronRoutes);
+app.use('/api/proactive', proactiveRoutes);
+app.use('/api/notifications', notificationRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http, cron, proactive, notifications');
 
 // ============================================
 
