@@ -993,8 +993,80 @@ a:hover {
         
         <!-- Chat Widget Scripts -->
         <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase-client.js"></script>
-    <script src="/js/chat-widget.js"></script>
-        <script src="/js/chat-integration.js"></script>
+        <script>
+            // Carregar chat widget independentemente do Supabase
+            document.addEventListener('DOMContentLoaded', async () => {
+                console.log('🚀 Iniciando carregamento do chat widget...');
+                
+                // Função para carregar script com fallback
+                const loadScript = (src, timeout = 5000) => {
+                    return new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = src;
+                        script.async = true;
+                        
+                        const timeoutId = setTimeout(() => {
+                            console.warn(`⚠️ Timeout ao carregar ${src}`);
+                            reject(new Error(`Timeout loading ${src}`));
+                        }, timeout);
+                        
+                        script.onload = () => {
+                            clearTimeout(timeoutId);
+                            console.log(`✅ Script carregado: ${src}`);
+                            resolve();
+                        };
+                        
+                        script.onerror = () => {
+                            clearTimeout(timeoutId);
+                            console.error(`❌ Erro ao carregar ${src}`);
+                            reject(new Error(`Failed to load ${src}`));
+                        };
+                        
+                        document.head.appendChild(script);
+                    });
+                };
+                
+                // Tentar carregar Supabase primeiro (com timeout)
+                try {
+                    await new Promise(resolve => {
+                        const checkSupabase = () => {
+                            if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+                                console.log('✅ Supabase JS carregado');
+                                resolve();
+                            } else {
+                                setTimeout(checkSupabase, 50);
+                            }
+                        };
+                        checkSupabase();
+                    });
+                    
+                    // Se Supabase carregou, carregar supabase-client.js
+                    try {
+                        await loadScript('/js/supabase-client.js', 3000);
+                    } catch (error) {
+                        console.warn('⚠️ Supabase client não carregou, continuando sem ele');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Supabase não carregou, continuando sem ele');
+                }
+                
+                // SEMPRE carregar o chat widget (independente do Supabase)
+                try {
+                    await loadScript('/js/chat-widget.js', 5000);
+                    console.log('✅ Chat widget carregado com sucesso');
+                } catch (error) {
+                    console.error('❌ Falha crítica ao carregar chat widget:', error);
+                }
+                
+                // Carregar chat-integration.js se disponível
+                try {
+                    await loadScript('/js/chat-integration.js', 3000);
+                } catch (error) {
+                    console.warn('⚠️ Chat integration não carregou, continuando sem ele');
+                }
+                
+                console.log('🎉 Carregamento de scripts concluído');
+            });
+        </script>
 </body>
 </html>
