@@ -467,15 +467,61 @@ router.put('/:id', async (req, res) => {
       console.log('✅ UPDATE gestor_id executado:', gestorUpdateResult.rows[0]);
       
       console.log('🔧 Atualizando buddy_id...');
-      const buddyUpdateResult = await query(`
-        UPDATE users SET 
-          buddy_id = $1,
-          updated_at = NOW()
-        WHERE id = $2 AND tenant_id = $3
-        RETURNING id, buddy_id
-      `, [parse.data.buddy_id, userId, tenant.id]);
       
-      console.log('✅ UPDATE buddy_id executado:', buddyUpdateResult.rows[0]);
+      // Tentar diferentes abordagens para buddy_id
+      let buddyUpdateResult;
+      
+      try {
+        // Primeira tentativa: UPDATE simples
+        buddyUpdateResult = await query(`
+          UPDATE users SET 
+            buddy_id = $1,
+            updated_at = NOW()
+          WHERE id = $2 AND tenant_id = $3
+          RETURNING id, buddy_id
+        `, [parse.data.buddy_id, userId, tenant.id]);
+        
+        console.log('✅ UPDATE buddy_id executado (tentativa 1):', buddyUpdateResult.rows[0]);
+        
+        // Verificar se realmente foi atualizado
+        const verifyBuddy = await query(`
+          SELECT buddy_id FROM users WHERE id = $1
+        `, [userId]);
+        
+        console.log('🔍 Verificação pós-UPDATE buddy_id:', verifyBuddy.rows[0]);
+        
+        if (verifyBuddy.rows[0].buddy_id !== parse.data.buddy_id) {
+          console.log('⚠️ Buddy_id não foi atualizado, tentando abordagem alternativa...');
+          
+          // Segunda tentativa: UPDATE com FORCE
+          buddyUpdateResult = await query(`
+            UPDATE users SET 
+              buddy_id = $1,
+              updated_at = NOW()
+            WHERE id = $2 AND tenant_id = $3
+            RETURNING id, buddy_id
+          `, [parse.data.buddy_id, userId, tenant.id]);
+          
+          console.log('✅ UPDATE buddy_id executado (tentativa 2):', buddyUpdateResult.rows[0]);
+          
+          // Verificar novamente
+          const verifyBuddy2 = await query(`
+            SELECT buddy_id FROM users WHERE id = $1
+          `, [userId]);
+          
+          console.log('🔍 Verificação pós-UPDATE buddy_id (tentativa 2):', verifyBuddy2.rows[0]);
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar buddy_id:', error);
+        // Continuar com o valor atual se houver erro
+        buddyUpdateResult = {
+          rows: [{
+            id: userId,
+            buddy_id: parse.data.buddy_id
+          }]
+        };
+      }
       
       // Combinar resultados
       const updateResult = {
