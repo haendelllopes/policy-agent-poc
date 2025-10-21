@@ -7,6 +7,17 @@ class GPTChatService {
     this.personalizationEngine = new PersonalizationEngine();
   }
 
+  getBaseUrl() {
+    const isProduction = process.env.NODE_ENV === 'production' || 
+                        process.env.VERCEL === '1';
+    
+    if (isProduction) {
+      return 'https://navigator-gules.vercel.app';
+    }
+    
+    return 'http://localhost:3000';
+  }
+
   async generateResponse(message, userContext, pageContext) {
     // 1. Preparar mensagens para OpenAI
     const systemMessage = await this.personalizationEngine.generateSystemMessage(userContext, pageContext);
@@ -161,21 +172,22 @@ class GPTChatService {
   // Usar APIs existentes do backend - NÃO criar novas
   async executeTool(toolName, parameters, userContext) {
     const axios = require('axios');
+    const baseUrl = this.getBaseUrl();
     
     switch (toolName) {
       case 'buscar_trilhas_disponiveis':
-        const trilhasResponse = await axios.get(`http://localhost:3000/api/agent/trilhas/disponiveis/${parameters.colaborador_id}`);
+        const trilhasResponse = await axios.get(`${baseUrl}/api/agent/trilhas/disponiveis/${parameters.colaborador_id}`);
         return trilhasResponse.data;
         
       case 'iniciar_trilha':
-        const iniciarResponse = await axios.post('http://localhost:3000/api/agent/trilhas/iniciar', {
+        const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar`, {
           trilha_id: parameters.trilha_id,
           colaborador_id: parameters.colaborador_id
         });
         return iniciarResponse.data;
         
       case 'registrar_feedback':
-        const feedbackResponse = await axios.post('http://localhost:3000/api/agent/trilhas/feedback', {
+        const feedbackResponse = await axios.post(`${baseUrl}/api/agent/trilhas/feedback`, {
           trilha_id: parameters.trilha_id,
           feedback: parameters.feedback,
           colaborador_id: parameters.colaborador_id
@@ -183,25 +195,25 @@ class GPTChatService {
         return feedbackResponse.data;
         
       case 'buscar_documentos':
-        const docsResponse = await axios.get(`http://localhost:3000/api/documents/search?q=${parameters.query}&colaborador_id=${parameters.colaborador_id}`);
+        const docsResponse = await axios.get(`${baseUrl}/api/documents/search?q=${parameters.query}&colaborador_id=${parameters.colaborador_id}`);
         return docsResponse.data;
         
       case 'finalizar_trilha':
-        const finalizarResponse = await axios.post('http://localhost:3000/api/agent/trilhas/finalizar', {
+        const finalizarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/finalizar`, {
           trilha_id: parameters.trilha_id,
           colaborador_id: parameters.colaborador_id
         });
         return finalizarResponse.data;
         
       case 'reiniciar_trilha':
-        const reiniciarResponse = await axios.post('http://localhost:3000/api/agent/trilhas/reiniciar', {
+        const reiniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/reativar`, {
           trilha_id: parameters.trilha_id,
           colaborador_id: parameters.colaborador_id
         });
         return reiniciarResponse.data;
         
       case 'criar_anotacao':
-        const anotacaoResponse = await axios.post('http://localhost:3000/api/agente/anotacoes', {
+        const anotacaoResponse = await axios.post(`${baseUrl}/api/agente/anotacoes`, {
           colaborador_id: parameters.colaborador_id,
           trilha_id: parameters.trilha_id,
           tipo: parameters.tipo,
@@ -218,7 +230,7 @@ class GPTChatService {
         return anotacaoResponse.data;
         
       case 'registrar_sentimento':
-        const sentimentoResponse = await axios.post('http://localhost:3000/api/sentimentos', {
+        const sentimentoResponse = await axios.post(`${baseUrl}/api/sentimentos`, {
           colaborador_id: parameters.colaborador_id,
           sentimento: parameters.sentimento,
           intensidade: parameters.intensidade,
@@ -230,7 +242,7 @@ class GPTChatService {
         return sentimentoResponse.data;
         
       case 'gerar_melhoria':
-        const melhoriaResponse = await axios.post('http://localhost:3000/api/ai/improvements', {
+        const melhoriaResponse = await axios.post(`${baseUrl}/api/ai/improvements`, {
           categoria: parameters.categoria,
           prioridade: parameters.prioridade,
           titulo: parameters.titulo,
