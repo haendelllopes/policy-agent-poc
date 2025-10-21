@@ -23,7 +23,17 @@ class HybridChatWidget {
   }
 
   generateUserId() {
-    return 'user-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    // Usar usuário real existente na tabela users
+    const usuariosExistentes = [
+      '3ba1e64a-88f1-4aa0-aa9a-4615a5b7e1f2', // Vanessa - Diretor
+      'f2764ec7-5398-4df7-a865-540fa94283ea', // Gustavo Siciliano - Administrador
+      '97625a2b-ab7b-4f6f-bd52-be3aed47647d', // Livia Wanderley - Gerente
+      'd423fce6-525e-43ad-b43f-834e533c18d3', // Gustavo Siciliano - Administrador
+      'cdcd92e6-cded-4933-9822-ed39b5953cd0'  // novo1 - Gerente
+    ];
+    
+    // Usar o primeiro usuário (Vanessa) como padrão para chat
+    return usuariosExistentes[0];
   }
 
   getPageContext() {
