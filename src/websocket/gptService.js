@@ -174,13 +174,16 @@ class GPTChatService {
     const axios = require('axios');
     const baseUrl = this.getBaseUrl();
     
+    // Extrair tenant_id do contexto do usuário
+    const tenantId = userContext?.tenant_id || '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant padrão
+    
     switch (toolName) {
       case 'buscar_trilhas_disponiveis':
-        const trilhasResponse = await axios.get(`${baseUrl}/api/agent/trilhas/disponiveis/${parameters.colaborador_id}`);
+        const trilhasResponse = await axios.get(`${baseUrl}/api/agent/trilhas/disponiveis/${parameters.colaborador_id}?tenant_id=${tenantId}`);
         return trilhasResponse.data;
         
       case 'iniciar_trilha':
-        const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar`, {
+        const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
           trilha_id: parameters.trilha_id,
           colaborador_id: parameters.colaborador_id
         });
@@ -201,14 +204,16 @@ class GPTChatService {
       case 'finalizar_trilha':
         const finalizarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/finalizar`, {
           trilha_id: parameters.trilha_id,
-          colaborador_id: parameters.colaborador_id
+          colaborador_id: parameters.colaborador_id,
+          tenant_id: tenantId
         });
         return finalizarResponse.data;
         
       case 'reiniciar_trilha':
         const reiniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/reativar`, {
           trilha_id: parameters.trilha_id,
-          colaborador_id: parameters.colaborador_id
+          colaborador_id: parameters.colaborador_id,
+          tenant_id: tenantId
         });
         return reiniciarResponse.data;
         
