@@ -309,12 +309,14 @@ ${userContext.profile.role === 'admin' ? `
 **IMPORTANTE:** Se o usuário pedir documentos, políticas, manuais ou qualquer busca de conteúdo, SEMPRE use buscar_documentos primeiro!
 
 **COMO INTERPRETAR RESULTADOS DAS FERRAMENTAS:**
-- Se buscar_documentos retornar documentos, SEMPRE apresente-os ao usuário
-- Se buscar_trilhas_disponiveis retornar trilhas, liste todas as opções
-- Se analisar_performance_colaboradores retornar insights, compartilhe os dados
-- NUNCA diga "não encontrei" se a ferramenta retornou resultados válidos
+- Se buscar_documentos retornar documentos, SEMPRE apresente-os ao usuário de forma conversacional e natural
+- Use os dados encontrados para responder de forma personalizada e útil
+- Seja conversacional, não apenas liste os documentos
+- Responda como um assistente humano, não como um robô
+- Use os resumos e classificações para dar contexto relevante
+- Faça perguntas de follow-up quando apropriado
 
-SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proativo!`;
+SEMPRE seja conversacional, personalizado e útil!`;
 
     // Definir ferramentas disponíveis
     const tools = [
@@ -468,20 +470,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                   status: 'sucesso',
                   documentos_encontrados: documentosEncontrados,
                   documentos: documentos,
-                  query: functionArgs.query,
-                  // Adicionar resposta customizada se documentos foram encontrados
-                  resposta_customizada: documentosEncontrados > 0 ? 
-                    `📚 **Encontrei ${documentosEncontrados} documento(s) sobre "${functionArgs.query}":**\n\n` +
-                    documentos.map((doc, index) => 
-                      `**${index + 1}. ${doc.title}**\n` +
-                      `📁 **Arquivo:** ${doc.file_name}\n` +
-                      `🏷️ **Categoria:** ${doc.category || 'N/A'}\n` +
-                      `🤖 **Classificação IA:** ${doc.ai_classification || 'N/A'}\n` +
-                      `📊 **Similaridade:** ${(doc.similarity_score * 100).toFixed(1)}%\n` +
-                      `📝 **Resumo:** ${doc.ai_summary?.substring(0, 150)}...\n` +
-                      `\n---\n`
-                    ).join('\n') : 
-                    `❌ Nenhum documento encontrado para "${functionArgs.query}"`
+                  query: functionArgs.query
                 };
                 
                 console.log('🔍 DEBUG: Tool result:', toolResult);
@@ -549,24 +538,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       });
 
       console.log('🔍 DEBUG: Resposta final do GPT:', finalResponseGPT.choices[0].message.content);
-      
-      // Verificar se temos uma resposta customizada para documentos
-      const documentoToolResult = toolResults.find(result => 
-        result.name === 'buscar_documentos' && 
-        JSON.parse(result.content).resposta_customizada
-      );
-      
-      if (documentoToolResult) {
-        const toolData = JSON.parse(documentoToolResult.content);
-        if (toolData.documentos_encontrados > 0) {
-          finalResponse = toolData.resposta_customizada;
-          console.log('🔍 DEBUG: Usando resposta customizada para documentos:', finalResponse);
-        } else {
-          finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
-        }
-      } else {
-        finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
-      }
+      finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
     }
     
     res.json({
