@@ -542,9 +542,29 @@ class HybridChatWidget {
   }
 
   hideTypingIndicator() {
+    // Procurar por indicador de digitação de diferentes formas
     const typingIndicator = this.messagesContainer.querySelector('.typing-indicator');
     if (typingIndicator) {
       typingIndicator.remove();
+      return;
+    }
+    
+    // Procurar por parágrafo com texto de digitação
+    const paragraphs = this.messagesContainer.querySelectorAll('p');
+    for (let p of paragraphs) {
+      if (p.textContent.includes('🤖 Digitando...')) {
+        p.remove();
+        return;
+      }
+    }
+    
+    // Procurar por qualquer elemento com texto de digitação
+    const allElements = this.messagesContainer.querySelectorAll('*');
+    for (let el of allElements) {
+      if (el.textContent.includes('🤖 Digitando...')) {
+        el.remove();
+        return;
+      }
     }
   }
 
