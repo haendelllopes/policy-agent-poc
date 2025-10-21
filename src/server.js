@@ -550,15 +550,68 @@ SEMPRE seja conversacional, personalizado e útil!`;
       }
     ];
 
-    // Detectar se deve forçar busca de dados do colaborador
-    const shouldForceColaboradorData = message.toLowerCase().includes('gestor') || 
-                                     message.toLowerCase().includes('buddy') || 
-                                     message.toLowerCase().includes('departamento') || 
-                                     message.toLowerCase().includes('cargo') ||
-                                     message.toLowerCase().includes('meu') ||
-                                     message.toLowerCase().includes('minha') ||
-                                     message.toLowerCase().includes('quem é') ||
-                                     message.toLowerCase().includes('qual é');
+    // Detectar perguntas sobre gestor e responder diretamente
+    const isGestorQuestion = message.toLowerCase().includes('gestor') && 
+                            (message.toLowerCase().includes('quem') || 
+                             message.toLowerCase().includes('nome') ||
+                             message.toLowerCase().includes('meu'));
+
+    if (isGestorQuestion && userId !== 'admin-demo') {
+      try {
+        console.log('🔧 Detectada pergunta sobre gestor - buscando dados diretamente');
+        const colaboradorId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
+        const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+        const userResponse = await axios.get(`${baseUrl}/api/users/${colaboradorId}`, {
+          headers: {
+            'x-tenant-subdomain': 'demo'
+          }
+        });
+        
+        console.log('🔍 DEBUG: Dados do colaborador encontrados:', userResponse.data);
+        
+        // Resposta personalizada direta
+        const personalizedResponse = `Olá ${userResponse.data.name}! 😊
+
+📋 **Suas informações:**
+• **Nome:** ${userResponse.data.name}
+• **Cargo:** ${userResponse.data.position}
+• **Departamento:** ${userResponse.data.department}
+• **Data de admissão:** ${new Date(userResponse.data.start_date).toLocaleDateString('pt-BR')}
+
+🤔 **Sobre seu gestor:**
+Infelizmente não tenho informações específicas sobre quem é seu gestor direto no sistema atual. Recomendo verificar com o RH ou consultar o organograma da empresa.
+
+Posso ajudar com outras informações sobre suas trilhas de onboarding! 🚀`;
+
+        // Salvar conversa
+        await saveConversation(
+          userId, 
+          message, 
+          personalizedResponse, 
+          sentimentAnalysis.sentimento, 
+          sentimentAnalysis.intensidade
+        );
+
+        return res.json({
+          message: personalizedResponse,
+          timestamp: new Date().toISOString(),
+          status: 'success',
+          sentiment: {
+            detected: sentimentAnalysis.sentimento,
+            intensity: sentimentAnalysis.intensidade,
+            tone: sentimentAnalysis.fatores_detectados?.tom || 'neutro'
+          },
+          conversationHistory: {
+            loaded: conversationHistory.length,
+            saved: true
+          },
+          directResponse: true
+        });
+      } catch (error) {
+        console.error('❌ Erro ao buscar dados do colaborador:', error);
+        // Continuar com o fluxo normal se houver erro
+      }
+    }
 
     // Detectar se deve forçar busca de documentos
     const shouldForceDocuments = message.toLowerCase().includes('documento') || 
@@ -569,10 +622,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
 
     // Configurar tool_choice baseado no contexto
     let toolChoice = 'auto';
-    if (shouldForceColaboradorData && userId !== 'admin-demo') {
-      toolChoice = { type: 'function', function: { name: 'buscar_dados_colaborador' } };
-      console.log('🔧 Forçando uso da ferramenta buscar_dados_colaborador');
-    } else if (shouldForceDocuments) {
+    if (shouldForceDocuments) {
       toolChoice = { type: 'function', function: { name: 'buscar_documentos' } };
       console.log('🔧 Forçando uso da ferramenta buscar_documentos');
     }
