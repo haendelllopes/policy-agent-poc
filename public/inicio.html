@@ -1089,6 +1089,24 @@ textarea:focus {
                     </div>
                 </div>
 
+                <!-- Gestor e Buddy -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Gestor</label>
+                        <select id="userGestor" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: white;">
+                            <option value="">Selecione um gestor</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 0.8rem;">Líder direto responsável pelo colaborador</small>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Buddy</label>
+                        <select id="userBuddy" style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: white;">
+                            <option value="">Selecione um buddy</option>
+                        </select>
+                        <small style="color: #64748b; font-size: 0.8rem;">Colega que ajudará no onboarding do colaborador</small>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
                     <button type="submit" class="btn-primary" style="padding: 0.75rem 2rem; border-radius: 8px; border: none; font-weight: 500; cursor: pointer;">
                         Adicionar Funcionário
@@ -1514,6 +1532,9 @@ textarea:focus {
                 // Popular dropdown de departamentos
                 populateDepartmentDropdown();
                 
+                // Popular gestor e buddy com valores atuais
+                populateGestorBuddyDropdowns(userData.gestor_id || '', userData.buddy_id || '');
+                
                 // Mostrar modal
                 document.getElementById('addUserModal').style.display = 'block';
                 
@@ -1576,6 +1597,9 @@ textarea:focus {
             // Popular dropdown de departamentos
             populateDepartmentDropdown();
             
+            // Popular dropdowns de gestor e buddy
+            populateGestorBuddyDropdowns();
+            
             // Definir data padrão como hoje e status como ativo
             document.getElementById('userStartDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('userStatus').value = 'active';
@@ -1608,6 +1632,59 @@ textarea:focus {
                     newOption.textContent = option.textContent;
                     departmentSelect.appendChild(newOption);
                 }
+            }
+        }
+
+        // Popular dropdowns de Gestor e Buddy
+        async function populateGestorBuddyDropdowns(selectedGestor = '', selectedBuddy = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const selectGestor = document.getElementById('userGestor');
+            const selectBuddy = document.getElementById('userBuddy');
+            
+            // Verificar se já foram populados para evitar duplicação
+            if (selectGestor.children.length > 1 || selectBuddy.children.length > 1) {
+                console.log('Dropdowns já populados, pulando...');
+                return;
+            }
+            
+            // Reset selects
+            selectGestor.innerHTML = '<option value="">Selecione um gestor</option>';
+            selectBuddy.innerHTML = '<option value="">Selecione um buddy</option>';
+            
+            try {
+                const users = await fetchData(`/api/users?tenant=${tenant}`);
+                
+                if (!users || users.length === 0) {
+                    console.warn('Nenhum usuário disponível para gestor/buddy');
+                    return;
+                }
+                
+                // Filtrar apenas usuários ativos e mapear para formato esperado
+                const activeUsers = users.filter(user => user.status === 'active');
+                
+                // Popular ambos os selects com os usuários ativos
+                activeUsers.forEach(user => {
+                    // Option para Gestor
+                    const optionGestor = document.createElement('option');
+                    optionGestor.value = user.id;
+                    optionGestor.textContent = user.name;
+                    selectGestor.appendChild(optionGestor);
+                    
+                    // Option para Buddy (criar uma cópia para evitar referência)
+                    const optionBuddy = document.createElement('option');
+                    optionBuddy.value = user.id;
+                    optionBuddy.textContent = user.name;
+                    selectBuddy.appendChild(optionBuddy);
+                });
+                
+                // Selecionar valores se fornecidos
+                if (selectedGestor) selectGestor.value = selectedGestor;
+                if (selectedBuddy) selectBuddy.value = selectedBuddy;
+                
+                console.log(`✅ Dropdowns Gestor/Buddy populados com ${activeUsers.length} usuários ativos`);
+            } catch (e) {
+                console.error('Erro ao carregar usuários para gestor/buddy:', e);
+                alert('Erro ao carregar lista de usuários');
             }
         }
 
@@ -1942,7 +2019,9 @@ textarea:focus {
                     position: document.getElementById('userPosition').value.trim(),
                     start_date: document.getElementById('userStartDate').value,
                     phone: formatPhoneForDatabase(document.getElementById('userPhone').value),
-                    status: document.getElementById('userStatus').value
+                    status: document.getElementById('userStatus').value,
+                    gestor_id: document.getElementById('userGestor').value || null,
+                    buddy_id: document.getElementById('userBuddy').value || null
                 };
                 
                 // Validações básicas
@@ -1965,6 +2044,8 @@ textarea:focus {
                 }
                 
                 console.log(' Dados do usuário:', userData);
+                console.log('🎯 Gestor ID:', userData.gestor_id, 'Tipo:', typeof userData.gestor_id);
+                console.log('🎯 Buddy ID:', userData.buddy_id, 'Tipo:', typeof userData.buddy_id);
                 
                 // Enviar para a API
                 const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
