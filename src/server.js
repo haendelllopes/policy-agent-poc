@@ -427,11 +427,15 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
             case 'buscar_documentos':
               // Buscar documentos reais usando o endpoint existente
               try {
+                console.log('🔍 DEBUG: Buscando documentos com query:', functionArgs.query);
                 const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
                 const searchResponse = await axios.post(`${baseUrl}/api/documents/semantic-search`, {
                   query: functionArgs.query,
                   colaborador_id: functionArgs.colaborador_id || 'demo-user'
                 });
+                
+                console.log('🔍 DEBUG: Resposta da busca:', searchResponse.data);
+                console.log('🔍 DEBUG: Documentos encontrados:', searchResponse.data.documents?.length || 0);
                 
                 toolResult = {
                   status: 'sucesso',
@@ -439,6 +443,8 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
                   documentos: searchResponse.data.documents || [],
                   query: functionArgs.query
                 };
+                
+                console.log('🔍 DEBUG: Tool result:', toolResult);
               } catch (error) {
                 console.error('❌ Erro ao buscar documentos:', error);
                 toolResult = {
@@ -484,6 +490,8 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       }
 
       // Gerar resposta final com os resultados das ferramentas
+      console.log('🔍 DEBUG: Tool results sendo enviados para GPT:', JSON.stringify(toolResults, null, 2));
+      
       const finalResponseGPT = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -500,6 +508,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
         max_tokens: 500
       });
 
+      console.log('🔍 DEBUG: Resposta final do GPT:', finalResponseGPT.choices[0].message.content);
       finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
     }
     
