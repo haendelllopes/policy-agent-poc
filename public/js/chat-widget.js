@@ -23,17 +23,40 @@ class HybridChatWidget {
   }
 
   generateUserId() {
-    // Usar usuário real existente na tabela users
-    const usuariosExistentes = [
-      '3ba1e64a-88f1-4aa0-aa9a-4615a5b7e1f2', // Vanessa - Diretor
-      'f2764ec7-5398-4df7-a865-540fa94283ea', // Gustavo Siciliano - Administrador
-      '97625a2b-ab7b-4f6f-bd52-be3aed47647d', // Livia Wanderley - Gerente
-      'd423fce6-525e-43ad-b43f-834e533c18d3', // Gustavo Siciliano - Administrador
-      'cdcd92e6-cded-4933-9822-ed39b5953cd0'  // novo1 - Gerente
-    ];
+    // Tentar pegar do localStorage primeiro
+    const loggedUserId = localStorage.getItem('user_id') || 
+                        localStorage.getItem('colaborador_id');
     
-    // Usar o primeiro usuário (Vanessa) como padrão para chat
-    return usuariosExistentes[0];
+    if (loggedUserId) {
+      console.log('✅ Usando usuário logado:', loggedUserId);
+      return loggedUserId;
+    }
+    
+    // Fallback para usuário padrão se não estiver logado
+    console.log('⚠️ Usuário não logado, usando fallback');
+    return '3ba1e64a-88f1-4aa0-aa9a-4615a5b7e1f2'; // Vanessa como fallback
+  }
+
+  isUserLoggedIn() {
+    const userId = localStorage.getItem('user_id');
+    const userName = localStorage.getItem('user_name');
+    return userId && userName;
+  }
+
+  showLoginPrompt() {
+    // Mostrar prompt para login
+    const loginPrompt = document.createElement('div');
+    loginPrompt.className = 'login-prompt';
+    loginPrompt.innerHTML = `
+      <div class="login-prompt-content">
+        <h3>🔐 Login Necessário</h3>
+        <p>Para usar o chat, você precisa estar logado na plataforma.</p>
+        <button onclick="window.location.href='/login'">Fazer Login</button>
+        <button onclick="this.parentElement.parentElement.remove()">Fechar</button>
+      </div>
+    `;
+    
+    document.body.appendChild(loginPrompt);
   }
 
   getPageContext() {
@@ -46,6 +69,13 @@ class HybridChatWidget {
 
   async init() {
     console.log('🚀 Inicializando Chat Widget Híbrido...');
+    
+    // Verificar se usuário está logado
+    if (!this.isUserLoggedIn()) {
+      console.log('⚠️ Usuário não logado, chat em modo limitado');
+      this.showLoginPrompt();
+      return;
+    }
     
     // Criar interface
     this.createWidget();

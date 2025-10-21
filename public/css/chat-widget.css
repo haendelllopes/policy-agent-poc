@@ -399,3 +399,75 @@
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
+
+/* Estilos para prompt de login */
+.login-prompt {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.login-prompt-content {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  font-family: 'Montserrat', 'Roboto', sans-serif;
+}
+
+.login-prompt-content h3 {
+  margin: 0 0 16px 0;
+  color: #343A40;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.login-prompt-content p {
+  margin: 0 0 24px 0;
+  color: #6C7570;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.login-prompt-content button {
+  background: #17A2B8;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0 8px;
+  transition: all 0.2s ease;
+}
+
+.login-prompt-content button:hover {
+  background: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.login-prompt-content button:last-child {
+  background: #6c757d;
+}
+
+.login-prompt-content button:last-child:hover {
+  background: #5a6268;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
