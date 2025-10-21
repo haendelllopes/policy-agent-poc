@@ -25,6 +25,75 @@ router.post('/insert-mock-data', async (req, res) => {
         const tenantId = '5978f911-738b-4aae-802a-f037fdac2e64';
         const userId = '4ab6c765-bcfc-4280-84cd-3190fcf881c2';
         
+        // 0. Criar tabelas necessárias se não existirem
+        console.log('🏗️ Criando tabelas necessárias...');
+        
+        // Criar tabela notifications
+        try {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS notifications (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+                    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    tipo VARCHAR(50) NOT NULL,
+                    titulo TEXT NOT NULL,
+                    mensagem TEXT,
+                    dados JSONB,
+                    link VARCHAR(255),
+                    lida BOOLEAN DEFAULT false,
+                    lida_em TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+            console.log('✅ Tabela notifications criada/verificada');
+        } catch (error) {
+            console.log('⚠️ Erro ao criar tabela notifications:', error.message);
+        }
+        
+        // Adicionar colunas necessárias em agente_anotacoes
+        try {
+            await pool.query(`
+                ALTER TABLE agente_anotacoes 
+                ADD COLUMN IF NOT EXISTS severidade VARCHAR(20) CHECK (severidade IN ('baixa', 'media', 'alta', 'critica')),
+                ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ativo' CHECK (status IN ('ativo', 'resolvido', 'ignorado', 'em_analise')),
+                ADD COLUMN IF NOT EXISTS resolvido_em TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS resolvido_por UUID REFERENCES users(id),
+                ADD COLUMN IF NOT EXISTS proactive_score INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS alerta_gerado BOOLEAN DEFAULT false
+            `);
+            console.log('✅ Colunas adicionadas em agente_anotacoes');
+        } catch (error) {
+            console.log('⚠️ Erro ao adicionar colunas em agente_anotacoes:', error.message);
+        }
+        
+        // Adicionar colunas necessárias em onboarding_improvements
+        try {
+            await pool.query(`
+                ALTER TABLE onboarding_improvements 
+                ADD COLUMN IF NOT EXISTS tipo_acao VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS alvo_colaborador_id UUID REFERENCES users(id),
+                ADD COLUMN IF NOT EXISTS justificativa_ia TEXT,
+                ADD COLUMN IF NOT EXISTS dados_acao JSONB,
+                ADD COLUMN IF NOT EXISTS executado_em TIMESTAMP
+            `);
+            console.log('✅ Colunas adicionadas em onboarding_improvements');
+        } catch (error) {
+            console.log('⚠️ Erro ao adicionar colunas em onboarding_improvements:', error.message);
+        }
+        
+        // Adicionar colunas necessárias em users
+        try {
+            await pool.query(`
+                ALTER TABLE users 
+                ADD COLUMN IF NOT EXISTS risk_score INTEGER DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS risk_score_atualizado_em TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS ultima_atividade_em TIMESTAMP
+            `);
+            console.log('✅ Colunas adicionadas em users');
+        } catch (error) {
+            console.log('⚠️ Erro ao adicionar colunas em users:', error.message);
+        }
+        
         let insertedCount = 0;
         let errorCount = 0;
         
