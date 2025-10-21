@@ -382,6 +382,9 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
 
     // Chamar GPT-4o com ferramentas
     console.log('🚀 Fazendo chamada para OpenAI GPT-4o...');
+    console.log('🔍 DEBUG: Mensagem do usuário:', message);
+    console.log('🔍 DEBUG: Ferramentas disponíveis:', tools.map(t => t.function.name));
+    
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -394,6 +397,7 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       max_tokens: 500
     });
     console.log('✅ Resposta OpenAI recebida:', response.choices[0]?.message?.content?.substring(0, 100) + '...');
+    console.log('🔍 DEBUG: Tool calls recebidos:', response.choices[0]?.message?.tool_calls);
 
     const responseMessage = response.choices[0].message;
     let finalResponse = responseMessage.content || 'Desculpe, não consegui processar sua mensagem.';
