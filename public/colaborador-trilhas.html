@@ -1026,28 +1026,33 @@ a:hover {
                     });
                 };
                 
-                // Tentar carregar Supabase primeiro (com timeout)
+                // Tentar carregar Supabase primeiro (com timeout agressivo)
                 try {
-                    await new Promise(resolve => {
-                        const checkSupabase = () => {
-                            if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
-                                console.log('✅ Supabase JS carregado');
-                                resolve();
-                            } else {
-                                setTimeout(checkSupabase, 50);
-                            }
-                        };
-                        checkSupabase();
-                    });
+                    await Promise.race([
+                        new Promise(resolve => {
+                            const checkSupabase = () => {
+                                if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
+                                    console.log('✅ Supabase JS carregado');
+                                    resolve();
+                                } else {
+                                    setTimeout(checkSupabase, 50);
+                                }
+                            };
+                            checkSupabase();
+                        }),
+                        new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error('Supabase timeout')), 2000); // Timeout de 2s
+                        })
+                    ]);
                     
                     // Se Supabase carregou, carregar supabase-client.js
                     try {
-                        await loadScript('/js/supabase-client.js', 3000);
+                        await loadScript('/js/supabase-client.js', 2000);
                     } catch (error) {
                         console.warn('⚠️ Supabase client não carregou, continuando sem ele');
                     }
                 } catch (error) {
-                    console.warn('⚠️ Supabase não carregou, continuando sem ele');
+                    console.warn('⚠️ Supabase não carregou em 2s, continuando sem ele');
                 }
                 
                 // SEMPRE carregar o chat widget (independente do Supabase)
