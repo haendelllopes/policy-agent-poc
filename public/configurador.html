@@ -1436,6 +1436,10 @@ a:hover {
             if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
                 return 'demo';
             }
+            // Para produção, sempre usar 'demo' como tenant padrão
+            if (hostname.includes('vercel.app') || hostname.includes('navigator-gules')) {
+                return 'demo';
+            }
             const parts = hostname.split('.');
             return parts.length > 1 ? parts[0] : 'demo';
         }
