@@ -538,10 +538,32 @@ SEMPRE seja conversacional, personalizado e útil!`;
       }
     ];
 
-    // Chamar GPT-4o com ferramentas
-    console.log('🚀 Fazendo chamada para OpenAI GPT-4o...');
-    console.log('🔍 DEBUG: Mensagem do usuário:', message);
-    console.log('🔍 DEBUG: Ferramentas disponíveis:', tools.map(t => t.function.name));
+    // Detectar se deve forçar busca de dados do colaborador
+    const shouldForceColaboradorData = message.toLowerCase().includes('gestor') || 
+                                     message.toLowerCase().includes('buddy') || 
+                                     message.toLowerCase().includes('departamento') || 
+                                     message.toLowerCase().includes('cargo') ||
+                                     message.toLowerCase().includes('meu') ||
+                                     message.toLowerCase().includes('minha') ||
+                                     message.toLowerCase().includes('quem é') ||
+                                     message.toLowerCase().includes('qual é');
+
+    // Detectar se deve forçar busca de documentos
+    const shouldForceDocuments = message.toLowerCase().includes('documento') || 
+                               message.toLowerCase().includes('política') || 
+                               message.toLowerCase().includes('manual') || 
+                               message.toLowerCase().includes('buscar') || 
+                               message.toLowerCase().includes('encontrar');
+
+    // Configurar tool_choice baseado no contexto
+    let toolChoice = 'auto';
+    if (shouldForceColaboradorData && userId !== 'admin-demo') {
+      toolChoice = { type: 'function', function: { name: 'buscar_dados_colaborador' } };
+      console.log('🔧 Forçando uso da ferramenta buscar_dados_colaborador');
+    } else if (shouldForceDocuments) {
+      toolChoice = { type: 'function', function: { name: 'buscar_documentos' } };
+      console.log('🔧 Forçando uso da ferramenta buscar_documentos');
+    }
     
     // Preparar mensagens com histórico
     const messages = [
@@ -567,12 +589,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
       model: 'gpt-4o',
       messages: messages,
       tools: tools,
-      tool_choice: message.toLowerCase().includes('documento') || 
-                   message.toLowerCase().includes('política') || 
-                   message.toLowerCase().includes('manual') || 
-                   message.toLowerCase().includes('buscar') || 
-                   message.toLowerCase().includes('encontrar') ? 
-                   { type: 'function', function: { name: 'buscar_documentos' } } : 'auto',
+      tool_choice: toolChoice,
       temperature: 0.7,
       max_tokens: 500
     });
