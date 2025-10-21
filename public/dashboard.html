@@ -2872,7 +2872,7 @@ a:hover {
                     updateMetricCard('trilhasAtivas', data.trilhasAtivas || 0, data.trilhasTrend || '+0%');
                     updateMetricCard('usuariosOnboarding', data.usuariosOnboarding || 0, data.usuariosTrend || '+0%');
                     updateMetricCard('melhoriasSugeridas', data.melhoriasSugeridas || 0, data.melhoriasTrend || '+0%');
-                    updateMetricCard('sentimentoMedio', data.sentimentoMedio || '--', data.sentimentoTrend || '+0%');
+                    updateMetricCard('sentimentoMedio', data.sentimentoMedio ? parseFloat(data.sentimentoMedio).toFixed(1) : '--', data.sentimentoTrend || '+0%');
                     updateMetricCard('alertasAtivos', data.alertasAtivos || 0, data.alertasTrend || '+0%');
                     updateMetricCard('colaboradoresRisco', data.colaboradoresRisco || 0, data.riscoTrend || '+0%');
                     
@@ -2912,25 +2912,46 @@ a:hover {
         // Carregar gráficos do dashboard
         async function loadDashboardCharts() {
             try {
-                // Trilhas por Cargo
-                await updateTrilhasCargoChart();
+                console.log('📊 Carregando dados dos gráficos do banco...');
                 
-                // Sentimento por Cargo
-                await updateSentimentoCargoChart();
+                // Buscar dados reais do banco
+                const tenantId = '5978f911-738b-4aae-802a-f037fdac2e64';
+                const response = await fetch(`/api/dashboard/metrics/${tenantId}`);
                 
-                // Alertas por Severidade
-                await updateAlertasSeveridadeChart();
-                
-                // Tendência de Engajamento
-                await updateEngajamentoChart();
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📊 Dados dos gráficos carregados:', data.graficos);
+                    
+                    // Trilhas por Cargo (dados reais)
+                    await updateTrilhasCargoChart(data.graficos?.trilhasPorCargo);
+                    
+                    // Sentimento por Cargo (dados reais)
+                    await updateSentimentoCargoChart(data.graficos?.sentimentoPorCargo);
+                    
+                    // Alertas por Severidade (dados reais)
+                    await updateAlertasSeveridadeChart(data.graficos?.alertasPorSeveridade);
+                    
+                    // Tendência de Engajamento (dados reais)
+                    await updateEngajamentoChart(data.graficos?.tendenciaEngajamento);
+                    
+                } else {
+                    throw new Error('Erro ao buscar dados dos gráficos');
+                }
                 
             } catch (error) {
                 console.error('❌ Erro ao carregar gráficos:', error);
+                console.log('📊 Usando dados mock como fallback...');
+                
+                // Fallback com dados mock
+                await updateTrilhasCargoChart();
+                await updateSentimentoCargoChart();
+                await updateAlertasSeveridadeChart();
+                await updateEngajamentoChart();
             }
         }
         
         // Atualizar gráfico de Trilhas por Cargo
-        async function updateTrilhasCargoChart() {
+        async function updateTrilhasCargoChart(realData = null) {
             const canvas = document.getElementById('trilhasCargoChart');
             if (!canvas) return;
             
@@ -2943,17 +2964,37 @@ a:hover {
             const ctx = canvas.getContext('2d');
             const filter = document.getElementById('trilhasCargoFilter')?.value || 'ativo';
             
-            // Dados mock para demonstração
-            const data = {
-                labels: ['Desenvolvedor', 'Designer', 'Product Manager', 'QA', 'DevOps'],
-                datasets: [{
-                    label: filter === 'ativo' ? 'Trilhas Ativas' : filter === 'concluido' ? 'Concluídas' : 'Atrasadas',
-                    data: filter === 'ativo' ? [8, 6, 4, 5, 3] : filter === 'concluido' ? [12, 8, 6, 7, 4] : [2, 1, 1, 2, 1],
-                    backgroundColor: filter === 'ativo' ? '#3b82f6' : filter === 'concluido' ? '#10b981' : '#ef4444',
-                    borderColor: filter === 'ativo' ? '#2563eb' : filter === 'concluido' ? '#059669' : '#dc2626',
-                    borderWidth: 1
-                }]
-            };
+            let chartData;
+            
+            if (realData && realData.length > 0) {
+                // Usar dados reais do banco
+                chartData = {
+                    labels: realData.map(item => item.cargo),
+                    datasets: [{
+                        label: filter === 'ativo' ? 'Trilhas Ativas' : filter === 'concluido' ? 'Concluídas' : 'Atrasadas',
+                        data: realData.map(item => {
+                            if (filter === 'ativo') return item.ativas;
+                            if (filter === 'concluido') return item.concluidas;
+                            return item.atrasadas;
+                        }),
+                        backgroundColor: filter === 'ativo' ? '#3b82f6' : filter === 'concluido' ? '#10b981' : '#ef4444',
+                        borderColor: filter === 'ativo' ? '#2563eb' : filter === 'concluido' ? '#059669' : '#dc2626',
+                        borderWidth: 1
+                    }]
+                };
+            } else {
+                // Dados mock para demonstração
+                chartData = {
+                    labels: ['Desenvolvedor', 'Designer', 'Product Manager', 'QA', 'DevOps'],
+                    datasets: [{
+                        label: filter === 'ativo' ? 'Trilhas Ativas' : filter === 'concluido' ? 'Concluídas' : 'Atrasadas',
+                        data: filter === 'ativo' ? [8, 6, 4, 5, 3] : filter === 'concluido' ? [12, 8, 6, 7, 4] : [2, 1, 1, 2, 1],
+                        backgroundColor: filter === 'ativo' ? '#3b82f6' : filter === 'concluido' ? '#10b981' : '#ef4444',
+                        borderColor: filter === 'ativo' ? '#2563eb' : filter === 'concluido' ? '#059669' : '#dc2626',
+                        borderWidth: 1
+                    }]
+                };
+            }
             
             // Destruir gráfico existente se houver
             if (window.trilhasCargoChart && typeof window.trilhasCargoChart.destroy === 'function') {
@@ -2962,7 +3003,7 @@ a:hover {
             
             window.trilhasCargoChart = new Chart(ctx, {
                 type: 'bar',
-                data: data,
+                data: chartData,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -2981,7 +3022,7 @@ a:hover {
         }
         
         // Atualizar gráfico de Sentimento por Cargo
-        async function updateSentimentoCargoChart() {
+        async function updateSentimentoCargoChart(realData = null) {
             const canvas = document.getElementById('sentimentoCargoChart');
             if (!canvas) return;
             
@@ -2993,19 +3034,37 @@ a:hover {
             
             const ctx = canvas.getContext('2d');
             
-            // Dados mock para demonstração
-            const data = {
-                labels: ['Desenvolvedor', 'Designer', 'Product Manager', 'QA', 'DevOps'],
-                datasets: [{
-                    label: 'Sentimento Médio',
-                    data: [4.2, 4.5, 4.1, 3.8, 4.3],
-                    backgroundColor: '#10b981',
-                    borderColor: '#059669',
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.1
-                }]
-            };
+            let chartData;
+            
+            if (realData && realData.length > 0) {
+                // Usar dados reais do banco
+                chartData = {
+                    labels: realData.map(item => item.cargo),
+                    datasets: [{
+                        label: 'Sentimento Médio',
+                        data: realData.map(item => parseFloat(item.sentimento).toFixed(1)),
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                };
+            } else {
+                // Dados mock para demonstração
+                chartData = {
+                    labels: ['Desenvolvedor', 'Designer', 'Product Manager', 'QA', 'DevOps'],
+                    datasets: [{
+                        label: 'Sentimento Médio',
+                        data: [4.2, 4.5, 4.1, 3.8, 4.3],
+                        backgroundColor: '#10b981',
+                        borderColor: '#059669',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    }]
+                };
+            }
             
             if (window.sentimentoCargoChart && typeof window.sentimentoCargoChart.destroy === 'function') {
                 window.sentimentoCargoChart.destroy();
@@ -3013,7 +3072,7 @@ a:hover {
             
             window.sentimentoCargoChart = new Chart(ctx, {
                 type: 'line',
-                data: data,
+                data: chartData,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,

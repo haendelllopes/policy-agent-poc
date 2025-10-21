@@ -399,16 +399,16 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
 // ============================================
 async function getGraficosReais(tenantId, queryFn) {
     try {
-        // 1. Trilhas por Cargo (dados reais)
+        // 1. Trilhas por Cargo (dados reais - usando tabelas existentes)
         const trilhasPorCargoQuery = `
             SELECT 
                 COALESCE(p.name, 'Sem Cargo') as cargo,
-                COUNT(DISTINCT ut.trilha_id) as ativas,
-                COUNT(CASE WHEN ut.status = 'concluido' THEN 1 END) as concluidas,
-                COUNT(CASE WHEN ut.status = 'atrasado' THEN 1 END) as atrasadas
+                COUNT(DISTINCT t.id) as ativas,
+                COUNT(CASE WHEN t.status = 'concluido' THEN 1 END) as concluidas,
+                COUNT(CASE WHEN t.status = 'atrasado' THEN 1 END) as atrasadas
             FROM users u
             LEFT JOIN positions p ON u.position_id = p.id
-            LEFT JOIN user_trilhas ut ON u.id = ut.user_id
+            LEFT JOIN trilhas t ON t.tenant_id = u.tenant_id
             WHERE u.tenant_id = $1
             GROUP BY p.name
             ORDER BY ativas DESC
