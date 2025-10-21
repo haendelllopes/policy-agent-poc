@@ -191,7 +191,7 @@ function createPool(connStr) {
 }
 
 // Função para executar queries com retry otimizado para Supabase Pro
-async function query(text, params = [], retries = 1) {
+async function query(text, params = [], retries = 3) {
   // No Vercel, usar conexão direta para evitar problemas de pool
   if (process.env.VERCEL && process.env.PGUSER && process.env.PGPASSWORD) {
     return await queryWithDirectConnection(text, params, retries);
@@ -255,7 +255,7 @@ async function query(text, params = [], retries = 1) {
 }
 
 // Função para executar queries com conexão direta otimizada - para Vercel
-async function queryWithDirectConnection(text, params = [], retries = 3) {
+async function queryWithDirectConnection(text, params = [], retries = 5) {
   const { Client } = require('pg');
   
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -269,19 +269,21 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       client = new Client({
         connectionString: sessionPoolerUrl,
         ssl: { rejectUnauthorized: false },
-        connectionTimeoutMillis: 30000, // 30 segundos - aumentado
-        statement_timeout: 90000, // 90 segundos - aumentado
-        query_timeout: 90000, // 90 segundos - aumentado
+        connectionTimeoutMillis: 15000, // 15 segundos - reduzido
+        statement_timeout: 30000, // 30 segundos - reduzido
+        query_timeout: 30000, // 30 segundos - reduzido
         application_name: `navigator-app-${Date.now()}-${attempt}`,
         // Configurações adicionais para estabilidade
-        keepAlive: false,
-        keepAliveInitialDelayMillis: 0
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
+        // Configurações específicas para Supabase
+        options: '-c default_transaction_isolation=read_committed'
       });
       
       // Timeout manual para conexão
       const connectionPromise = client.connect();
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 90000) // Aumentado para 90s
+        setTimeout(() => reject(new Error('Connection timeout')), 20000) // 20 segundos
       );
       
       await Promise.race([connectionPromise, timeoutPromise]);
@@ -290,7 +292,7 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
       // Timeout manual para query
       const queryPromise = client.query(text, params);
       const queryTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), 120000) // Aumentado para 120s
+        setTimeout(() => reject(new Error('Query timeout')), 45000) // 45 segundos
       );
       
       const res = await Promise.race([queryPromise, queryTimeoutPromise]);
@@ -301,13 +303,27 @@ async function queryWithDirectConnection(text, params = [], retries = 3) {
     } catch (error) {
       console.error(`Erro na query direta (tentativa ${attempt}/${retries}):`, error.message);
       
-      if (attempt === retries) {
+      // Verificar se é um erro recuperável
+      const isRetryableError = (
+        error.message.includes('connection terminated') ||
+        error.message.includes('Connection terminated unexpectedly') ||
+        error.message.includes('db_termination') ||
+        error.message.includes('ENOTFOUND') ||
+        error.message.includes('timeout') ||
+        error.message.includes('ECONNRESET') ||
+        error.message.includes('ETIMEDOUT') ||
+        error.message.includes('Connection terminated due to connection timeout') ||
+        error.message.includes('MaxClientsInSessionMode') ||
+        error.code === 'XX000' // Erro fatal do PostgreSQL
+      );
+      
+      if (attempt === retries || !isRetryableError) {
         throw error;
       }
       
-      // Delay exponencial com jitter
-      const baseDelay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
-      const jitter = Math.random() * 1000; // 0-1s de jitter
+      // Delay exponencial com jitter mais agressivo
+      const baseDelay = Math.min(Math.pow(1.5, attempt) * 1000, 10000); // Máximo 10s
+      const jitter = Math.random() * 2000; // 0-2s de jitter
       const delay = baseDelay + jitter;
       
       console.log(`Aguardando ${Math.round(delay)}ms antes da próxima tentativa...`);

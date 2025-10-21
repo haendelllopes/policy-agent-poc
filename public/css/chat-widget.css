@@ -1,4 +1,4 @@
-/* Chat Widget Flutuante - Independente do sistema atual */
+/* Chat Widget Flutuante - Brand Manual Navi */
 .chat-widget {
   position: fixed;
   bottom: 20px;
@@ -12,13 +12,23 @@
   display: flex;
   flex-direction: column;
   font-family: 'Montserrat', 'Roboto', sans-serif;
-  border: 1px solid #e9ecef;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
+  border: 1px solid #e2e8f0;
+  transform: translateY(calc(100% + 20px));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Hover Effect do Brand Manual */
+.chat-widget:hover {
+  transform: translateY(calc(100% + 20px)) translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .chat-widget.open {
   transform: translateY(0);
+  opacity: 1;
+  visibility: visible;
 }
 
 .chat-header {
@@ -29,6 +39,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
 }
 
 .chat-avatar {
@@ -41,6 +53,21 @@
   justify-content: center;
   font-size: 20px;
   margin-right: 12px;
+  transition: all 0.2s ease;
+}
+
+.chat-avatar:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.chat-icon {
+  width: 20px;
+  height: 20px;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .chat-info h3 {
@@ -62,12 +89,25 @@
   font-size: 20px;
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .chat-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.chat-toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .chat-messages {
@@ -92,8 +132,10 @@
   padding: 12px 16px;
   border-radius: 18px;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .message.user .message-bubble {
@@ -127,12 +169,11 @@
   border-radius: 24px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s;
 }
 
 .chat-input input:focus {
   border-color: #17A2B8;
-  box-shadow: 0 0 0 2px rgba(23, 162, 184, 0.2);
 }
 
 .chat-input button {
@@ -146,18 +187,29 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
 .chat-input button:hover {
   background: #138496;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
 }
 
 .chat-input button:disabled {
   background: #6c757d;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
+}
+
+.send-icon {
+  width: 18px;
+  height: 18px;
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* Chat Toggle Button */
@@ -175,7 +227,7 @@
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
   z-index: 999;
-  transition: all 0.3s ease;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .chat-toggle-btn:hover {
@@ -187,45 +239,150 @@
   display: none;
 }
 
-/* Animações suaves do Brand Manual */
-.chat-widget {
-  animation: slideInUp 0.3s ease-out;
+/* Estilos para conteúdo formatado */
+.message-bubble h1, .message-bubble h2, .message-bubble h3 {
+  margin: 8px 0 4px 0;
+  font-weight: 600;
 }
 
-@keyframes slideInUp {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+.message-bubble h1 { font-size: 16px; }
+.message-bubble h2 { font-size: 15px; }
+.message-bubble h3 { font-size: 14px; }
+
+.message-bubble ul, .message-bubble ol {
+  margin: 8px 0;
+  padding-left: 20px;
 }
 
-/* Typing indicator com animação */
+.message-bubble li {
+  margin: 4px 0;
+}
+
+.message-bubble p {
+  margin: 6px 0;
+}
+
+.message-bubble strong {
+  font-weight: 600;
+}
+
+.message-bubble em {
+  font-style: italic;
+}
+
+.message-bubble code {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.message-bubble pre {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+  overflow-x: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.message-bubble blockquote {
+  border-left: 4px solid #17A2B8;
+  padding-left: 12px;
+  margin: 8px 0;
+  font-style: italic;
+  color: #666;
+}
+
+.message-bubble a {
+  color: #17A2B8;
+  text-decoration: none;
+}
+
+.message-bubble a:hover {
+  text-decoration: underline;
+}
+
+/* Estilos para mensagens longas */
+.message-bubble.long-text {
+  max-width: 90%;
+  padding: 16px 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Estilos para ferramentas utilizadas */
+.tools-used {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(23, 162, 184, 0.1);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #17A2B8;
+}
+
+.tools-used-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tool-item {
+  margin: 2px 0;
+  padding: 2px 6px;
+  background: rgba(23, 162, 184, 0.1);
+  border-radius: 4px;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* Estilos para indicadores de sentimento */
+.sentiment-indicator {
+  margin-top: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.sentiment-positive {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.sentiment-negative {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+.sentiment-neutral {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
+
+/* Indicador de digitação - Brand Manual */
 .typing-indicator {
-  display: flex;
-  align-items: center;
+  opacity: 0.8;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 .typing-dots {
-  display: flex;
+  display: inline-flex;
   gap: 4px;
 }
 
 .typing-dots span {
-  display: inline-block;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
   background: #17A2B8;
+  border-radius: 50%;
   animation: typing 1.4s infinite ease-in-out;
 }
 
 .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
 .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-.typing-dots span:nth-child(3) { animation-delay: 0s; }
 
 @keyframes typing {
   0%, 80%, 100% {
@@ -238,93 +395,7 @@
   }
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-  .chat-widget {
-    width: calc(100vw - 40px);
-    height: calc(100vh - 40px);
-    bottom: 20px;
-    right: 20px;
-    left: 20px;
-  }
-  
-  .chat-toggle-btn {
-    bottom: 20px;
-    right: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .chat-widget {
-    width: calc(100vw - 20px);
-    height: calc(100vh - 20px);
-    bottom: 10px;
-    right: 10px;
-    left: 10px;
-  }
-  
-  .chat-toggle-btn {
-    bottom: 10px;
-    right: 10px;
-    width: 50px;
-    height: 50px;
-    font-size: 20px;
-  }
-}
-
-/* Scrollbar personalizada */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: #17A2B8;
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb:hover {
-  background: #138496;
-}
-
-/* Estados de conexão */
-.chat-status-online {
-  color: #28a745;
-}
-
-.chat-status-offline {
-  color: #dc3545;
-}
-
-.chat-status-connecting {
-  color: #ffc107;
-}
-
-/* Mensagens especiais */
-.message.system {
-  justify-content: center;
-}
-
-.message.system .message-bubble {
-  background: #e9ecef;
-  color: #6c757d;
-  font-size: 12px;
-  font-style: italic;
-  border-radius: 12px;
-}
-
-/* Indicador de ferramentas usadas */
-.message-tools {
-  font-size: 11px;
-  color: #6c757d;
-  margin-top: 4px;
-  font-style: italic;
-}
-
-.message-tools::before {
-  content: "🔧 ";
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }

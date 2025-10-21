@@ -1,11 +1,11 @@
-const axios = require('axios');
-
 class PersonalizationEngine {
   // Usar APIs existentes - NÃO criar novas queries
   async loadUserContext(userId) {
+    const axios = require('axios');
+    
     try {
       // Usar endpoint existente do backend
-      const response = await axios.get(`http://localhost:3000/api/users/${userId}`);
+      const response = await axios.get(`http://localhost:3000/api/agent/trilhas/colaborador/${userId}`);
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao carregar contexto:', error);
@@ -20,98 +20,239 @@ class PersonalizationEngine {
     }
   }
 
-  async loadConversationHistory(userId) {
+  // Carregar histórico de conversas do colaborador
+  async loadConversationHistory(userId, limit = 10) {
+    const axios = require('axios');
+    
     try {
-      // Usar endpoint existente para histórico
-      const response = await axios.get(`http://localhost:3000/api/conversations/${userId}`);
-      return response.data || [];
+      const response = await axios.get(`http://localhost:3000/api/conversations/history/${userId}?limit=${limit}`);
+      return response.data.messages || [];
     } catch (error) {
       console.error('❌ Erro ao carregar histórico:', error);
       return [];
     }
   }
 
-  async loadOnboardingProgress(userId) {
+  // Carregar anotações do agente sobre o colaborador
+  async loadAgentNotes(userId, limit = 5) {
+    const axios = require('axios');
+    
     try {
-      // Usar endpoint existente para progresso
-      const response = await axios.get(`http://localhost:3000/api/agent-trilhas/colaborador/${userId}`);
-      return response.data || { trilhas_concluidas: 0, trilhas_ativas: [] };
+      const response = await axios.get(`http://localhost:3000/api/agente/anotacoes?colaborador_id=${userId}&limit=${limit}`);
+      return response.data.anotacoes || [];
     } catch (error) {
-      console.error('❌ Erro ao carregar progresso:', error);
-      return { trilhas_concluidas: 0, trilhas_ativas: [] };
+      console.error('❌ Erro ao carregar anotações:', error);
+      return [];
     }
   }
 
-  generateSystemMessage(userContext, pageContext) {
-    const { name, position, department, sentimento_atual, sentimento_intensidade, role } = userContext;
+  // Carregar histórico de sentimentos
+  async loadSentimentHistory(userId, limit = 5) {
+    const axios = require('axios');
     
-    // Detectar se é administrador
-    const isAdmin = role === 'admin' || pageContext?.userType === 'admin';
+    try {
+      const response = await axios.get(`http://localhost:3000/api/sentimentos/history/${userId}?limit=${limit}`);
+      return response.data.sentimentos || [];
+    } catch (error) {
+      console.error('❌ Erro ao carregar histórico de sentimentos:', error);
+      return [];
+    }
+  }
+
+  // Análise de padrões históricos
+  async analyzeHistoricalPatterns(userId) {
+    try {
+      const [conversations, notes, sentiments] = await Promise.all([
+        this.loadConversationHistory(userId, 20),
+        this.loadAgentNotes(userId, 10),
+        this.loadSentimentHistory(userId, 10)
+      ]);
+
+      const patterns = {
+        // Padrões de sentimento
+        sentimentTrend: this.analyzeSentimentTrend(sentiments),
+        
+        // Padrões de conversa
+        commonTopics: this.extractCommonTopics(conversations),
+        
+        // Padrões de dificuldade
+        difficultyPatterns: this.identifyDifficultyPatterns(notes),
+        
+        // Padrões de engajamento
+        engagementLevel: this.calculateEngagementLevel(conversations),
+        
+        // Insights gerais
+        insights: this.generateInsights(conversations, notes, sentiments)
+      };
+
+      return patterns;
+    } catch (error) {
+      console.error('❌ Erro na análise histórica:', error);
+      return {
+        sentimentTrend: 'neutro',
+        commonTopics: [],
+        difficultyPatterns: [],
+        engagementLevel: 'medio',
+        insights: []
+      };
+    }
+  }
+
+  // Analisar tendência de sentimento
+  analyzeSentimentTrend(sentiments) {
+    if (sentiments.length < 2) return 'neutro';
+    
+    const recent = sentiments.slice(0, 3);
+    const older = sentiments.slice(3, 6);
+    
+    const recentAvg = this.calculateSentimentAverage(recent);
+    const olderAvg = this.calculateSentimentAverage(older);
+    
+    if (recentAvg > olderAvg + 0.2) return 'melhorando';
+    if (recentAvg < olderAvg - 0.2) return 'piorando';
+    return 'estavel';
+  }
+
+  // Calcular média de sentimento
+  calculateSentimentAverage(sentiments) {
+    const sentimentValues = {
+      'muito_negativo': 0,
+      'negativo': 0.25,
+      'neutro': 0.5,
+      'positivo': 0.75,
+      'muito_positivo': 1
+    };
+    
+    const total = sentiments.reduce((sum, s) => sum + (sentimentValues[s.sentimento] || 0.5), 0);
+    return total / sentiments.length;
+  }
+
+  // Extrair tópicos comuns das conversas
+  extractCommonTopics(conversations) {
+    const topics = {};
+    
+    conversations.forEach(msg => {
+      const text = msg.text?.toLowerCase() || '';
+      
+      // Detectar tópicos por palavras-chave
+      if (text.includes('trilha') || text.includes('curso')) topics.trilhas = (topics.trilhas || 0) + 1;
+      if (text.includes('documento') || text.includes('pdf')) topics.documentos = (topics.documentos || 0) + 1;
+      if (text.includes('dúvida') || text.includes('pergunta')) topics.duvidas = (topics.duvidas || 0) + 1;
+      if (text.includes('feedback') || text.includes('sugestão')) topics.feedback = (topics.feedback || 0) + 1;
+      if (text.includes('problema') || text.includes('dificuldade')) topics.problemas = (topics.problemas || 0) + 1;
+    });
+    
+    return Object.entries(topics)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3)
+      .map(([topic, count]) => ({ topic, frequency: count }));
+  }
+
+  // Identificar padrões de dificuldade
+  identifyDifficultyPatterns(notes) {
+    return notes
+      .filter(note => note.tipo === 'dificuldade_conteudo' || note.sentimento?.includes('negativo'))
+      .map(note => ({
+        tipo: note.tipo,
+        titulo: note.titulo,
+        frequencia: 1,
+        ultima_ocorrencia: note.created_at
+      }));
+  }
+
+  // Calcular nível de engajamento
+  calculateEngagementLevel(conversations) {
+    if (conversations.length === 0) return 'baixo';
+    
+    const recentMessages = conversations.slice(0, 5);
+    const avgLength = recentMessages.reduce((sum, msg) => sum + (msg.text?.length || 0), 0) / recentMessages.length;
+    
+    if (avgLength > 50) return 'alto';
+    if (avgLength > 20) return 'medio';
+    return 'baixo';
+  }
+
+  // Gerar insights baseados nos dados históricos
+  generateInsights(conversations, notes, sentiments) {
+    const insights = [];
+    
+    // Insight sobre sentimento
+    if (sentiments.length > 0) {
+      const latestSentiment = sentiments[0];
+      if (latestSentiment.sentimento === 'negativo' || latestSentiment.sentimento === 'muito_negativo') {
+        insights.push('⚠️ Colaborador demonstrou sentimento negativo recentemente - ofereça suporte extra');
+      }
+    }
+    
+    // Insight sobre engajamento
+    const engagementLevel = this.calculateEngagementLevel(conversations);
+    if (engagementLevel === 'baixo') {
+      insights.push('📉 Baixo engajamento detectado - considere abordagem mais interativa');
+    }
+    
+    // Insight sobre dificuldades
+    const difficultyNotes = notes.filter(n => n.tipo === 'dificuldade_conteudo');
+    if (difficultyNotes.length > 2) {
+      insights.push('🔍 Múltiplas dificuldades identificadas - ofereça recursos adicionais');
+    }
+    
+    return insights;
+  }
+
+  async generateSystemMessage(userContext, pageContext) {
+    const { name, position, department, sentimento_atual, sentimento_intensidade, id } = userContext;
+    
+    // Carregar análise histórica
+    const historicalPatterns = await this.analyzeHistoricalPatterns(id);
     
     // Determinar tom baseado no sentimento
     const toneConfig = this.getToneBySentiment(sentimento_atual);
     
+    // Construir insights históricos
+    const historicalInsights = historicalPatterns.insights.length > 0 
+      ? `\n📊 **INSIGHTS HISTÓRICOS:**\n${historicalPatterns.insights.map(insight => `- ${insight}`).join('\n')}`
+      : '';
+    
+    const sentimentTrend = historicalPatterns.sentimentTrend !== 'neutro' 
+      ? `\n📈 **TENDÊNCIA DE SENTIMENTO:** ${historicalPatterns.sentimentTrend}`
+      : '';
+    
+    const commonTopics = historicalPatterns.commonTopics.length > 0
+      ? `\n🎯 **TÓPICOS FREQUENTES:** ${historicalPatterns.commonTopics.map(t => t.topic).join(', ')}`
+      : '';
+    
     return `Você é o **Navi**, assistente de onboarding inteligente e proativo.
 
 🎯 **CONTEXTO ATUAL:**
-- **Usuário:** ${name}
+- **Colaborador:** ${name}
 - **Cargo:** ${position}
 - **Departamento:** ${department}
-- **Tipo:** ${isAdmin ? 'ADMINISTRADOR' : 'COLABORADOR'}
 - **Sentimento:** ${sentimento_atual} (${sentimento_intensidade}%)
 - **Página atual:** ${pageContext?.page || 'Dashboard'}
-${pageContext?.trilha_visualizando ? `- **Trilha Visualizando:** ${pageContext.trilha_visualizando}` : ''}
-${pageContext?.conteudo_atual ? `- **Conteúdo Atual:** ${pageContext.conteudo_atual}` : ''}
+- **Nível de engajamento:** ${historicalPatterns.engagementLevel}
 
-🎭 **TOM DE VOZ:** ${toneConfig.tom} ${toneConfig.emoji}
-
-${isAdmin ? `
-🎯 **MODO ADMINISTRADOR ATIVADO:**
-- Você tem acesso a ferramentas avançadas de análise
-- Seja proativo em identificar problemas e oportunidades
-- Gere insights estratégicos baseados em dados
-- Sugira ações preventivas e melhorias
-- Foque em métricas de performance e ROI
-` : ''}
+🎭 **TOM DE VOZ:** ${toneConfig.tom} ${toneConfig.emoji}${sentimentTrend}${commonTopics}${historicalInsights}
 
 ${sentimento_atual?.includes('negativo') ? `
 ⚠️ **ATENÇÃO - SENTIMENTO NEGATIVO:**
 - Seja EXTRA empático e acolhedor
 - Ouça ativamente e valide os sentimentos
 - Ofereça ajuda IMEDIATA e CONCRETA
-- Não minimize problemas
-- Mostre que você está aqui para ajudar de verdade
 ` : ''}
 
-${sentimento_atual?.includes('positivo') ? `
-🎉 **OPORTUNIDADE - SENTIMENTO POSITIVO:**
-- Celebre as conquistas do colaborador
-- Mantenha o momentum positivo
-- Sugira próximos passos desafiadores
-- Reforce o progresso alcançado
-` : ''}
+🔧 **SUAS FERRAMENTAS:**
+1. buscar_trilhas_disponiveis - Lista trilhas do colaborador
+2. iniciar_trilha - Inicia trilha específica
+3. finalizar_trilha - Finaliza trilha específica
+4. reiniciar_trilha - Reinicia trilha específica
+5. registrar_feedback - Registra feedback sobre trilhas
+6. buscar_documentos - Busca semântica em documentos
+7. criar_anotacao - Cria anotação do agente
+8. registrar_sentimento - Registra sentimento do colaborador
+9. gerar_melhoria - Gera sugestão de melhoria
 
-🔧 **SUAS FERRAMENTAS DISPONÍVEIS:**
-
-**PARA COLABORADORES:**
-- buscar_trilhas_disponiveis: Lista trilhas do colaborador
-- iniciar_trilha: Inicia trilha específica
-- registrar_feedback: Registra feedback sobre trilhas
-- buscar_documentos: Busca semântica em documentos
-
-**PARA ADMINISTRADORES (FASE 5 - AGENTE PROATIVO):**
-- analisar_performance_colaboradores: Analisa performance e identifica riscos
-- gerar_relatorio_onboarding: Gera relatórios automáticos (executivo/operacional)
-- criar_alertas_personalizados: Sistema de alertas inteligentes
-- identificar_gargalos_trilhas: Detecta problemas em trilhas
-
-**INSTRUÇÕES IMPORTANTES:**
-- SEMPRE use as ferramentas quando apropriado
-- Para administradores, seja proativo em usar as ferramentas de análise
-- Quando o usuário pedir análise, relatórios ou alertas, USE as ferramentas correspondentes
-- Não responda sem usar ferramentas quando elas são necessárias
-
-SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proativo!`;
+SEMPRE use as ferramentas quando apropriado e seja proativo!
+Analise padrões históricos e ofereça suporte personalizado!`;
   }
 
   getToneBySentiment(sentimento) {
@@ -123,48 +264,6 @@ SEMPRE use as ferramentas apropriadas baseadas no tipo de usuário e seja proati
       'muito_negativo': { tom: 'EXTREMAMENTE EMPÁTICO e ACOLHEDOR', emoji: '💙' }
     };
     return tones[sentimento] || tones['neutro'];
-  }
-
-  getEmojiBySentiment(sentimento) {
-    const emojis = {
-      'muito_positivo': '😍',
-      'positivo': '😊',
-      'neutro': '😐',
-      'negativo': '😔',
-      'muito_negativo': '😡'
-    };
-    return emojis[sentimento] || '🤖';
-  }
-
-  // Método para gerar contexto completo do usuário
-  async generateFullUserContext(userId, pageContext = {}) {
-    try {
-      // Carregar dados em paralelo para melhor performance
-      const [userProfile, conversationHistory, onboardingProgress] = await Promise.all([
-        this.loadUserContext(userId),
-        this.loadConversationHistory(userId),
-        this.loadOnboardingProgress(userId)
-      ]);
-
-      return {
-        userId,
-        profile: userProfile,
-        conversationHistory: conversationHistory.slice(-10), // Últimas 10 mensagens
-        onboardingProgress,
-        pageContext,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('❌ Erro ao gerar contexto completo:', error);
-      return {
-        userId,
-        profile: { id: userId, name: 'Usuário', sentimento_atual: 'neutro' },
-        conversationHistory: [],
-        onboardingProgress: { trilhas_concluidas: 0, trilhas_ativas: [] },
-        pageContext,
-        timestamp: new Date().toISOString()
-      };
-    }
   }
 }
 

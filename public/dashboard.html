@@ -13,6 +13,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- Chat Widget CSS -->
+    <link rel="stylesheet" href="/css/chat-widget.css">
+    
     <!-- Brand Manual CSS - Inline -->
     <style>
 /**
@@ -2059,21 +2062,30 @@ a:hover {
         
     </script>
     
-        <!-- Chat Widget Integration (HTTP Version for Vercel) -->
+        <!-- Chat Widget Integration (WebSocket Version) -->
         <link href="css/chat-widget.css" rel="stylesheet">
-        <script src="js/chat-widget-http.js"></script>
         <script>
             // Initialize chat widget for dashboard
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.chatWidgetHTTP) {
+                if (window.chatWidget) {
                     // Set dashboard context
-                    window.chatWidgetHTTP.setUserId('admin-demo');
-                    window.chatWidgetHTTP.setContext({
+                    window.chatWidget.setUserId('admin-demo');
+                    window.chatWidget.setContext({
                         page: 'dashboard',
                         userType: 'admin'
                     });
                 }
             });
         </script>
+        
+        <!-- Feather Icons - Brand Manual -->
+        <script src="https://unpkg.com/feather-icons"></script>
+        <script>
+            feather.replace();
+        </script>
+        
+        <!-- Chat Widget Scripts -->
+        <script src="/js/chat-widget.js"></script>
+        <script src="/js/chat-integration.js"></script>
 </body>
 </html>

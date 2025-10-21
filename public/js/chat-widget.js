@@ -5,8 +5,6 @@ class ChatWidget {
     this.isOpen = false;
     this.userId = this.getCurrentUserId();
     this.pageContext = this.getPageContext();
-    this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
     
     this.init();
   }
@@ -18,18 +16,22 @@ class ChatWidget {
   }
 
   createWidget() {
-    // Criar HTML do widget - independente do sistema atual
+    // Criar HTML do widget - Brand Manual Navi
     const widgetHTML = `
       <div class="chat-widget" id="chatWidget">
         <div class="chat-header">
           <div style="display: flex; align-items: center;">
-            <div class="chat-avatar" id="chatAvatar">🤖</div>
+            <div class="chat-avatar" id="chatAvatar">
+              <i data-feather="message-circle" class="chat-icon"></i>
+            </div>
             <div class="chat-info">
               <h3>Navi</h3>
-              <p id="chatStatus" class="chat-status-connecting">Conectando...</p>
+              <p id="chatStatus">Conectando...</p>
             </div>
           </div>
-          <button class="chat-toggle" id="chatClose" title="Fechar chat">✕</button>
+          <button class="chat-toggle" id="chatClose">
+            <i data-feather="x" class="chat-toggle-icon"></i>
+          </button>
         </div>
         <div class="chat-messages" id="chatMessages">
           <div class="message bot">
@@ -40,20 +42,25 @@ class ChatWidget {
         </div>
         <div class="chat-input-container">
           <div class="chat-input">
-            <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500" autocomplete="off">
-            <button id="chatSend" disabled title="Enviar mensagem">
-              <span>➤</span>
+            <input type="text" id="chatInput" placeholder="Digite sua mensagem..." maxlength="500">
+            <button id="chatSend" disabled>
+              <i data-feather="send" class="send-icon"></i>
             </button>
           </div>
         </div>
       </div>
       
-      <button class="chat-toggle-btn" id="chatToggleBtn" title="Abrir chat com Navi">
-        💬
+      <button class="chat-toggle-btn" id="chatToggleBtn">
+        <i data-feather="message-circle"></i>
       </button>
     `;
 
     document.body.insertAdjacentHTML('beforeend', widgetHTML);
+    
+    // Inicializar Feather Icons
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
     
     // Referências aos elementos
     this.widget = document.getElementById('chatWidget');
@@ -70,15 +77,12 @@ class ChatWidget {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws/chat`;
     
-    console.log('🔌 Conectando ao WebSocket:', wsUrl);
     this.ws = new WebSocket(wsUrl);
     
     this.ws.onopen = () => {
       console.log('🔌 WebSocket conectado (Chat Flutuante)');
       this.isConnected = true;
-      this.reconnectAttempts = 0;
       this.status.textContent = 'Online';
-      this.status.className = 'chat-status-online';
       this.sendBtn.disabled = false;
       this.updateAvatar('online');
     };
@@ -92,32 +96,20 @@ class ChatWidget {
       console.log('🔌 WebSocket desconectado');
       this.isConnected = false;
       this.status.textContent = 'Desconectado';
-      this.status.className = 'chat-status-offline';
       this.sendBtn.disabled = true;
       this.updateAvatar('offline');
       
-      // Tentar reconectar se não foi fechado manualmente
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
-        this.reconnectAttempts++;
-        const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
-        console.log(`🔄 Tentativa de reconexão ${this.reconnectAttempts}/${this.maxReconnectAttempts} em ${delay}ms`);
-        
-        setTimeout(() => {
-          if (!this.isConnected) {
-            this.connectWebSocket();
-          }
-        }, delay);
-      } else {
-        console.log('❌ Máximo de tentativas de reconexão atingido');
-        this.status.textContent = 'Erro de conexão';
-        this.status.className = 'chat-status-offline';
-      }
+      // Tentar reconectar após 3 segundos
+      setTimeout(() => {
+        if (!this.isConnected) {
+          this.connectWebSocket();
+        }
+      }, 3000);
     };
     
     this.ws.onerror = (error) => {
       console.error('❌ Erro WebSocket:', error);
       this.status.textContent = 'Erro de conexão';
-      this.status.className = 'chat-status-offline';
       this.updateAvatar('error');
     };
   }
@@ -144,16 +136,10 @@ class ChatWidget {
       }
     });
     
-    // Auto-resize do input (se fosse textarea)
+    // Auto-resize do input
     this.input.addEventListener('input', () => {
-      // Para input de texto simples, não precisa de resize
-    });
-    
-    // Fechar chat com ESC
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) {
-        this.closeChat();
-      }
+      this.input.style.height = 'auto';
+      this.input.style.height = this.input.scrollHeight + 'px';
     });
   }
 
@@ -162,9 +148,6 @@ class ChatWidget {
     this.toggleBtn.classList.add('hidden');
     this.isOpen = true;
     this.input.focus();
-    
-    // Scroll para baixo
-    this.scrollToBottom();
   }
 
   closeChat() {
@@ -190,6 +173,7 @@ class ChatWidget {
     
     // Limpar input
     this.input.value = '';
+    this.input.style.height = 'auto';
     
     // Mostrar indicador de digitação
     this.showTypingIndicator();
@@ -200,7 +184,10 @@ class ChatWidget {
     
     switch (data.type) {
       case 'response':
-        this.addMessage(data.message, 'bot', data.toolsUsed);
+        this.addMessage(data.message || 'Resposta recebida', 'bot', {
+          sentiment: data.sentiment,
+          toolsUsed: data.toolsUsed
+        });
         this.updateSentimentIndicator(data.sentiment);
         break;
       case 'error':
@@ -209,33 +196,92 @@ class ChatWidget {
       case 'typing':
         this.showTypingIndicator();
         break;
-      default:
-        console.log('📨 Mensagem desconhecida:', data);
     }
   }
 
-  addMessage(text, sender, toolsUsed = null) {
+  addMessage(text, sender, metadata = {}) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${sender}`;
     
     const bubbleDiv = document.createElement('div');
     bubbleDiv.className = 'message-bubble';
-    bubbleDiv.textContent = text;
+    
+    // Detectar se é texto longo (tratar null/undefined)
+    if (text && text.length > 200) {
+      bubbleDiv.classList.add('long-text');
+    }
+    
+    // Formatar o texto
+    bubbleDiv.innerHTML = this.formatMessage(text);
     
     messageDiv.appendChild(bubbleDiv);
     
-    // Adicionar indicador de ferramentas se usado
-    if (toolsUsed && toolsUsed.length > 0) {
+    // Adicionar ferramentas utilizadas se disponível
+    if (metadata.toolsUsed && metadata.toolsUsed.length > 0) {
       const toolsDiv = document.createElement('div');
-      toolsDiv.className = 'message-tools';
-      toolsDiv.textContent = `Ferramentas usadas: ${toolsUsed.join(', ')}`;
+      toolsDiv.className = 'tools-used';
+      toolsDiv.innerHTML = `
+        <div class="tools-used-title">🔧 Ferramentas utilizadas:</div>
+        ${metadata.toolsUsed.map(tool => `<span class="tool-item">${tool.tool}</span>`).join('')}
+      `;
       messageDiv.appendChild(toolsDiv);
+    }
+    
+    // Adicionar indicador de sentimento se disponível
+    if (metadata.sentiment && metadata.sentiment !== 'neutro') {
+      const sentimentDiv = document.createElement('div');
+      sentimentDiv.className = `sentiment-indicator sentiment-${metadata.sentiment.includes('positivo') ? 'positive' : 'negative'}`;
+      sentimentDiv.textContent = `Sentimento: ${metadata.sentiment}`;
+      messageDiv.appendChild(sentimentDiv);
     }
     
     this.messagesContainer.appendChild(messageDiv);
     
     // Scroll para baixo
-    this.scrollToBottom();
+    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+  }
+
+  formatMessage(text) {
+    // Tratar valores null/undefined
+    if (!text) {
+      return '<em>Mensagem vazia</em>';
+    }
+    
+    // Converter quebras de linha para <br>
+    let formatted = text.replace(/\n/g, '<br>');
+    
+    // Formatar listas com marcadores
+    formatted = formatted.replace(/^[\s]*[-•]\s+(.+)$/gm, '<li>$1</li>');
+    formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    
+    // Formatar listas numeradas
+    formatted = formatted.replace(/^[\s]*\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
+    
+    // Formatar texto em negrito
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Formatar texto em itálico
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Formatar código inline
+    formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Formatar blocos de código
+    formatted = formatted.replace(/```([^`]+)```/g, '<pre>$1</pre>');
+    
+    // Formatar links
+    formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+    
+    // Formatar títulos
+    formatted = formatted.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    formatted = formatted.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    formatted = formatted.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    
+    // Formatar citações
+    formatted = formatted.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+    
+    return formatted;
   }
 
   showTypingIndicator() {
@@ -250,7 +296,7 @@ class ChatWidget {
     `;
     
     this.messagesContainer.appendChild(typingDiv);
-    this.scrollToBottom();
+    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
   }
 
   hideTypingIndicator() {
@@ -270,7 +316,15 @@ class ChatWidget {
     };
     
     if (sentiment && sentimentEmojis[sentiment]) {
-      this.avatar.textContent = sentimentEmojis[sentiment];
+      // Manter ícone Feather mesmo com sentimento
+      this.refreshFeatherIcons();
+    }
+  }
+
+  refreshFeatherIcons() {
+    // Re-inicializar Feather Icons após mudanças no DOM
+    if (typeof feather !== 'undefined') {
+      feather.replace();
     }
   }
 
@@ -284,95 +338,21 @@ class ChatWidget {
     this.avatar.textContent = statusEmojis[status] || '🤖';
   }
 
-  scrollToBottom() {
-    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
-  }
-
   getCurrentUserId() {
     // Buscar userId do localStorage ou da sessão
-    // Primeiro tenta localStorage
-    let userId = localStorage.getItem('userId');
-    
-    // Se não encontrar, tenta buscar de elementos da página
-    if (!userId) {
-      const userIdElement = document.querySelector('[data-user-id]');
-      if (userIdElement) {
-        userId = userIdElement.getAttribute('data-user-id');
-        localStorage.setItem('userId', userId);
-      }
-    }
-    
-    // Se ainda não encontrar, usa um ID temporário
-    if (!userId) {
-      userId = 'anonymous-' + Date.now();
-      localStorage.setItem('userId', userId);
-    }
-    
-    return userId;
+    return localStorage.getItem('userId') || 'anonymous';
   }
 
   getPageContext() {
-    const currentPage = window.location.pathname.split('/').pop() || 'dashboard';
-    
-    const context = {
-      page: currentPage,
+    return {
+      page: window.location.pathname.split('/').pop() || 'dashboard',
       url: window.location.href,
       timestamp: new Date().toISOString()
     };
-    
-    // Adicionar contexto específico da página
-    switch (currentPage) {
-      case 'colaborador-trilha-detalhes.html':
-        const trilhaTitle = document.querySelector('.trilha-title');
-        if (trilhaTitle) {
-          context.trilha_visualizando = trilhaTitle.textContent;
-        }
-        break;
-        
-      case 'colaborador-trilhas.html':
-        const trilhas = Array.from(document.querySelectorAll('.trilha-card')).map(card => ({
-          nome: card.querySelector('.trilha-nome')?.textContent,
-          status: card.querySelector('.trilha-status')?.textContent
-        }));
-        context.trilhas_disponiveis = trilhas;
-        break;
-        
-      case 'dashboard.html':
-        const metrics = {
-          colaboradoresAtivos: document.querySelector('.metric-colaboradores')?.textContent,
-          trilhasConcluidas: document.querySelector('.metric-trilhas')?.textContent,
-          sentimentMedio: document.querySelector('.metric-sentimento')?.textContent
-        };
-        context.metrics = metrics;
-        break;
-    }
-    
-    return context;
-  }
-
-  // Método público para abrir o chat programaticamente
-  openChatWithMessage(message) {
-    this.openChat();
-    if (message) {
-      this.input.value = message;
-      this.input.focus();
-    }
-  }
-
-  // Método público para fechar o chat programaticamente
-  closeChatProgrammatically() {
-    this.closeChat();
   }
 }
 
 // Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
-  // Verificar se já existe uma instância
-  if (!window.chatWidget) {
-    window.chatWidget = new ChatWidget();
-    console.log('💬 Chat Widget inicializado');
-  }
+  new ChatWidget();
 });
-
-// Exportar para uso global
-window.ChatWidget = ChatWidget;

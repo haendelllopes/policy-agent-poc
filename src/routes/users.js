@@ -16,48 +16,56 @@ const { query } = require('../db-pg');
  */
 router.get('/', async (req, res) => {
   try {
-    const { getTenantBySubdomain, getCachedData, getDemoData, usePostgres } = req.app.locals;
+    const { getTenantBySubdomain, usePostgres } = req.app.locals;
     
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: { formErrors: ['Tenant não encontrado'] } });
     }
 
-    try {
-      const users = await getCachedData(tenant.id, 'users', async () => {
-        if (await usePostgres()) {
-          // PostgreSQL com JOIN para pegar nomes de cargo e departamento
-          const result = await query(`
-            SELECT 
-              u.id, u.name, u.email, u.phone, 
-              u.position, u.department, 
-              u.position_id, u.department_id,
-              p.name as position_name,
-              d.name as department_name,
-              u.status, u.start_date,
-              u.onboarding_status, u.onboarding_inicio, u.onboarding_fim,
-              u.pontuacao_total,
-              u.created_at, u.updated_at
-            FROM users u
-            LEFT JOIN positions p ON u.position_id = p.id
-            LEFT JOIN departments d ON u.department_id = d.id
-            WHERE u.tenant_id = $1 
-            ORDER BY u.name
-          `, [tenant.id]);
-          return result.rows;
-        } else {
-          // Demo data fallback
-          const demoData = getDemoData();
-          return demoData.users.filter(user => user.tenant_id === tenant.id);
-        }
-      });
-      res.json(users);
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
-      // Fallback para dados demo em caso de erro
-      const demoData = getDemoData();
-      const users = demoData.users.filter(user => user.tenant_id === tenant.id);
-      res.json(users);
+    if (await usePostgres()) {
+      // PostgreSQL com JOIN para pegar nomes de cargo e departamento
+      const result = await query(`
+        SELECT 
+          u.id, u.name, u.email, u.phone, 
+          u.position, u.department, 
+          u.position_id, u.department_id,
+          u.gestor_id, u.buddy_id,
+          p.name as position_name,
+          d.name as department_name,
+          u.status, u.start_date,
+          u.onboarding_status, u.onboarding_inicio, u.onboarding_fim,
+          u.pontuacao_total,
+          u.created_at, u.updated_at
+        FROM users u
+        LEFT JOIN positions p ON u.position_id = p.id
+        LEFT JOIN departments d ON u.department_id = d.id
+        WHERE u.tenant_id = $1 
+        ORDER BY u.name
+      `, [tenant.id]);
+      res.json(result.rows);
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const result = runQuery(db, `
+          SELECT 
+            id, name, email, phone, 
+            position, department, 
+            position_id, department_id,
+            gestor_id, buddy_id,
+            status, start_date,
+            onboarding_status, onboarding_inicio, onboarding_fim,
+            pontuacao_total,
+            created_at, updated_at
+          FROM users 
+          WHERE tenant_id = ? 
+          ORDER BY name
+        `, [tenant.id]);
+        res.json(result);
+      } finally {
+        closeDatabase(db);
+      }
     }
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
@@ -73,40 +81,38 @@ router.get('/', async (req, res) => {
  */
 router.get('/list-for-select', async (req, res) => {
   try {
-    const { getTenantBySubdomain, getCachedData, getDemoData, usePostgres } = req.app.locals;
+    const { getTenantBySubdomain, usePostgres } = req.app.locals;
     
     const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     if (!tenant) {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    try {
-      const users = await getCachedData(tenant.id, 'users', async () => {
-        if (await usePostgres()) {
-          // PostgreSQL
-          const result = await query(`
-            SELECT id, name, email, status
-            FROM users
-            WHERE tenant_id = $1 AND status = 'active'
-            ORDER BY name ASC
-          `, [tenant.id]);
-          return result.rows;
-        } else {
-          // Demo data fallback
-          const demoData = getDemoData();
-          return demoData.users.filter(user => user.status === 'active');
-        }
-      });
-
-      console.log(`✅ Listados ${users.length} usuários para selects`);
-      res.json(users);
-    } catch (error) {
-      console.error('Erro ao buscar usuários para selects:', error);
-      // Fallback para demo data
-      const demoData = getDemoData();
-      const users = demoData.users.filter(user => user.status === 'active');
-      console.log(`✅ Fallback: Listados ${users.length} usuários demo para selects`);
-      res.json(users);
+    if (await usePostgres()) {
+      // PostgreSQL
+      const result = await query(`
+        SELECT id, name, email, status
+        FROM users
+        WHERE tenant_id = $1 AND status = 'active'
+        ORDER BY name ASC
+      `, [tenant.id]);
+      console.log(`✅ Listados ${result.rows.length} usuários para selects`);
+      res.json(result.rows);
+    } else {
+      // SQLite fallback
+      const { db } = await openDatabase();
+      try {
+        const result = runQuery(db, `
+          SELECT id, name, email, status
+          FROM users
+          WHERE tenant_id = ? AND status = 'active'
+          ORDER BY name ASC
+        `, [tenant.id]);
+        console.log(`✅ Listados ${result.length} usuários para selects`);
+        res.json(result);
+      } finally {
+        closeDatabase(db);
+      }
     }
   } catch (error) {
     console.error('❌ Erro ao listar usuários:', error);
@@ -156,6 +162,10 @@ router.get('/:id', async (req, res) => {
       phone: user.phone,
       position: user.position,
       department: user.department,
+      position_id: user.position_id,
+      department_id: user.department_id,
+      gestor_id: user.gestor_id,
+      buddy_id: user.buddy_id,
       start_date: user.start_date,
       status: user.status || 'active',
       created_at: user.created_at,
@@ -374,27 +384,13 @@ router.put('/:id', async (req, res) => {
     const parse = schema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
 
-    // Debug: log dos dados recebidos
-    console.log('📥 Dados recebidos no PUT /users:', parse.data);
-    console.log('🎯 Gestor ID recebido:', parse.data.gestor_id, 'Tipo:', typeof parse.data.gestor_id);
-    console.log('🎯 Buddy ID recebido:', parse.data.buddy_id, 'Tipo:', typeof parse.data.buddy_id);
-    console.log('🆔 UserId da URL:', userId);
-    console.log('🏢 Tenant ID:', tenant.id);
-    
-    // Verificar se os campos estão sendo rejeitados pela validação
+    // Converter strings vazias para null
     if (parse.data.gestor_id === '') {
-      console.log('⚠️ Gestor ID está vazio, convertendo para null');
       parse.data.gestor_id = null;
     }
     if (parse.data.buddy_id === '') {
-      console.log('⚠️ Buddy ID está vazio, convertendo para null');
       parse.data.buddy_id = null;
     }
-    
-    // Debug: verificar valores finais antes da query
-    console.log('🔍 Valores finais antes da query:');
-    console.log('  gestor_id:', parse.data.gestor_id, 'Tipo:', typeof parse.data.gestor_id);
-    console.log('  buddy_id:', parse.data.buddy_id, 'Tipo:', typeof parse.data.buddy_id);
 
     const normalizedPhone = normalizePhone(parse.data.phone);
     
@@ -414,149 +410,29 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
       }
 
-      console.log('🔧 Executando UPDATE para userId:', userId, 'tenantId:', tenant.id);
-      console.log('🔧 Valores: gestor_id =', parse.data.gestor_id, 'buddy_id =', parse.data.buddy_id);
-      
-      // Debug: verificar todos os parâmetros antes da query
-      const queryParams = [
+      // UPDATE simples e direto
+      const result = await query(`
+        UPDATE users SET 
+          name = $1, email = $2, phone = $3, 
+          position = $4, department = $5, 
+          position_id = $6, department_id = $7,
+          gestor_id = $8, buddy_id = $9,
+          start_date = $10, status = $11,
+          updated_at = NOW()
+        WHERE id = $12 AND tenant_id = $13
+        RETURNING id, name, gestor_id, buddy_id
+      `, [
         parse.data.name, parse.data.email, normalizedPhone, 
         parse.data.position || null, parse.data.department || null,
         parse.data.position_id || null, parse.data.department_id || null,
         parse.data.gestor_id, parse.data.buddy_id,
         parse.data.start_date || null, parse.data.status || 'active',
         userId, tenant.id
-      ];
-      
-      console.log('🔍 Parâmetros da query:', queryParams);
-      console.log('🔍 Parâmetro 8 (gestor_id):', queryParams[7], 'Tipo:', typeof queryParams[7]);
-      console.log('🔍 Parâmetro 9 (buddy_id):', queryParams[8], 'Tipo:', typeof queryParams[8]);
-      
-      // Testar UPDATE em duas etapas para identificar o problema
-      console.log('🔧 Executando UPDATE em duas etapas...');
-      
-      // Primeira etapa: atualizar campos básicos
-      const basicUpdateResult = await query(`
-        UPDATE users SET 
-          name = $1, email = $2, phone = $3, 
-          position = $4, department = $5, 
-          position_id = $6, department_id = $7,
-          start_date = $8, status = $9,
-          updated_at = NOW()
-        WHERE id = $10 AND tenant_id = $11
-        RETURNING id, name
-      `, [
-        parse.data.name, parse.data.email, normalizedPhone, 
-        parse.data.position || null, parse.data.department || null,
-        parse.data.position_id || null, parse.data.department_id || null,
-        parse.data.start_date || null, parse.data.status || 'active',
-        userId, tenant.id
       ]);
-      
-      console.log('✅ UPDATE básico executado:', basicUpdateResult.rows[0]);
-      
-      // Segunda etapa: atualizar gestor_id e buddy_id separadamente
-      console.log('🔧 Atualizando gestor_id...');
-      const gestorUpdateResult = await query(`
-        UPDATE users SET 
-          gestor_id = $1,
-          updated_at = NOW()
-        WHERE id = $2 AND tenant_id = $3
-        RETURNING id, gestor_id
-      `, [parse.data.gestor_id, userId, tenant.id]);
-      
-      console.log('✅ UPDATE gestor_id executado:', gestorUpdateResult.rows[0]);
-      
-      console.log('🔧 Atualizando buddy_id...');
-      
-      // SOLUÇÃO TEMPORÁRIA: Usar abordagem alternativa para buddy_id
-      let buddyUpdateResult;
-      
-      try {
-        // Primeira tentativa: UPDATE simples
-        buddyUpdateResult = await query(`
-          UPDATE users SET 
-            buddy_id = $1,
-            updated_at = NOW()
-          WHERE id = $2 AND tenant_id = $3
-          RETURNING id, buddy_id
-        `, [parse.data.buddy_id, userId, tenant.id]);
-        
-        console.log('✅ UPDATE buddy_id executado (tentativa 1):', buddyUpdateResult.rows[0]);
-        
-        // Verificar se realmente foi atualizado
-        const verifyBuddy = await query(`
-          SELECT buddy_id FROM users WHERE id = $1
-        `, [userId]);
-        
-        console.log('🔍 Verificação pós-UPDATE buddy_id:', verifyBuddy.rows[0]);
-        
-        if (verifyBuddy.rows[0].buddy_id !== parse.data.buddy_id) {
-          console.log('⚠️ Buddy_id não foi atualizado, tentando abordagem alternativa...');
-          
-          // Segunda tentativa: UPDATE com FORCE
-          buddyUpdateResult = await query(`
-            UPDATE users SET 
-              buddy_id = $1,
-              updated_at = NOW()
-            WHERE id = $2 AND tenant_id = $3
-            RETURNING id, buddy_id
-          `, [parse.data.buddy_id, userId, tenant.id]);
-          
-          console.log('✅ UPDATE buddy_id executado (tentativa 2):', buddyUpdateResult.rows[0]);
-          
-          // Verificar novamente
-          const verifyBuddy2 = await query(`
-            SELECT buddy_id FROM users WHERE id = $1
-          `, [userId]);
-          
-          console.log('🔍 Verificação pós-UPDATE buddy_id (tentativa 2):', verifyBuddy2.rows[0]);
-          
-          // Se ainda não funcionou, usar abordagem de fallback
-          if (verifyBuddy2.rows[0].buddy_id !== parse.data.buddy_id) {
-            console.log('🚨 PROBLEMA CRÍTICO: Buddy_id não está sendo atualizado!');
-            console.log('🔧 Usando fallback: retornando valor solicitado mesmo que não tenha sido salvo');
-            
-            // Fallback: retornar o valor solicitado mesmo que não tenha sido salvo
-            buddyUpdateResult = {
-              rows: [{
-                id: userId,
-                buddy_id: parse.data.buddy_id // Retornar o valor solicitado
-              }]
-            };
-          }
-        }
-        
-      } catch (error) {
-        console.error('❌ Erro ao atualizar buddy_id:', error);
-        // Continuar com o valor atual se houver erro
-        buddyUpdateResult = {
-          rows: [{
-            id: userId,
-            buddy_id: parse.data.buddy_id
-          }]
-        };
-      }
-      
-      // Combinar resultados
-      const updateResult = {
-        rows: [{
-          id: userId,
-          name: basicUpdateResult.rows[0].name,
-          gestor_id: gestorUpdateResult.rows[0].gestor_id,
-          buddy_id: buddyUpdateResult.rows[0].buddy_id
-        }]
-      };
-      
-      console.log('✅ UPDATE executado. Resultado:', updateResult.rows[0]);
-      
-      // Verificar se realmente foi salvo
-      const verificacao = await query(`
-        SELECT id, name, gestor_id, buddy_id 
-        FROM users 
-        WHERE id = $1
-      `, [userId]);
-      console.log('🔍 Verificação pós-UPDATE:', verificacao.rows[0]);
+
+      console.log('✅ Usuário atualizado:', result.rows[0]);
     } else {
+      // SQLite fallback
       const { db } = await openDatabase();
       try {
         const existing = runQuery(db, 'SELECT id FROM users WHERE id = ? AND tenant_id = ?', [userId, tenant.id]);
@@ -580,7 +456,7 @@ router.put('/:id', async (req, res) => {
           [parse.data.name, parse.data.email, normalizedPhone, 
            parse.data.position || null, parse.data.department || null,
            parse.data.position_id || null, parse.data.department_id || null,
-           parse.data.gestor_id || null, parse.data.buddy_id || null,
+           parse.data.gestor_id, parse.data.buddy_id,
            parse.data.start_date || null, parse.data.status || 'active',
            userId, tenant.id]);
       } finally {

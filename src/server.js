@@ -10,6 +10,7 @@ const mammoth = require('mammoth');
 const OpenAI = require('openai');
 const axios = require('axios');
 const openaiSentimentService = require('./services/openaiSentimentService');
+const ChatWebSocketServer = require('./websocket/chatServer');
 
 // Funções auxiliares para personalização
 async function loadConversationHistory(userId, limit = 10) {
@@ -87,7 +88,6 @@ const { initializePool, query, migrate: migratePG, getTenantBySubdomain: getTena
 const { analyzeDocument } = require('./document-analyzer');
 const TelegramBot = require('./telegram-bot');
 const QRCode = require('qrcode');
-const ChatWebSocketServer = require('./websocket/chatServer');
 
 // Cache simples para dados quando PostgreSQL está instável
 const dataCache = {
@@ -3445,6 +3445,7 @@ const positionsRoutes = require('./routes/positions');
 const agentTrilhasRoutes = require('./routes/agent-trilhas');
 const agentN8nRoutes = require('./routes/agent-n8n');
 const conversationsRoutes = require('./routes/conversations');
+const chatAnalysisRoutes = require('./routes/chat-analysis');
 
 // Importar helpers
 const { 
@@ -3491,8 +3492,9 @@ app.use('/api/positions', positionsRoutes);
 app.use('/api/agent/trilhas', agentTrilhasRoutes);
 app.use('/api/agent-n8n', agentN8nRoutes);
 app.use('/api/conversations', conversationsRoutes);
+app.use('/api/chat', chatAnalysisRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis');
 
 // ============================================
 
@@ -3505,7 +3507,7 @@ async function bootstrap() {
     // Criar servidor HTTP para integrar WebSocket
     const server = http.createServer(app);
     
-    // Inicializar WebSocket Server
+    // Inicializar WebSocket Server para Chat Flutuante
     const chatWebSocketServer = new ChatWebSocketServer(server);
     
     server.listen(port, () => {

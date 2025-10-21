@@ -1,53 +1,16 @@
-<svg width="200" height="120" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background cinza claro -->
-  <rect width="200" height="120" fill="#F8F9FA"/>
+<svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .navi-compact { font-family: 'Montserrat', Arial, sans-serif; font-weight: 700; font-size: 14px; fill: #343A40; }
+    </style>
+  </defs>
   
-  <!-- Grupo do logo centralizado -->
-  <g transform="translate(100, 50)">
+  <g transform="translate(20, 14)">
     <!-- Texto "NAV" -->
-    <text 
-      font-family="Montserrat, Arial, sans-serif" 
-      font-weight="700" 
-      font-size="32" 
-      fill="#343A40"
-      text-anchor="middle"
-      y="8">NAV</text>
-    
-    <!-- Letra "I" -->
-    <text 
-      font-family="Montserrat, Arial, sans-serif" 
-      font-weight="700" 
-      font-size="32" 
-      fill="#343A40"
-      x="48" 
-      y="8">I</text>
-    
+    <text class="navi-compact" text-anchor="middle" y="3">NAV</text>
+    <!-- Letra "I" com caret -->
+    <text class="navi-compact" x="20" y="3">I</text>
     <!-- Caret substituindo o ponto do "i" -->
-    <path 
-      d="M48 -6 L50 -10 L52 -6" 
-      stroke="#17A2B8" 
-      stroke-width="2.5" 
-      stroke-linecap="round" 
-      stroke-linejoin="round"
-      fill="none"/>
-    
-    <!-- Tagline "ONBOARD" -->
-    <text 
-      font-family="Montserrat, Arial, sans-serif" 
-      font-weight="400" 
-      font-size="14" 
-      fill="#6C7570"
-      text-anchor="middle"
-      y="32">ONBOARD</text>
-  </g>
-  
-  <!-- Elemento decorativo: estrela no canto inferior direito -->
-  <g transform="translate(180, 100)">
-    <path 
-      d="M0 -4 L1.2 -1.2 L4 0 L1.2 1.2 L0 4 L-1.2 1.2 L-4 0 L-1.2 -1.2 Z" 
-      fill="#6C7570" 
-      opacity="0.6"/>
+    <path d="M20 -2 L22 -6 L24 -2" stroke="#343A40" stroke-width="2" stroke-linecap="round" fill="none"/>
   </g>
 </svg>
-
-

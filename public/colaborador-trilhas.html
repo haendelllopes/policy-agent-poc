@@ -8,6 +8,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- Chat Widget CSS -->
+    <link rel="stylesheet" href="/css/chat-widget.css">
+    
     <!-- Brand Manual CSS - Inline -->
     <style>
 /**
@@ -966,16 +969,15 @@ a:hover {
         }
     </script>
     
-        <!-- Chat Widget Integration (HTTP Version for Vercel) -->
+        <!-- Chat Widget Integration (WebSocket Version) -->
         <link href="css/chat-widget.css" rel="stylesheet">
-        <script src="js/chat-widget-http.js"></script>
         <script>
             // Initialize chat widget for trilhas page
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.chatWidgetHTTP) {
+                if (window.chatWidget) {
                     // Set trilhas context
-                    window.chatWidgetHTTP.setUserId('colaborador-demo');
-                    window.chatWidgetHTTP.setContext({
+                    window.chatWidget.setUserId('colaborador-demo');
+                    window.chatWidget.setContext({
                         page: 'colaborador-trilhas',
                         userType: 'colaborador'
                     });
@@ -983,7 +985,14 @@ a:hover {
             });
         </script>
     
-    <!-- Feather Icons -->
-    <script src="https://unpkg.com/feather-icons"></script>
+        <!-- Feather Icons - Brand Manual -->
+        <script src="https://unpkg.com/feather-icons"></script>
+        <script>
+            feather.replace();
+        </script>
+        
+        <!-- Chat Widget Scripts -->
+        <script src="/js/chat-widget.js"></script>
+        <script src="/js/chat-integration.js"></script>
 </body>
 </html>

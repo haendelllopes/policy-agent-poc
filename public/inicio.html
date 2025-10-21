@@ -2097,16 +2097,15 @@ textarea:focus {
         console.log(' Dashboard inicializado com sucesso!');
     </script>
     
-        <!-- Chat Widget Integration (HTTP Version for Vercel) -->
+        <!-- Chat Widget Integration (WebSocket Version) -->
         <link href="css/chat-widget.css" rel="stylesheet">
-        <script src="js/chat-widget-http.js"></script>
         <script>
             // Initialize chat widget for inicio page
             document.addEventListener('DOMContentLoaded', function() {
-                if (window.chatWidgetHTTP) {
+                if (window.chatWidget) {
                     // Set inicio context
-                    window.chatWidgetHTTP.setUserId('admin-demo');
-                    window.chatWidgetHTTP.setContext({
+                    window.chatWidget.setUserId('admin-demo');
+                    window.chatWidget.setContext({
                         page: 'inicio',
                         userType: 'admin'
                     });
