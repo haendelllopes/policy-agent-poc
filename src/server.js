@@ -358,7 +358,7 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
         sentimento_intensidade: Math.round(sentimentAnalysis.intensidade * 100),
         role: userId === 'admin-demo' ? 'admin' : 'colaborador',
         tom_detectado: sentimentAnalysis.fatores_detectados?.tom || 'neutro',
-        colaborador_id: colaboradorIdFromUrl // Adicionar ID do colaborador para uso nas ferramentas
+        colaborador_id: realUserId // Adicionar ID do colaborador para uso nas ferramentas
       },
       conversationHistory: conversationHistory,
       sentimentAnalysis: sentimentAnalysis
@@ -581,7 +581,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
     if (isPersonalDataQuestion && userId !== 'admin-demo') {
       try {
         console.log('🔧 Detectada pergunta sobre dados pessoais - buscando dados diretamente');
-        const colaboradorId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
+        const colaboradorId = realUserId || 'a4cd1933-f066-4595-a0b6-614a603f4bd3';
         const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
         const userResponse = await axios.get(`${baseUrl}/api/users/${colaboradorId}`, {
           headers: {
@@ -809,7 +809,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
               // Buscar dados reais do colaborador usando API existente
               try {
                 // Usar o colaborador_id do contexto ou um ID padrão para demo
-                const colaboradorId = colaboradorIdFromUrl || 'a4cd1933-f066-4595-a0b6-614a603f4bd3'; // ID demo
+                const colaboradorId = realUserId || 'a4cd1933-f066-4595-a0b6-614a603f4bd3'; // ID demo
                 console.log('🔍 DEBUG: Buscando dados do colaborador:', colaboradorId);
                 const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
                 const userResponse = await axios.get(`${baseUrl}/api/users/${colaboradorId}`, {
