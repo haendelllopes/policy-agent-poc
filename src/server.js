@@ -586,34 +586,12 @@ SEMPRE seja conversacional, personalizado e útil!`;
           }
         }
         
-        // Resposta personalizada direta
+        // Resposta personalizada direta e simples
         let personalizedResponse;
         if (gestorInfo) {
-          personalizedResponse = `Oi! 😊 
-
-Sobre seu gestor, ele é o **${gestorInfo.name}**! Ele trabalha como ${gestorInfo.position} no departamento de ${gestorInfo.department}.
-
-📋 **Suas informações:**
-• Você é o ${userResponse.data.name}
-• Trabalha como ${userResponse.data.position} 
-• No departamento de ${userResponse.data.department}
-• Desde ${new Date(userResponse.data.start_date).toLocaleDateString('pt-BR')}
-
-Posso ajudar com outras informações sobre suas trilhas de onboarding! 🚀`;
+          personalizedResponse = `Seu gestor é o **${gestorInfo.name}**! Ele é ${gestorInfo.position} no departamento de ${gestorInfo.department}. 😊`;
         } else {
-          personalizedResponse = `Oi! 😊 
-
-Sobre seu gestor... Infelizmente não tenho essa informação específica no sistema ainda. 
-
-📋 **Suas informações:**
-• Você é o ${userResponse.data.name}
-• Trabalha como ${userResponse.data.position} 
-• No departamento de ${userResponse.data.department}
-• Desde ${new Date(userResponse.data.start_date).toLocaleDateString('pt-BR')}
-
-Para descobrir quem é seu gestor, recomendo falar com o RH ou dar uma olhada no organograma da empresa.
-
-Posso te ajudar com outras coisas, tipo suas trilhas de onboarding! 🚀`;
+          personalizedResponse = `Infelizmente não tenho essa informação sobre seu gestor no sistema ainda. Recomendo falar com o RH ou consultar o organograma da empresa! 😊`;
         }
 
         // Salvar conversa
