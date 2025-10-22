@@ -1,0 +1,12 @@
+{
+  "name": "generate-embedding",
+  "version": "1.0.0",
+  "description": "Supabase Edge Function para gerar embeddings usando OpenAI",
+  "main": "index.ts",
+  "scripts": {
+    "start": "deno run --allow-net --allow-env index.ts"
+  },
+  "dependencies": {
+    "deno": "^1.0.0"
+  }
+}
