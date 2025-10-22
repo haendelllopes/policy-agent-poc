@@ -97,3 +97,4 @@ async function testFase3BackgroundAnalysis() {
 
 // Executar teste
 testFase3BackgroundAnalysis().catch(console.error);
+

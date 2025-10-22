@@ -75,3 +75,4 @@ async function testarCorrecoes() {
 
 // Executar teste
 testarCorrecoes().catch(console.error);
+

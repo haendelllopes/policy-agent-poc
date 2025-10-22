@@ -74,3 +74,4 @@ async function testVisualBrandManual() {
 }
 
 testVisualBrandManual().catch(console.error);
+

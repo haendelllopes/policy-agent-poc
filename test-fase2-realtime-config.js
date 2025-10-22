@@ -140,3 +140,4 @@ ALTER TABLE chat_connections REPLICA IDENTITY FULL;
 }
 
 testChatTables().catch(console.error);
+

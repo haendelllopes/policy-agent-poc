@@ -64,3 +64,4 @@ ALTER TABLE chat_connections REPLICA IDENTITY FULL;
 COMMENT ON TABLE chat_messages IS 'Mensagens do chat em tempo real';
 COMMENT ON TABLE chat_sessions IS 'Sessões de chat dos usuários';
 COMMENT ON TABLE chat_connections IS 'Status de conexão dos usuários';
+

@@ -73,8 +73,12 @@ router.get('/disponiveis/:colaboradorId', requireTenant, async (req, res) => {
         END as situacao
       FROM trilhas t
       LEFT JOIN colaborador_trilhas ct ON ct.trilha_id = t.id AND ct.colaborador_id = $2
-      WHERE t.tenant_id = $1 AND t.ativo = true
-      ORDER BY t.ordem, t.nome
+      WHERE t.tenant_id = $1 
+        AND t.ativo = true
+        AND colaborador_tem_acesso_trilha($2, t.id) = true
+      ORDER BY 
+        CASE WHEN t.ordem = 0 THEN 999999 ELSE t.ordem END ASC,
+        t.nome ASC
     `, [tenantId, userId]);
 
     // Buscar subdomain do tenant para a URL
@@ -89,11 +93,44 @@ router.get('/disponiveis/:colaboradorId', requireTenant, async (req, res) => {
     const trilhasEmAndamento = result.rows.filter(t => t.situacao === 'em_andamento');
     const trilhasConcluidas = result.rows.filter(t => t.situacao === 'concluida');
 
+    // ✅ NOVO: Preparar links formatados para diferentes canais
+    const dashboardUrl = `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${colaboradorId}&tenant=${tenantSubdomain}`;
+    
+    // Links formatados para diferentes canais
+    const linksFormatados = {
+      dashboard: {
+        url: dashboardUrl,
+        titulo: 'Painel Pessoal',
+        descricao: 'Acompanhe seu progresso nas trilhas',
+        tipo: 'dashboard'
+      }
+    };
+    
+    // Adicionar links das trilhas disponíveis se tiverem URLs
+    trilhasDisponiveis.forEach((trilha, index) => {
+      if (trilha.url) {
+        linksFormatados[`trilha_${index}`] = {
+          url: trilha.url,
+          titulo: trilha.nome,
+          descricao: trilha.descricao,
+          tipo: 'trilha'
+        };
+      }
+    });
+
     res.json({
       disponiveis: trilhasDisponiveis,
       em_andamento: trilhasEmAndamento,
       concluidas: trilhasConcluidas,
-      dashboard_url: `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${colaboradorId}&tenant=${tenantSubdomain}`
+      dashboard_url: dashboardUrl,
+      // ✅ NOVO: Links formatados para diferentes canais
+      links_formatados: linksFormatados,
+      // ✅ NOVO: Informações para formatação
+      formatacao: {
+        canal: req.query.canal || 'whatsapp', // whatsapp, telegram, chat, email
+        incluir_botoes: req.query.botoes === 'true',
+        estilo: req.query.estilo || 'padrao' // padrao, compacto, detalhado
+      }
     });
   } catch (error) {
     console.error('Erro ao buscar trilhas disponíveis:', error);
@@ -321,13 +358,44 @@ router.post('/iniciar', requireTenant, async (req, res) => {
       console.error('Erro ao enviar webhook trilha-iniciada:', webhookError);
     }
 
+    // ✅ NOVO: Preparar links formatados para diferentes canais
+    const dashboardUrl = `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${userId}&tenant=${req.tenantSubdomain}`;
+    
+    // Links formatados para diferentes canais
+    const linksFormatados = {
+      dashboard: {
+        url: dashboardUrl,
+        titulo: 'Painel Pessoal',
+        descricao: 'Acompanhe seu progresso na trilha',
+        tipo: 'dashboard'
+      }
+    };
+    
+    // Adicionar link do primeiro conteúdo se disponível
+    if (primeiroConteudo.rows[0] && primeiroConteudo.rows[0].url) {
+      linksFormatados.primeiro_conteudo = {
+        url: primeiroConteudo.rows[0].url,
+        titulo: primeiroConteudo.rows[0].titulo,
+        descricao: primeiroConteudo.rows[0].descricao,
+        tipo: primeiroConteudo.rows[0].tipo
+      };
+    }
+
     res.json({
       success: true,
       message: `Trilha "${trilhaResult.rows[0].nome}" iniciada com sucesso!`,
       trilha: trilhaResult.rows[0],
       progresso_id: novoProgresso.rows[0].id,
       primeiro_conteudo: primeiroConteudo.rows[0] || null,
-      dashboard_url: `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${userId}&tenant=${req.tenantSubdomain}`
+      dashboard_url: dashboardUrl,
+      // ✅ NOVO: Links formatados para diferentes canais
+      links_formatados: linksFormatados,
+      // ✅ NOVO: Informações para formatação
+      formatacao: {
+        canal: req.query.canal || 'whatsapp', // whatsapp, telegram, chat, email
+        incluir_botoes: req.query.botoes === 'true',
+        estilo: req.query.estilo || 'padrao' // padrao, compacto, detalhado
+      }
     });
 
   } catch (error) {
@@ -611,6 +679,224 @@ router.post('/reativar', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Erro ao reativar trilha:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * POST /api/agent/trilhas/formatar-links
+ * Formata links para diferentes canais de comunicação
+ */
+router.post('/formatar-links', requireTenant, async (req, res) => {
+  try {
+    const { links, canal = 'whatsapp', estilo = 'padrao' } = req.body;
+    
+    if (!links || !Array.isArray(links)) {
+      return res.status(400).json({ 
+        error: 'Links são obrigatórios e devem ser um array' 
+      });
+    }
+    
+    // Importar o formatador
+    const LinkFormatter = require('../utils/link-formatter');
+    const formatter = new LinkFormatter();
+    
+    const linksFormatados = [];
+    
+    links.forEach(link => {
+      const { url, titulo, descricao } = link;
+      
+      let linkFormatado;
+      
+      switch (canal) {
+        case 'whatsapp':
+          linkFormatado = formatter.formatarWhatsApp(url, titulo, descricao);
+          break;
+        case 'telegram':
+          linkFormatado = formatter.formatarTelegram(url, titulo, descricao);
+          break;
+        case 'chat':
+          linkFormatado = formatter.formatarChatFlutuante(url, titulo, descricao);
+          break;
+        case 'email':
+          linkFormatado = formatter.formatarEmail(url, titulo, descricao);
+          break;
+        default:
+          linkFormatado = formatter.formatarWhatsApp(url, titulo, descricao);
+      }
+      
+      linksFormatados.push({
+        original: link,
+        formatado: linkFormatado,
+        canal: canal,
+        estilo: estilo
+      });
+    });
+    
+    res.json({
+      success: true,
+      canal: canal,
+      estilo: estilo,
+      total_links: linksFormatados.length,
+      links_formatados: linksFormatados
+    });
+    
+  } catch (error) {
+    console.error('Erro ao formatar links:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * GET /api/agent/trilhas/buscar-conteudo
+ * Busca semântica nos conteúdos processados
+ */
+router.get('/buscar-conteudo', requireTenant, async (req, res) => {
+  try {
+    const { query: searchQuery, trilha_id, limit = 10 } = req.query;
+    
+    if (!searchQuery) {
+      return res.status(400).json({ error: 'Query de busca é obrigatória' });
+    }
+
+    // Gerar embedding da query usando OpenAI
+    const { generateEmbedding } = require('../utils/embedding-generator');
+    const queryEmbedding = await generateEmbedding(searchQuery);
+    
+    // Busca semântica usando função SQL
+    const result = await query(`
+      SELECT * FROM buscar_conteudos_similares($1, $2, $3)
+    `, [req.tenantId, JSON.stringify(queryEmbedding), parseInt(limit)]);
+
+    // Buscar informações adicionais dos conteúdos
+    const conteudosCompletos = await Promise.all(
+      result.rows.map(async (row) => {
+        const conteudoInfo = await query(`
+          SELECT 
+            tc.titulo,
+            tc.descricao,
+            tc.url,
+            tc.tipo,
+            t.nome as trilha_nome,
+            t.id as trilha_id
+          FROM trilha_conteudos tc
+          JOIN trilhas t ON t.id = tc.trilha_id
+          WHERE tc.id = $1
+        `, [row.trilha_conteudo_id]);
+
+        return {
+          ...row,
+          conteudo_info: conteudoInfo.rows[0]
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      query: searchQuery,
+      results: conteudosCompletos,
+      total: conteudosCompletos.length,
+      embedding_generated: true
+    });
+
+  } catch (error) {
+    console.error('Erro na busca semântica:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * POST /api/agent/trilhas/buscar-conteudo-semantico
+ * Busca semântica avançada com filtros
+ */
+router.post('/buscar-conteudo-semantico', requireTenant, async (req, res) => {
+  try {
+    const { 
+      query: searchQuery, 
+      trilha_id, 
+      categoria,
+      nivel_dificuldade,
+      tipo_conteudo,
+      limit = 10,
+      min_similarity = 0.7
+    } = req.body;
+    
+    if (!searchQuery) {
+      return res.status(400).json({ error: 'Query de busca é obrigatória' });
+    }
+
+    // Gerar embedding da query
+    const { generateEmbedding } = require('../utils/embedding-generator');
+    const queryEmbedding = await generateEmbedding(searchQuery);
+    
+    // Construir query SQL com filtros
+    let whereConditions = ['tcp.tenant_id = $1', 'tcp.status = \'completed\'', 'tcp.embedding IS NOT NULL'];
+    let params = [req.tenantId, JSON.stringify(queryEmbedding)];
+    let paramIndex = 3;
+
+    if (trilha_id) {
+      whereConditions.push(`tc.trilha_id = $${paramIndex}`);
+      params.push(trilha_id);
+      paramIndex++;
+    }
+
+    if (categoria) {
+      whereConditions.push(`tcp.categoria_sugerida ILIKE $${paramIndex}`);
+      params.push(`%${categoria}%`);
+      paramIndex++;
+    }
+
+    if (nivel_dificuldade) {
+      whereConditions.push(`tcp.nivel_dificuldade = $${paramIndex}`);
+      params.push(nivel_dificuldade);
+      paramIndex++;
+    }
+
+    if (tipo_conteudo) {
+      whereConditions.push(`tc.tipo = $${paramIndex}`);
+      params.push(tipo_conteudo);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+    
+    // Busca com filtros e similaridade mínima
+    const result = await query(`
+      SELECT 
+        tcp.*,
+        tc.titulo,
+        tc.descricao,
+        tc.url,
+        tc.tipo,
+        t.nome as trilha_nome,
+        t.id as trilha_id,
+        (1 - (tcp.embedding <-> $2)) as similarity_score
+      FROM trilha_conteudos_processados tcp
+      JOIN trilha_conteudos tc ON tc.id = tcp.trilha_conteudo_id
+      JOIN trilhas t ON t.id = tc.trilha_id
+      WHERE ${whereClause}
+        AND (1 - (tcp.embedding <-> $2)) >= $${paramIndex}
+      ORDER BY tcp.embedding <-> $2
+      LIMIT $${paramIndex + 1}
+    `, [...params, min_similarity, parseInt(limit)]);
+
+    res.json({
+      success: true,
+      query: searchQuery,
+      filters: {
+        trilha_id,
+        categoria,
+        nivel_dificuldade,
+        tipo_conteudo,
+        min_similarity
+      },
+      results: result.rows,
+      total: result.rows.length,
+      embedding_generated: true
+    });
+
+  } catch (error) {
+    console.error('Erro na busca semântica avançada:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

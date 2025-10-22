@@ -224,3 +224,4 @@ function extractTags(sentiment) {
 }
 
 module.exports = router;
+

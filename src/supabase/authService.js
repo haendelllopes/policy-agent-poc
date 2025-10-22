@@ -147,3 +147,4 @@ class SupabaseAuthService {
 }
 
 module.exports = SupabaseAuthService;
+

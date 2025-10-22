@@ -106,6 +106,20 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
+    // Validar ordem única (se ordem > 0)
+    if (parse.data.ordem > 0) {
+      const ordemExists = await query(
+        'SELECT id FROM trilhas WHERE tenant_id = $1 AND ordem = $2',
+        [tenant.id, parse.data.ordem]
+      );
+      
+      if (ordemExists.rows.length > 0) {
+        return res.status(400).json({ 
+          error: 'Já existe uma trilha com esta ordem. Escolha outra ordem ou deixe 0 para ordem automática.' 
+        });
+      }
+    }
+
     const trilhaId = uuidv4();
     
     await query(`
@@ -167,6 +181,20 @@ router.put('/:id', async (req, res) => {
 
     if (existing.rows.length === 0) {
       return res.status(404).json({ error: 'Trilha não encontrada' });
+    }
+
+    // Validar ordem única (se ordem > 0, excluindo a própria trilha)
+    if (parse.data.ordem !== undefined && parse.data.ordem > 0) {
+      const ordemExists = await query(
+        'SELECT id FROM trilhas WHERE tenant_id = $1 AND ordem = $2 AND id != $3',
+        [tenant.id, parse.data.ordem, trilhaId]
+      );
+      
+      if (ordemExists.rows.length > 0) {
+        return res.status(400).json({ 
+          error: 'Já existe uma trilha com esta ordem. Escolha outra ordem ou deixe 0 para ordem automática.' 
+        });
+      }
     }
 
     await query(`
@@ -232,6 +260,42 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/trilhas/reordenar
+ * Reordenar todas as trilhas do tenant (ordem crescente)
+ */
+router.post('/reordenar', async (req, res) => {
+  try {
+    const { getTenantBySubdomain } = req.app.locals;
+    
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    // Reordenar trilhas por data de criação (exceto ordem 0)
+    const result = await query(`
+      WITH trilhas_ordenadas AS (
+        SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) as nova_ordem
+        FROM trilhas 
+        WHERE tenant_id = $1 AND ativo = true AND ordem > 0
+      )
+      UPDATE trilhas 
+      SET ordem = to_ordenadas.nova_ordem
+      FROM trilhas_ordenadas to_ordenadas
+      WHERE trilhas.id = to_ordenadas.id
+    `, [tenant.id]);
+
+    res.json({ 
+      message: 'Trilhas reordenadas com sucesso',
+      total: result.rowCount
+    });
+  } catch (error) {
+    console.error('Erro ao reordenar trilhas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // ============================================
 // GESTÃO DE CONTEÚDOS DAS TRILHAS
 // ============================================
@@ -290,8 +354,9 @@ router.post('/:id/conteudos', async (req, res) => {
       parse.data.obrigatorio
     ]);
 
-    // Disparar webhook para n8n processar conteúdo (opcional - apenas se N8N_WEBHOOK_PROCESSAR_CONTEUDO estiver configurado)
-    const N8N_PROCESSAR_URL = process.env.N8N_WEBHOOK_PROCESSAR_CONTEUDO;
+    // ✅ NOVO: Disparar webhook para processamento automático com AI
+    const N8N_PROCESSAR_URL = process.env.N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_PROCESSAR_CONTEUDO;
+    console.log('🔍 DEBUG: N8N_PROCESSAR_URL =', N8N_PROCESSAR_URL);
     if (N8N_PROCESSAR_URL) {
       try {
         // Buscar informações da trilha
@@ -301,23 +366,31 @@ router.post('/:id/conteudos', async (req, res) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            type: 'trilha_conteudo_processamento',
             timestamp: new Date().toISOString(),
+            trilha_conteudo_id: conteudoId,
+            trilha_id: trilhaId,
+            trilha_nome: trilhaInfo.rows[0]?.nome,
+            tenant_id: tenant.id,
+            tenant_subdomain: req.tenantSubdomain,
             conteudo: {
-              id: conteudoId,
-              trilha_id: trilhaId,
-              trilha_nome: trilhaInfo.rows[0]?.nome,
               tipo: parse.data.tipo,
               titulo: parse.data.titulo,
               descricao: parse.data.descricao,
-              url: parse.data.url
+              url: parse.data.url,
+              ordem: parse.data.ordem,
+              obrigatorio: parse.data.obrigatorio
             }
           })
         });
-        console.log(`✅ Webhook n8n disparado para processar conteúdo ${conteudoId}`);
+        console.log(`✅ Webhook processamento disparado para conteúdo ${conteudoId} (${parse.data.tipo})`);
       } catch (webhookError) {
-        console.error('⚠️ Erro ao enviar webhook processar conteúdo:', webhookError.message);
+        console.error('⚠️ Erro ao enviar webhook processamento:', webhookError.message);
+        console.error('⚠️ Detalhes do erro:', webhookError);
         // Não bloqueia a criação do conteúdo se o webhook falhar
       }
+    } else {
+      console.log('ℹ️ N8N_WEBHOOK_URL não configurado - processamento automático desabilitado');
     }
 
     res.status(201).json({
@@ -451,6 +524,177 @@ router.delete('/conteudos/:conteudoId', async (req, res) => {
     res.json({ message: 'Conteúdo deletado com sucesso', id: conteudoId });
   } catch (error) {
     console.error('Erro ao deletar conteúdo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * POST /api/trilhas/conteudos/processamento-resultado
+ * Receber resultado do processamento do N8N
+ */
+router.post('/conteudos/processamento-resultado', async (req, res) => {
+  try {
+    const { 
+      trilha_conteudo_id, 
+      conteudo_extraido, 
+      resumo, 
+      tags, 
+      categoria_sugerida,
+      nivel_dificuldade,
+      tempo_estimado_minutos,
+      idioma,
+      word_count,
+      sentiment_score,
+      embedding,
+      status,
+      erro 
+    } = req.body;
+
+    // Validações básicas
+    if (!trilha_conteudo_id) {
+      return res.status(400).json({ error: 'trilha_conteudo_id é obrigatório' });
+    }
+
+    if (!status) {
+      return res.status(400).json({ error: 'status é obrigatório' });
+    }
+
+    // Buscar tenant_id do conteúdo
+    const conteudoResult = await query(`
+      SELECT tc.id, tc.trilha_id, t.tenant_id 
+      FROM trilha_conteudos tc
+      JOIN trilhas t ON t.id = tc.trilha_id
+      WHERE tc.id = $1
+    `, [trilha_conteudo_id]);
+
+    if (conteudoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conteúdo não encontrado' });
+    }
+
+    const tenantId = conteudoResult.rows[0].tenant_id;
+
+    // Salvar ou atualizar dados processados
+    const result = await query(`
+      INSERT INTO trilha_conteudos_processados (
+        trilha_conteudo_id, tenant_id, conteudo_extraido, resumo, tags,
+        categoria_sugerida, nivel_dificuldade, tempo_estimado_minutos,
+        idioma, word_count, sentiment_score, embedding, status, erro
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ON CONFLICT (trilha_conteudo_id) 
+      DO UPDATE SET
+        conteudo_extraido = EXCLUDED.conteudo_extraido,
+        resumo = EXCLUDED.resumo,
+        tags = EXCLUDED.tags,
+        categoria_sugerida = EXCLUDED.categoria_sugerida,
+        nivel_dificuldade = EXCLUDED.nivel_dificuldade,
+        tempo_estimado_minutos = EXCLUDED.tempo_estimado_minutos,
+        idioma = EXCLUDED.idioma,
+        word_count = EXCLUDED.word_count,
+        sentiment_score = EXCLUDED.sentiment_score,
+        embedding = EXCLUDED.embedding,
+        status = EXCLUDED.status,
+        erro = EXCLUDED.erro,
+        processed_at = NOW()
+      RETURNING *
+    `, [
+      trilha_conteudo_id, 
+      tenantId,
+      conteudo_extraido || null, 
+      resumo || null, 
+      tags || null, 
+      categoria_sugerida || null,
+      nivel_dificuldade || null,
+      tempo_estimado_minutos || null,
+      idioma || 'pt-BR',
+      word_count || null,
+      sentiment_score || null,
+      embedding ? JSON.stringify(embedding) : null,
+      status,
+      erro || null
+    ]);
+
+    console.log(`✅ Processamento salvo para conteúdo ${trilha_conteudo_id} - Status: ${status}`);
+
+    res.json({ 
+      success: true, 
+      processed_id: result.rows[0].id,
+      status: result.rows[0].status,
+      message: 'Dados processados salvos com sucesso'
+    });
+
+  } catch (error) {
+    console.error('Erro ao salvar processamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * GET /api/trilhas/conteudos/:id/processamento
+ * Buscar dados de processamento de um conteúdo
+ */
+router.get('/conteudos/:id/processamento', async (req, res) => {
+  try {
+    const conteudoId = req.params.id;
+    const { getTenantBySubdomain } = req.app.locals;
+    
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    const result = await query(`
+      SELECT 
+        tcp.*,
+        tc.titulo,
+        tc.descricao,
+        tc.url,
+        tc.tipo,
+        t.nome as trilha_nome
+      FROM trilha_conteudos_processados tcp
+      JOIN trilha_conteudos tc ON tc.id = tcp.trilha_conteudo_id
+      JOIN trilhas t ON t.id = tc.trilha_id
+      WHERE tcp.trilha_conteudo_id = $1 AND tcp.tenant_id = $2
+    `, [conteudoId, tenant.id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Processamento não encontrado' });
+    }
+
+    res.json({
+      success: true,
+      processamento: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar processamento:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
+ * GET /api/trilhas/conteudos/processamento/estatisticas
+ * Buscar estatísticas de processamento do tenant
+ */
+router.get('/conteudos/processamento/estatisticas', async (req, res) => {
+  try {
+    const { getTenantBySubdomain } = req.app.locals;
+    
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    const result = await query(`
+      SELECT * FROM obter_estatisticas_processamento_conteudos($1)
+    `, [tenant.id]);
+
+    res.json({
+      success: true,
+      estatisticas: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

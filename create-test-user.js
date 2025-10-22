@@ -82,3 +82,4 @@ createTestUser().then(userId => {
     console.log('\n❌ Falha ao criar usuário de teste');
   }
 }).catch(console.error);
+

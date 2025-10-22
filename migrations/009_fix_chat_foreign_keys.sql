@@ -21,3 +21,4 @@ ALTER TABLE chat_connections ADD CONSTRAINT chat_connections_user_id_fkey
 COMMENT ON TABLE chat_messages IS 'Mensagens do chat em tempo real - FK para users(id)';
 COMMENT ON TABLE chat_sessions IS 'Sessões de chat dos usuários - FK para users(id)';
 COMMENT ON TABLE chat_connections IS 'Status de conexão dos usuários - FK para users(id)';
+

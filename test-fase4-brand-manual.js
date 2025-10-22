@@ -53,3 +53,4 @@ async function testFase4BrandManual() {
 }
 
 testFase4BrandManual().catch(console.error);
+

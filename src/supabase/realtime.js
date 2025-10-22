@@ -70,3 +70,4 @@ class SupabaseRealtimeConfig {
 }
 
 module.exports = SupabaseRealtimeConfig;
+

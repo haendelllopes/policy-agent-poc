@@ -125,3 +125,4 @@ async function testFase3WithoutFK() {
 }
 
 testFase3WithoutFK().catch(console.error);
+

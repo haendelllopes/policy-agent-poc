@@ -57,3 +57,4 @@ BEGIN
     RETURN auth.uid() = target_user_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+

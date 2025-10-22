@@ -86,3 +86,4 @@ checkUsersTable().then(userId => {
     console.log('ALTER TABLE chat_connections ADD CONSTRAINT chat_connections_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id);');
   }
 }).catch(console.error);
+

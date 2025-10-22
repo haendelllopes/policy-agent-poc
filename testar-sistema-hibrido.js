@@ -103,3 +103,4 @@ async function testarSistemaHibrido() {
 }
 
 testarSistemaHibrido().catch(console.error);
+

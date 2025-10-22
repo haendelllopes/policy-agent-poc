@@ -49,3 +49,4 @@ module.exports = {
   supabase,
   testConnection
 };
+

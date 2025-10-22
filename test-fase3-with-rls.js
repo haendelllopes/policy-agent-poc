@@ -136,3 +136,4 @@ ALTER TABLE chat_connections ADD CONSTRAINT chat_connections_user_id_fkey FOREIG
 }
 
 testFase3WithRLS().catch(console.error);
+

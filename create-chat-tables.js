@@ -117,3 +117,4 @@ async function createChatTables() {
 }
 
 createChatTables().catch(console.error);
+

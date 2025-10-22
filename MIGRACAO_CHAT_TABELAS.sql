@@ -89,3 +89,4 @@ SELECT * FROM chat_messages WHERE message = 'Teste de migração';
 
 -- Limpar teste
 DELETE FROM chat_messages WHERE message = 'Teste de migração';
+

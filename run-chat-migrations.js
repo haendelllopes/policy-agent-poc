@@ -60,3 +60,4 @@ async function runChatMigrations() {
 }
 
 runChatMigrations().catch(console.error);
+

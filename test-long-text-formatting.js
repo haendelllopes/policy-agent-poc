@@ -63,3 +63,4 @@ async function testLongTextFormatting() {
 
 // Executar testes
 testLongTextFormatting().catch(console.error);
+

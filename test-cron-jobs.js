@@ -213,3 +213,4 @@ module.exports = {
   simularCicloCompleto,
   executarTodosTestes
 };
+

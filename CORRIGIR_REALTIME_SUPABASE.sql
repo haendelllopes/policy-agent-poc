@@ -54,3 +54,4 @@ SELECT * FROM chat_messages WHERE message = 'Teste Realtime Corrigido';
 
 -- Limpar teste
 DELETE FROM chat_messages WHERE message = 'Teste Realtime Corrigido';
+

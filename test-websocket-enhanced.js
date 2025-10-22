@@ -96,3 +96,4 @@ async function testEnhancedWebSocketChat() {
 
 // Executar testes
 testEnhancedWebSocketChat().catch(console.error);
+

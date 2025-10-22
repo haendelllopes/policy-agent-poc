@@ -66,3 +66,4 @@ async function testChatFlutuante() {
 
 // Executar testes
 testChatFlutuante().catch(console.error);
+

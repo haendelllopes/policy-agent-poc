@@ -92,3 +92,4 @@ async function testarCorrecaoSupabase() {
 }
 
 testarCorrecaoSupabase().catch(console.error);
+
