@@ -3463,6 +3463,7 @@ const proactiveRoutes = require('./routes/proactive');
 const notificationRoutes = require('./routes/notifications');
 const dashboardRoutes = require('./routes/dashboard');
 const migrationRoutes = require('./routes/migration');
+const uploadRoutes = require('./routes/upload');
 
 // Importar helpers
 const { 
@@ -3516,8 +3517,9 @@ app.use('/api/proactive', proactiveRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/migration', migrationRoutes);
+app.use('/api/upload', uploadRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http, cron, proactive, notifications');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http, cron, proactive, notifications, migration, upload');
 
 // ============================================
 

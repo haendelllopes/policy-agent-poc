@@ -529,7 +529,180 @@ router.delete('/conteudos/:conteudoId', async (req, res) => {
 });
 
 /**
- * POST /api/trilhas/conteudos/processamento-resultado
+ * POST /api/trilhas/:id/conteudos-com-upload
+ * Criar conteúdo de trilha com upload de arquivo
+ */
+router.post('/:id/conteudos-com-upload', upload.single('arquivo'), async (req, res) => {
+  try {
+    const { getTenantBySubdomain } = req.app.locals;
+    const trilhaId = req.params.id;
+    
+    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+
+    // Validar trilha
+    const trilha = await query('SELECT * FROM trilhas WHERE id = $1 AND tenant_id = $2', [trilhaId, tenant.id]);
+    if (trilha.rows.length === 0) {
+      return res.status(404).json({ error: 'Trilha não encontrada' });
+    }
+
+    // Validar dados do conteúdo
+    const conteudoSchema = z.object({
+      tipo: z.enum(['documento', 'pdf', 'video', 'link']),
+      titulo: z.string().min(1, 'Título é obrigatório'),
+      descricao: z.string().optional(),
+      ordem: z.number().int().min(1),
+      obrigatorio: z.boolean().optional()
+    });
+
+    const parse = conteudoSchema.safeParse({
+      tipo: req.body.tipo,
+      titulo: req.body.titulo,
+      descricao: req.body.descricao,
+      ordem: parseInt(req.body.ordem),
+      obrigatorio: req.body.obrigatorio === 'true'
+    });
+
+    if (!parse.success) {
+      return res.status(400).json({ 
+        error: 'Dados inválidos',
+        details: parse.error.errors
+      });
+    }
+
+    // Processar arquivo se fornecido
+    let arquivoUrl = null;
+    if (req.file) {
+      try {
+        // Upload para Supabase Storage
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('Configuração do Supabase não encontrada');
+        }
+
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        // Gerar nome único para o arquivo
+        const fileExtension = path.extname(req.file.originalname);
+        const fileName = `${uuidv4()}${fileExtension}`;
+        const filePath = `tenant_${tenant.id}/${fileName}`;
+
+        // Upload para Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('trilha-arquivos')
+          .upload(filePath, req.file.buffer, {
+            contentType: req.file.mimetype,
+            metadata: {
+              originalName: req.file.originalname,
+              size: req.file.size,
+              uploadedAt: new Date().toISOString(),
+              tenantId: tenant.id,
+              trilhaId: trilhaId
+            }
+          });
+
+        if (error) {
+          throw new Error(`Erro no upload: ${error.message}`);
+        }
+
+        // Gerar URL pública
+        const publicUrl = await query(`
+          SELECT obter_url_arquivo_trilha('trilha-arquivos', $1) as url
+        `, [filePath]);
+
+        arquivoUrl = publicUrl.rows[0].url;
+        console.log(`✅ Arquivo uploadado: ${req.file.originalname} -> ${arquivoUrl}`);
+
+      } catch (uploadError) {
+        console.error('Erro no upload do arquivo:', uploadError);
+        return res.status(500).json({ 
+          error: 'Erro ao fazer upload do arquivo',
+          details: uploadError.message
+        });
+      }
+    }
+
+    // Criar conteúdo na trilha
+    const conteudoId = uuidv4();
+    await query(`
+      INSERT INTO trilha_conteudos (id, trilha_id, tipo, titulo, descricao, url, ordem, obrigatorio)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [
+      conteudoId,
+      trilhaId,
+      parse.data.tipo,
+      parse.data.titulo,
+      parse.data.descricao || null,
+      arquivoUrl || parse.data.url || null,
+      parse.data.ordem,
+      parse.data.obrigatorio
+    ]);
+
+    // ✅ Disparar webhook para processamento automático com AI
+    const N8N_PROCESSAR_URL = process.env.N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_PROCESSAR_CONTEUDO;
+    if (N8N_PROCESSAR_URL) {
+      try {
+        // Buscar informações da trilha
+        const trilhaInfo = await query('SELECT nome FROM trilhas WHERE id = $1', [trilhaId]);
+        
+        await fetch(N8N_PROCESSAR_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'trilha_conteudo_processamento',
+            timestamp: new Date().toISOString(),
+            trilha_conteudo_id: conteudoId,
+            trilha_id: trilhaId,
+            trilha_nome: trilhaInfo.rows[0]?.nome,
+            tenant_id: tenant.id,
+            tenant_subdomain: req.tenantSubdomain,
+            conteudo: {
+              tipo: parse.data.tipo,
+              titulo: parse.data.titulo,
+              descricao: parse.data.descricao,
+              url: arquivoUrl || parse.data.url,
+              ordem: parse.data.ordem,
+              obrigatorio: parse.data.obrigatorio,
+              arquivo_original: req.file ? {
+                name: req.file.originalname,
+                size: req.file.size,
+                mimetype: req.file.mimetype
+              } : null
+            }
+          })
+        });
+        console.log(`✅ Webhook processamento disparado para conteúdo ${conteudoId} (${parse.data.tipo}) com arquivo`);
+      } catch (webhookError) {
+        console.error('⚠️ Erro ao enviar webhook processamento:', webhookError.message);
+        // Não bloqueia a criação do conteúdo se o webhook falhar
+      }
+    }
+
+    res.status(201).json({
+      id: conteudoId,
+      trilha_id: trilhaId,
+      ...parse.data,
+      url: arquivoUrl || parse.data.url,
+      arquivo_uploadado: req.file ? {
+        name: req.file.originalname,
+        size: req.file.size,
+        mimetype: req.file.mimetype,
+        url: arquivoUrl
+      } : null
+    });
+
+  } catch (error) {
+    console.error('Erro ao criar conteúdo com upload:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+/**
  * Receber resultado do processamento do N8N
  */
 router.post('/conteudos/processamento-resultado', async (req, res) => {
