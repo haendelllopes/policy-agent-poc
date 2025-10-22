@@ -1,8 +1,41 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { z } = require('zod');
 const { query } = require('../db-pg');
+const path = require('path');
+
+// Configurar multer para upload temporário
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'video/mp4',
+      'video/avi',
+      'video/quicktime',
+      'video/x-msvideo',
+      'text/plain',
+      'application/rtf',
+      'image/jpeg',
+      'image/png',
+      'image/gif'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Tipo de arquivo não permitido'), false);
+    }
+  }
+});
 
 /**
  * GET /api/trilhas
