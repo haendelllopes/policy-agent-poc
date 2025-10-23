@@ -1588,7 +1588,7 @@ a:hover {
                     <textarea id="conteudo-descricao" placeholder="Descreva brevemente este conteúdo..."></textarea>
                 </div>
                 
-                <div class="form-group" id="url-container">
+                <div class="form-group" id="url-container" style="display: none;">
                     <label for="conteudo-url">URL *</label>
                     <input type="url" id="conteudo-url" placeholder="https://...">
                 </div>
@@ -1946,8 +1946,20 @@ a:hover {
             const uploadContainer = document.getElementById('upload-container');
             const urlInput = document.getElementById('conteudo-url');
             
-            tipoSelect.addEventListener('change', function() {
+            if (!tipoSelect) {
+                console.error('Elemento conteudo-tipo não encontrado');
+                return;
+            }
+            
+            // Remover event listener anterior se existir
+            tipoSelect.removeEventListener('change', handleTipoChange);
+            
+            // Adicionar novo event listener
+            tipoSelect.addEventListener('change', handleTipoChange);
+            
+            function handleTipoChange() {
                 const tipo = this.value;
+                console.log('Tipo selecionado:', tipo);
                 
                 if (['documento', 'pdf', 'video'].includes(tipo)) {
                     // Mostrar upload, esconder URL
@@ -1955,22 +1967,33 @@ a:hover {
                     uploadContainer.style.display = 'block';
                     urlInput.required = false;
                     
+                    console.log('Mostrando upload container');
+                    
                     // Inicializar uploader se ainda não foi inicializado
                     if (!window.trilhaUploader) {
-                        window.trilhaUploader = new TrilhaFileUploader('file-uploader-container');
+                        try {
+                            window.trilhaUploader = new TrilhaFileUploader('file-uploader-container');
+                            console.log('Uploader inicializado');
+                        } catch (error) {
+                            console.error('Erro ao inicializar uploader:', error);
+                        }
                     }
                 } else if (tipo === 'link') {
                     // Mostrar URL, esconder upload
                     urlContainer.style.display = 'block';
                     uploadContainer.style.display = 'none';
                     urlInput.required = true;
+                    
+                    console.log('Mostrando URL container');
                 } else {
                     // Ambos escondidos
                     urlContainer.style.display = 'none';
                     uploadContainer.style.display = 'none';
                     urlInput.required = false;
+                    
+                    console.log('Escondendo ambos containers');
                 }
-            });
+            }
         }
 
         async function salvarConteudo(event) {
