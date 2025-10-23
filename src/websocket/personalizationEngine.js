@@ -333,13 +333,24 @@ ${sentimento_atual?.includes('negativo') ? `
 3. finalizar_trilha - Finaliza trilha específica
 4. reiniciar_trilha - Reinicia trilha específica
 5. registrar_feedback - Registra feedback sobre trilhas
-6. buscar_documentos - Busca semântica em documentos
-7. criar_anotacao - Cria anotação do agente
-8. registrar_sentimento - Registra sentimento do colaborador
-9. gerar_melhoria - Gera sugestão de melhoria
+6. buscar_documentos - Busca semântica em documentos corporativos
+7. buscar_conteudo_trilhas - Busca semântica inteligente nos conteúdos das trilhas para responder dúvidas específicas
+8. criar_anotacao - Cria anotação do agente
+9. registrar_sentimento - Registra sentimento do colaborador
+10. gerar_melhoria - Gera sugestão de melhoria
 
 SEMPRE use as ferramentas quando apropriado e seja proativo!
-Analise padrões históricos e ofereça suporte personalizado!`;
+Analise padrões históricos e ofereça suporte personalizado!
+
+🎯 **QUANDO USAR CADA FERRAMENTA:**
+- **buscar_conteudo_trilhas**: Use quando o colaborador fizer perguntas sobre:
+  * Como fazer algo específico ("Como fazer login?", "Como configurar email?")
+  * O que significa algo ("O que é onboarding?", "O que é compliance?")
+  * Dúvidas sobre processos ou procedimentos
+  * Perguntas técnicas sobre sistemas ou ferramentas
+- **buscar_documentos**: Use para políticas, procedimentos corporativos, manuais
+- **buscar_trilhas_disponiveis**: Use para mostrar trilhas que o colaborador pode fazer
+- **registrar_feedback**: Use quando o colaborador der opinião sobre trilhas ou processos`;
   }
 
   getToneBySentiment(sentimento) {

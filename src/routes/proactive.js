@@ -568,3 +568,11 @@ async function buscarInsights(tenantId) {
 
 module.exports = router;
 
+
+
+
+
+
+
+
+

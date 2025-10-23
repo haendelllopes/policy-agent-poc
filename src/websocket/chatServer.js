@@ -264,6 +264,29 @@ SEMPRE use as ferramentas quando apropriado e seja proativo!`;
             colaborador_id: { type: 'string' }
           }
         }
+      },
+      {
+        name: 'buscar_conteudo_trilhas',
+        description: 'Busca semântica inteligente nos conteúdos das trilhas para responder dúvidas específicas',
+        parameters: {
+          type: 'object',
+          properties: {
+            query: { 
+              type: 'string',
+              description: 'Pergunta ou dúvida sobre conteúdo das trilhas (ex: "Como fazer login?", "O que é onboarding?")'
+            },
+            colaborador_id: { type: 'string' },
+            trilha_id: { 
+              type: 'string',
+              description: 'ID da trilha específica para buscar (opcional)'
+            },
+            limit: { 
+              type: 'number',
+              description: 'Número máximo de resultados (padrão: 5)'
+            }
+          },
+          required: ['query', 'colaborador_id']
+        }
       }
     ];
   }
@@ -328,6 +351,23 @@ SEMPRE use as ferramentas quando apropriado e seja proativo!`;
       case 'buscar_documentos':
         const docsResponse = await axios.get(`http://localhost:3000/api/documents/search?q=${parameters.query}&colaborador_id=${parameters.colaborador_id}`);
         return docsResponse.data;
+        
+      case 'buscar_conteudo_trilhas':
+        const limit = parameters.limit || 5;
+        let url = `http://localhost:3000/api/agent/trilhas/buscar-conteudo?query=${encodeURIComponent(parameters.query)}&limit=${limit}`;
+        
+        // Adicionar tenant do contexto do usuário
+        if (userContext && userContext.tenantId) {
+          url += `&tenant=${userContext.tenantId}`;
+        }
+        
+        // Adicionar filtro de trilha se especificado
+        if (parameters.trilha_id) {
+          url += `&trilha_id=${parameters.trilha_id}`;
+        }
+        
+        const conteudoResponse = await axios.get(url);
+        return conteudoResponse.data;
         
       default:
         throw new Error(`Ferramenta não encontrada: ${toolName}`);

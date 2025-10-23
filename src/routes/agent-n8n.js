@@ -416,4 +416,81 @@ router.post('/trilhas/feedback', deriveTenantFromCollaboratorBody, async (req, r
   }
 });
 
+/**
+ * GET /api/agent-n8n/trilhas/buscar-conteudo/:colaborador_id
+ * Busca semântica nos conteúdos das trilhas para N8N
+ */
+router.get('/trilhas/buscar-conteudo/:colaborador_id', deriveTenantFromCollaborator, async (req, res) => {
+  try {
+    const { colaborador_id } = req.params;
+    const { query: searchQuery, trilha_id, limit = 5 } = req.query;
+    
+    if (!searchQuery) {
+      return res.status(400).json({ error: 'Query de busca é obrigatória' });
+    }
+
+    console.log(`🔍 N8N Busca Semântica: "${searchQuery}" para colaborador ${colaborador_id}`);
+
+    // Gerar embedding da query usando OpenAI
+    const { generateEmbedding } = require('../utils/embedding-generator');
+    const queryEmbedding = await generateEmbedding(searchQuery);
+    
+    // Busca semântica usando função SQL
+    const result = await query(`
+      SELECT * FROM buscar_conteudos_similares($1, $2, $3)
+    `, [req.tenantId, JSON.stringify(queryEmbedding), parseInt(limit)]);
+
+    // Buscar informações adicionais dos conteúdos
+    const conteudosCompletos = await Promise.all(
+      result.rows.map(async (row) => {
+        const conteudoInfo = await query(`
+          SELECT 
+            tc.titulo,
+            tc.descricao,
+            tc.url,
+            tc.tipo,
+            t.nome as trilha_nome,
+            t.id as trilha_id
+          FROM trilha_conteudos tc
+          JOIN trilhas t ON t.id = tc.trilha_id
+          WHERE tc.id = $1
+        `, [row.trilha_conteudo_id]);
+
+        return {
+          ...row,
+          conteudo_info: conteudoInfo.rows[0]
+        };
+      })
+    );
+
+    // Filtrar por trilha específica se especificado
+    let resultadosFiltrados = conteudosCompletos;
+    if (trilha_id) {
+      resultadosFiltrados = conteudosCompletos.filter(item => 
+        item.conteudo_info && item.conteudo_info.trilha_id === trilha_id
+      );
+    }
+
+    console.log(`✅ N8N encontrou ${resultadosFiltrados.length} conteúdos relevantes`);
+
+    res.json({
+      success: true,
+      query: searchQuery,
+      colaborador_id,
+      tenant_id: req.tenantId,
+      results: resultadosFiltrados,
+      total: resultadosFiltrados.length,
+      embedding_generated: true,
+      filters: {
+        trilha_id: trilha_id || null,
+        limit: parseInt(limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro na busca semântica (N8N):', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 module.exports = router;
