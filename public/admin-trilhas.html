@@ -1961,13 +1961,13 @@ a:hover {
                 const tipo = this.value;
                 console.log('Tipo selecionado:', tipo);
                 
-                if (['documento', 'pdf', 'video'].includes(tipo)) {
-                    // Mostrar upload, esconder URL
+                if (['documento', 'pdf'].includes(tipo)) {
+                    // Documentos e PDFs: upload obrigatório
                     urlContainer.style.display = 'none';
                     uploadContainer.style.display = 'block';
                     urlInput.required = false;
                     
-                    console.log('Mostrando upload container');
+                    console.log('Mostrando upload container para', tipo);
                     
                     // Inicializar uploader se ainda não foi inicializado
                     if (!window.trilhaUploader) {
@@ -1978,13 +1978,37 @@ a:hover {
                             console.error('Erro ao inicializar uploader:', error);
                         }
                     }
+                } else if (tipo === 'video') {
+                    // Vídeos: mostrar ambos (URL para YouTube, Upload para arquivos)
+                    urlContainer.style.display = 'block';
+                    uploadContainer.style.display = 'block';
+                    urlInput.required = false;
+                    
+                    // Atualizar labels para vídeo
+                    document.querySelector('#url-container label').textContent = 'URL do Vídeo (YouTube, Vimeo, etc.)';
+                    document.querySelector('#upload-container label').textContent = 'Ou Upload de Arquivo de Vídeo';
+                    
+                    console.log('Mostrando ambos containers para vídeo');
+                    
+                    // Inicializar uploader se ainda não foi inicializado
+                    if (!window.trilhaUploader) {
+                        try {
+                            window.trilhaUploader = new TrilhaFileUploader('file-uploader-container');
+                            console.log('Uploader inicializado para vídeo');
+                        } catch (error) {
+                            console.error('Erro ao inicializar uploader:', error);
+                        }
+                    }
                 } else if (tipo === 'link') {
-                    // Mostrar URL, esconder upload
+                    // Links: apenas URL
                     urlContainer.style.display = 'block';
                     uploadContainer.style.display = 'none';
                     urlInput.required = true;
                     
-                    console.log('Mostrando URL container');
+                    // Restaurar label original
+                    document.querySelector('#url-container label').textContent = 'URL *';
+                    
+                    console.log('Mostrando URL container para link');
                 } else {
                     // Ambos escondidos
                     urlContainer.style.display = 'none';
@@ -2005,8 +2029,8 @@ a:hover {
             let url = '';
             let arquivo = null;
             
-            if (['documento', 'pdf', 'video'].includes(tipo)) {
-                // Upload de arquivo
+            if (['documento', 'pdf'].includes(tipo)) {
+                // Documentos e PDFs: upload obrigatório
                 if (!window.trilhaUploader) {
                     alert('Sistema de upload não inicializado. Tente novamente.');
                     return;
@@ -2019,8 +2043,24 @@ a:hover {
                 }
                 arquivo = uploadedFiles[0];
                 url = arquivo.url;
+            } else if (tipo === 'video') {
+                // Vídeos: verificar se tem arquivo ou URL
+                const urlValue = document.getElementById('conteudo-url').value.trim();
+                const uploadedFiles = window.trilhaUploader ? window.trilhaUploader.getUploadedFiles() : [];
+                
+                if (uploadedFiles.length > 0) {
+                    // Tem arquivo uploadado
+                    arquivo = uploadedFiles[0];
+                    url = arquivo.url;
+                } else if (urlValue) {
+                    // Tem URL (YouTube, Vimeo, etc.)
+                    url = urlValue;
+                } else {
+                    alert('Por favor, forneça uma URL do vídeo (YouTube, Vimeo, etc.) ou faça upload de um arquivo de vídeo.');
+                    return;
+                }
             } else if (tipo === 'link') {
-                // URL manual
+                // Links: URL obrigatória
                 url = document.getElementById('conteudo-url').value;
                 if (!url) {
                     alert('Por favor, informe a URL.');
