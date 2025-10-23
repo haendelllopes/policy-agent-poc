@@ -1800,6 +1800,21 @@ a:hover {
         }
     </script>
     <script>
+        // Configurações da API
+        const API_BASE = window.location.origin;
+        const TENANT = 'demo'; // Ou pegar de URL/localStorage
+        
+        // Função para toggle da sidebar
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebar && mainContent) {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            }
+        }
+        
         // Preservar tenant nos links de navegação e marcar ativo corretamente
         document.addEventListener('DOMContentLoaded', function() {
             const url = new URL(window.location.href);
