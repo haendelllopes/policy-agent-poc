@@ -3464,6 +3464,7 @@ const notificationRoutes = require('./routes/notifications');
 const dashboardRoutes = require('./routes/dashboard');
 const migrationRoutes = require('./routes/migration');
 const uploadRoutes = require('./routes/upload');
+const websocketRoutes = require('./routes/websocket');
 
 // Importar helpers
 const { 
@@ -3518,8 +3519,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/migration', migrationRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/websocket', websocketRoutes);
 
-console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http, cron, proactive, notifications, migration, upload');
+console.log('✅ Rotas modulares carregadas: auth, trilhas, colaborador, quiz, gamificação, admin, webhooks, sentimentos, trilhas-recomendadas, anotacoes, analise-sentimento, agente-anotacoes, trilhas-segmentacao, departments, positions, agent-trilhas, agent-n8n, conversations, chat-analysis, chat-http, cron, proactive, notifications, migration, upload, websocket');
 
 // ============================================
 

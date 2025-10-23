@@ -10,6 +10,7 @@ class ChatWebSocketServer {
     });
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     this.activeConnections = new Map();
+    this.adminConnections = new Map(); // Map<adminId, Set<WebSocket>>
     
     this.setupEventHandlers();
     console.log('🛡️ WebSocket Server criado em /ws/chat (independente do N8N)');
@@ -45,6 +46,11 @@ class ChatWebSocketServer {
     if (type === 'chat') {
       // 1. Carregar contexto do usuário (usando APIs existentes)
       const userContext = await this.loadUserContext(userId);
+      
+      // 1.1. Se for admin, registrar para notificações de urgência
+      if (userContext.role === 'admin') {
+        this.registerAdminConnection(userId, ws);
+      }
       
       // 2. Gerar resposta personalizada (GPT-4o direto)
       const response = await this.generatePersonalizedResponse(text, userContext, context);
@@ -404,6 +410,66 @@ SEMPRE use as ferramentas quando apropriado e seja proativo!`;
       console.error(`❌ Erro na análise background para ${userId}:`, error.message);
       // Não re-throw para não quebrar o fluxo principal
     }
+  }
+
+  // ============================================
+  // MÉTODOS PARA GERENCIAR CONEXÕES DE ADMIN
+  // ============================================
+
+  /**
+   * Registrar conexão de admin para notificações de urgência
+   */
+  registerAdminConnection(adminId, ws) {
+    if (!this.adminConnections.has(adminId)) {
+      this.adminConnections.set(adminId, new Set());
+    }
+    this.adminConnections.get(adminId).add(ws);
+    
+    console.log(`👑 Admin ${adminId} registrado para notificações de urgência`);
+    
+    // Remover quando desconectar
+    ws.on('close', () => {
+      const connections = this.adminConnections.get(adminId);
+      if (connections) {
+        connections.delete(ws);
+        if (connections.size === 0) {
+          this.adminConnections.delete(adminId);
+          console.log(`👑 Admin ${adminId} desconectado - removido das notificações`);
+        }
+      }
+    });
+  }
+
+  /**
+   * Buscar conexões ativas de um admin
+   */
+  getAdminConnections(adminId) {
+    const connections = this.adminConnections.get(adminId);
+    return connections ? Array.from(connections) : [];
+  }
+
+  /**
+   * Verificar se admin está conectado
+   */
+  isAdminConnected(adminId) {
+    const connections = this.adminConnections.get(adminId);
+    return connections && connections.size > 0;
+  }
+
+  /**
+   * Listar todos os admins conectados
+   */
+  getConnectedAdmins() {
+    const connectedAdmins = [];
+    for (const [adminId, connections] of this.adminConnections) {
+      if (connections.size > 0) {
+        connectedAdmins.push({
+          admin_id: adminId,
+          connections: connections.size
+        });
+      }
+    }
+    return connectedAdmins;
   }
 }
 

@@ -508,7 +508,10 @@ class HybridChatWidget {
   handleMessage(data) {
     this.hideTypingIndicator();
     
-    if (data.type === 'error') {
+    if (data.type === 'urgent_notification') {
+      // Mostrar notificação crítica
+      this.showUrgentNotification(data.message, data.data);
+    } else if (data.type === 'error') {
       this.addMessage(data.message, 'system');
     } else {
       const message = data.message || data.text || 'Resposta recebida';
@@ -613,6 +616,186 @@ class HybridChatWidget {
 
   getMessageHistory() {
     return this.messageHistory;
+  }
+
+  // ============================================
+  // NOTIFICAÇÕES DE URGÊNCIA
+  // ============================================
+
+  showUrgentNotification(message, data) {
+    console.log('🚨 Notificação de urgência recebida:', data);
+    
+    // Criar modal de urgência
+    const modal = document.createElement('div');
+    modal.className = 'urgent-notification-modal';
+    modal.innerHTML = `
+      <div class="urgent-modal-content">
+        <div class="urgent-header">
+          <h3>🚨 Alerta Crítico</h3>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="urgent-body">
+          <pre>${message}</pre>
+        </div>
+        <div class="urgent-actions">
+          <button class="btn-primary" onclick="window.hybridChatWidget.openChat()">Abrir Chat</button>
+          <button class="btn-secondary" onclick="window.hybridChatWidget.closeUrgentModal()">Marcar como Lido</button>
+        </div>
+      </div>
+    `;
+    
+    // Adicionar CSS para modal de urgência
+    const style = document.createElement('style');
+    style.textContent = `
+      .urgent-notification-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 0, 0, 0.1);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: urgentFadeIn 0.3s ease-in;
+      }
+      
+      .urgent-modal-content {
+        background: white;
+        border: 3px solid #ff4444;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
+        animation: urgentPulse 2s infinite;
+      }
+      
+      .urgent-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ff4444;
+      }
+      
+      .urgent-header h3 {
+        margin: 0;
+        color: #ff4444;
+        font-size: 1.5em;
+      }
+      
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #ff4444;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .urgent-body {
+        margin-bottom: 20px;
+      }
+      
+      .urgent-body pre {
+        white-space: pre-wrap;
+        font-family: inherit;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+        color: #333;
+      }
+      
+      .urgent-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      
+      .btn-primary, .btn-secondary {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-primary {
+        background: #ff4444;
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        background: #cc3333;
+        transform: translateY(-2px);
+      }
+      
+      .btn-secondary {
+        background: #f0f0f0;
+        color: #333;
+      }
+      
+      .btn-secondary:hover {
+        background: #e0e0e0;
+        transform: translateY(-2px);
+      }
+      
+      @keyframes urgentFadeIn {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      
+      @keyframes urgentPulse {
+        0% { transform: scale(1); box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3); }
+        50% { transform: scale(1.02); box-shadow: 0 15px 40px rgba(255, 0, 0, 0.5); }
+        100% { transform: scale(1); box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3); }
+      }
+    `;
+    
+    // Adicionar ao DOM
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+    
+    // Event listeners
+    modal.querySelector('.close-btn').onclick = () => this.closeUrgentModal();
+    
+    // Auto-fechar após 60 segundos
+    setTimeout(() => {
+      this.closeUrgentModal();
+    }, 60000);
+    
+    // Fazer som de alerta (se permitido)
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBS13yO/eizEIHWq+8+OWT');
+      audio.volume = 0.3;
+      audio.play().catch(() => {
+        // Ignorar erro se não conseguir reproduzir
+      });
+    } catch (error) {
+      // Ignorar erro de áudio
+    }
+  }
+
+  closeUrgentModal() {
+    const modal = document.querySelector('.urgent-notification-modal');
+    const style = document.querySelector('style');
+    
+    if (modal) {
+      modal.remove();
+    }
+    if (style && style.textContent.includes('urgent-notification-modal')) {
+      style.remove();
+    }
   }
 }
 
