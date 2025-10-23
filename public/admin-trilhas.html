@@ -1435,10 +1435,6 @@ a:hover {
                                 <i data-feather="plus"></i>
                                 Nova Trilha
                             </button>
-                            <a href="/criar-trilha-completa.html" class="btn-success" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none; color: white; background: var(--navi-success-green);">
-                                <i data-feather="magic"></i>
-                                Criar Trilha Completa
-                            </a>
                         </div>
                     </div>
 
@@ -1592,9 +1588,14 @@ a:hover {
                     <textarea id="conteudo-descricao" placeholder="Descreva brevemente este conteúdo..."></textarea>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="url-container">
                     <label for="conteudo-url">URL *</label>
-                    <input type="url" id="conteudo-url" required placeholder="https://...">
+                    <input type="url" id="conteudo-url" placeholder="https://...">
+                </div>
+                
+                <div class="form-group" id="upload-container" style="display: none;">
+                    <label>Arquivo *</label>
+                    <div id="file-uploader-container"></div>
                 </div>
                 
                 <div class="form-row">
@@ -1629,6 +1630,7 @@ a:hover {
             carregarTrilhas();
             carregarDepartamentos();
             carregarCargos();
+            configurarTipoConteudo(); // Configurar controle de upload/URL
         });
 
         async function carregarTrilhas() {
@@ -1734,7 +1736,7 @@ a:hover {
             document.getElementById('modal-title').textContent = 'Nova Trilha';
             document.getElementById('form-trilha').reset();
             document.getElementById('trilha-id').value = '';
-            document.getElementById('conteudos-section').style.display = 'none';
+            document.getElementById('conteudos-section').style.display = 'block'; // Mostrar seção de conteúdos
             document.getElementById('alert-container').innerHTML = '';
             document.getElementById('preview-acesso').style.display = 'none';
             
@@ -1895,6 +1897,18 @@ a:hover {
             
             document.getElementById('conteudo-trilha-id').value = trilhaAtual.id;
             document.getElementById('form-conteudo').reset();
+            
+            // Resetar containers de upload/URL
+            document.getElementById('url-container').style.display = 'none';
+            document.getElementById('upload-container').style.display = 'none';
+            document.getElementById('conteudo-url').required = false;
+            
+            // Limpar uploader se existir
+            if (window.trilhaUploader) {
+                window.trilhaUploader.files = [];
+                window.trilhaUploader.renderFileList();
+            }
+            
             document.getElementById('modal-conteudo').classList.add('active');
         }
 
@@ -1902,30 +1916,79 @@ a:hover {
             document.getElementById('modal-conteudo').classList.remove('active');
         }
 
+        // Controle de tipo de conteúdo para upload/URL
+        function configurarTipoConteudo() {
+            const tipoSelect = document.getElementById('conteudo-tipo');
+            const urlContainer = document.getElementById('url-container');
+            const uploadContainer = document.getElementById('upload-container');
+            const urlInput = document.getElementById('conteudo-url');
+            
+            tipoSelect.addEventListener('change', function() {
+                const tipo = this.value;
+                
+                if (['documento', 'pdf', 'video'].includes(tipo)) {
+                    // Mostrar upload, esconder URL
+                    urlContainer.style.display = 'none';
+                    uploadContainer.style.display = 'block';
+                    urlInput.required = false;
+                    
+                    // Inicializar uploader se ainda não foi inicializado
+                    if (!window.trilhaUploader) {
+                        window.trilhaUploader = new TrilhaFileUploader('file-uploader-container');
+                    }
+                } else if (tipo === 'link') {
+                    // Mostrar URL, esconder upload
+                    urlContainer.style.display = 'block';
+                    uploadContainer.style.display = 'none';
+                    urlInput.required = true;
+                } else {
+                    // Ambos escondidos
+                    urlContainer.style.display = 'none';
+                    uploadContainer.style.display = 'none';
+                    urlInput.required = false;
+                }
+            });
+        }
+
         async function salvarConteudo(event) {
             event.preventDefault();
             
             const trilhaId = document.getElementById('conteudo-trilha-id').value;
+            const tipo = document.getElementById('conteudo-tipo').value;
             
-            const data = {
-                tipo: document.getElementById('conteudo-tipo').value,
-                titulo: document.getElementById('conteudo-titulo').value,
-                descricao: document.getElementById('conteudo-descricao').value,
-                url: document.getElementById('conteudo-url').value,
-                ordem: parseInt(document.getElementById('conteudo-ordem').value),
-                obrigatorio: document.getElementById('conteudo-obrigatorio').checked
-            };
+            let url = '';
+            let arquivo = null;
+            
+            if (['documento', 'pdf', 'video'].includes(tipo)) {
+                // Upload de arquivo
+                if (!window.trilhaUploader) {
+                    alert('Sistema de upload não inicializado. Tente novamente.');
+                    return;
+                }
+                
+                const uploadedFiles = window.trilhaUploader.getUploadedFiles();
+                if (uploadedFiles.length === 0) {
+                    alert('Por favor, faça upload de um arquivo.');
+                    return;
+                }
+                arquivo = uploadedFiles[0];
+                url = arquivo.url;
+            } else if (tipo === 'link') {
+                // URL manual
+                url = document.getElementById('conteudo-url').value;
+                if (!url) {
+                    alert('Por favor, informe a URL.');
+                    return;
+                }
+            }
             
             try {
-                const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/conteudos?tenant=${TENANT}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Erro ao adicionar conteúdo');
+                if (arquivo) {
+                    // Usar endpoint com upload
+                    await criarConteudoComUpload(trilhaId, tipo, arquivo);
+                } else {
+                    // Usar endpoint normal
+                    await criarConteudoNormal(trilhaId, tipo, url);
                 }
                 
                 // Recarregar trilha
@@ -1933,8 +1996,55 @@ a:hover {
                 editarTrilha(trilhaId);
                 
             } catch (error) {
-                alert('Erro: ' + error.message);
+                console.error('Erro ao salvar conteúdo:', error);
+                alert('Erro ao adicionar conteúdo: ' + error.message);
             }
+        }
+        
+        async function criarConteudoComUpload(trilhaId, tipo, arquivo) {
+            const formData = new FormData();
+            formData.append('arquivo', arquivo.originalFile);
+            formData.append('tipo', tipo);
+            formData.append('titulo', document.getElementById('conteudo-titulo').value);
+            formData.append('descricao', document.getElementById('conteudo-descricao').value);
+            formData.append('ordem', document.getElementById('conteudo-ordem').value);
+            formData.append('obrigatorio', document.getElementById('conteudo-obrigatorio').checked);
+            
+            const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/conteudos-com-upload?tenant=${TENANT}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao criar conteúdo com upload');
+            }
+            
+            return response.json();
+        }
+        
+        async function criarConteudoNormal(trilhaId, tipo, url) {
+            const conteudoData = {
+                tipo: tipo,
+                titulo: document.getElementById('conteudo-titulo').value,
+                descricao: document.getElementById('conteudo-descricao').value,
+                url: url,
+                ordem: parseInt(document.getElementById('conteudo-ordem').value),
+                obrigatorio: document.getElementById('conteudo-obrigatorio').checked
+            };
+            
+            const response = await fetch(`${API_BASE}/api/trilhas/${trilhaId}/conteudos?tenant=${TENANT}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(conteudoData)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao criar conteúdo');
+            }
+            
+            return response.json();
         }
 
         async function deletarConteudo(conteudoId) {
