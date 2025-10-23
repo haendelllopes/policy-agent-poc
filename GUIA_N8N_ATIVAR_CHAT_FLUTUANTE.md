@@ -16,7 +16,22 @@
 
 **No branch "CRÍTICA" do IF Node, após notificar admin, adicionar:**
 
-#### **2.1. Novo Nó HTTP Request: "Ativar Chat Flutuante Admin"**
+#### **2.1. Novo Nó HTTP Request: "Buscar Dados Colaborador"**
+
+**Configuração:**
+- **Nome:** `Buscar Dados Colaborador`
+- **Tipo:** HTTP Request
+- **Método:** `GET`
+- **URL:** `https://navigator-gules.vercel.app/api/users/{{ $('Webhook').item.json.body.colaborador_id }}`
+
+**Headers:**
+```json
+{
+  "Content-Type": "application/json"
+}
+```
+
+#### **2.2. Novo Nó HTTP Request: "Ativar Chat Flutuante Admin"**
 
 **Configuração:**
 - **Nome:** `Ativar Chat Flutuante Admin`
@@ -35,14 +50,14 @@
 ```json
 {
   "admin_id": "{{ $('Buscar Admin').item.json.admin_id }}",
-  "tenant_id": "{{ $('Buscar Admin').item.json.tenant_id }}",
+  "tenant_id": "{{ $('Buscar Dados Colaborador').item.json.tenant_id }}",
   "tipo": "urgencia_critica",
-  "colaborador_nome": "{{ $('💾 Salvar Anotação').item.json.colaborador_nome }}",
-  "problema": "{{ $('💾 Salvar Anotação').item.json.anotacao }}",
-  "urgencia": "{{ $('💾 Salvar Anotação').item.json.urgencia }}",
-  "categoria": "{{ $('💾 Salvar Anotação').item.json.categoria }}",
-  "acao_sugerida": "{{ $('💾 Salvar Anotação').item.json.acao_sugerida }}",
-  "anotacao_id": "{{ $('💾 Salvar Anotação').item.json.id }}"
+  "colaborador_nome": "{{ $('Buscar Dados Colaborador').item.json.name }}",
+  "problema": "{{ $('Webhook').item.json.body.titulo }}",
+  "urgencia": "{{ $('Webhook').item.json.body.urgencia }}",
+  "categoria": "{{ $('Webhook').item.json.body.categoria }}",
+  "acao_sugerida": "{{ $('Webhook').item.json.body.acao_sugerida }}",
+  "anotacao_id": "{{ $('Webhook').item.json.body.anotacao_id }}"
 }
 ```
 
@@ -64,7 +79,7 @@
 💾 Salvar Anotação
     ↓
 🚨 Analisar Urgência
-    ├─ CRÍTICA → Notificar Admin → Ativar Chat Flutuante → Continuar
+    ├─ CRÍTICA → Notificar Admin → Buscar Dados Colaborador → Ativar Chat Flutuante → Continuar
     ├─ ALTA → Notificar Admin
     ├─ MÉDIA → Continuar
     └─ BAIXA → Continuar
@@ -183,9 +198,11 @@ try {
 
 - [ ] Localizar workflow "Detecção de Urgência"
 - [ ] Encontrar branch "CRÍTICA" do IF Node
+- [ ] Adicionar nó "Buscar Dados Colaborador"
+- [ ] Configurar URL do endpoint /api/users/{colaborador_id}
 - [ ] Adicionar nó "Ativar Chat Flutuante Admin"
 - [ ] Configurar URL e Body corretamente
-- [ ] Conectar nó ao fluxo existente
+- [ ] Conectar nós: Notificar Admin → Buscar Dados → Ativar Chat
 - [ ] Adicionar nó "Tratar Erro Chat Flutuante"
 - [ ] Testar com dados de exemplo
 - [ ] Verificar logs de execução
