@@ -65,7 +65,7 @@ No campo **"Tools"**, adicionar:
 
 #### **2.2. Configurar URL**
 ```
-{{ $json.colaborador_id ? 'http://localhost:3000/api/agent-n8n/trilhas/buscar-conteudo/' + $json.colaborador_id : 'http://localhost:3000/api/agent-n8n/trilhas/buscar-conteudo/test-user-id' }}
+{{ $json.colaborador_id ? 'https://navigator-gules.vercel.app/api/agent-n8n/trilhas/buscar-conteudo/' + $json.colaborador_id : 'https://navigator-gules.vercel.app/api/agent-n8n/trilhas/buscar-conteudo/test-user-id' }}
 ```
 
 #### **2.3. Configurar Query Parameters**
