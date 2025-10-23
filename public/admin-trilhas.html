@@ -1808,6 +1808,17 @@ a:hover {
         function fecharModalTrilha() {
             document.getElementById('modal-trilha').classList.remove('active');
             trilhaAtual = null;
+            
+            // Limpar conteúdos temporários se modal for fechado sem salvar
+            if (window.conteudosTemporarios) {
+                window.conteudosTemporarios = [];
+            }
+            
+            // Limpar lista visual
+            const conteudosList = document.getElementById('conteudos-list');
+            if (conteudosList) {
+                conteudosList.innerHTML = '';
+            }
         }
 
         async function salvarTrilha(event) {
@@ -1846,10 +1857,17 @@ a:hover {
                 const trilhaIdParaSegmentacao = isEditing ? trilhaId : result.id;
                 await salvarSegmentacao(trilhaIdParaSegmentacao);
                 
+                // Se é uma nova trilha e há conteúdos temporários, processá-los
+                if (!isEditing && window.conteudosTemporarios && window.conteudosTemporarios.length > 0) {
+                    await processarConteudosTemporarios(result.id);
+                }
+                
                 // Mostrar mensagem de sucesso
                 document.getElementById('alert-container').innerHTML = `
                     <div class="alert alert-success">
                         ✅ Trilha ${isEditing ? 'atualizada' : 'criada'} com sucesso!
+                        ${!isEditing && window.conteudosTemporarios && window.conteudosTemporarios.length > 0 ? 
+                            ` ${window.conteudosTemporarios.length} conteúdo(s) adicionado(s)!` : ''}
                     </div>
                 `;
                 
@@ -1890,12 +1908,17 @@ a:hover {
 
         // Gerenciar conteúdos
         function adicionarConteudo() {
-            if (!trilhaAtual || !trilhaAtual.id) {
-                alert('Salve a trilha antes de adicionar conteúdos');
-                return;
+            // Permitir adicionar conteúdo mesmo se trilha não foi salva ainda
+            // O conteúdo será salvo quando a trilha for salva
+            
+            // Se trilha já foi salva, usar o ID existente
+            if (trilhaAtual && trilhaAtual.id) {
+                document.getElementById('conteudo-trilha-id').value = trilhaAtual.id;
+            } else {
+                // Se trilha ainda não foi salva, usar um ID temporário
+                document.getElementById('conteudo-trilha-id').value = 'temp-' + Date.now();
             }
             
-            document.getElementById('conteudo-trilha-id').value = trilhaAtual.id;
             document.getElementById('form-conteudo').reset();
             
             // Resetar containers de upload/URL
@@ -1983,22 +2006,110 @@ a:hover {
             }
             
             try {
-                if (arquivo) {
-                    // Usar endpoint com upload
-                    await criarConteudoComUpload(trilhaId, tipo, arquivo);
+                // Se trilha ainda não foi salva (ID temporário), armazenar conteúdo temporariamente
+                if (trilhaId.startsWith('temp-')) {
+                    await salvarConteudoTemporario(tipo, url, arquivo);
                 } else {
-                    // Usar endpoint normal
-                    await criarConteudoNormal(trilhaId, tipo, url);
+                    // Trilha já salva, criar conteúdo normalmente
+                    if (arquivo) {
+                        await criarConteudoComUpload(trilhaId, tipo, arquivo);
+                    } else {
+                        await criarConteudoNormal(trilhaId, tipo, url);
+                    }
+                    
+                    // Recarregar trilha
+                    fecharModalConteudo();
+                    editarTrilha(trilhaId);
                 }
-                
-                // Recarregar trilha
-                fecharModalConteudo();
-                editarTrilha(trilhaId);
                 
             } catch (error) {
                 console.error('Erro ao salvar conteúdo:', error);
                 alert('Erro ao adicionar conteúdo: ' + error.message);
             }
+        }
+        
+        async function salvarConteudoTemporario(tipo, url, arquivo) {
+            // Armazenar conteúdo temporariamente para ser salvo quando a trilha for criada
+            const conteudoTemp = {
+                tipo: tipo,
+                titulo: document.getElementById('conteudo-titulo').value,
+                descricao: document.getElementById('conteudo-descricao').value,
+                url: url,
+                ordem: parseInt(document.getElementById('conteudo-ordem').value),
+                obrigatorio: document.getElementById('conteudo-obrigatorio').checked,
+                arquivo: arquivo
+            };
+            
+            // Inicializar array de conteúdos temporários se não existir
+            if (!window.conteudosTemporarios) {
+                window.conteudosTemporarios = [];
+            }
+            
+            window.conteudosTemporarios.push(conteudoTemp);
+            
+            // Fechar modal e mostrar conteúdo na lista
+            fecharModalConteudo();
+            mostrarConteudoTemporario(conteudoTemp);
+            
+            console.log('Conteúdo temporário adicionado:', conteudoTemp);
+        }
+        
+        function mostrarConteudoTemporario(conteudo) {
+            const conteudosList = document.getElementById('conteudos-list');
+            const conteudoItem = document.createElement('div');
+            conteudoItem.className = 'conteudo-item';
+            conteudoItem.innerHTML = `
+                <div class="conteudo-info">
+                    <h4>${conteudo.titulo}</h4>
+                    <p><strong>Tipo:</strong> ${conteudo.tipo}</p>
+                    <p><strong>Descrição:</strong> ${conteudo.descricao || 'N/A'}</p>
+                    <p><strong>URL/Arquivo:</strong> ${conteudo.url || (conteudo.arquivo ? conteudo.arquivo.name : 'N/A')}</p>
+                    <p><strong>Ordem:</strong> ${conteudo.ordem} | <strong>Obrigatório:</strong> ${conteudo.obrigatorio ? 'Sim' : 'Não'}</p>
+                </div>
+                <div class="conteudo-actions">
+                    <button onclick="removerConteudoTemporario(this)" class="btn btn-danger btn-sm">Remover</button>
+                </div>
+            `;
+            conteudosList.appendChild(conteudoItem);
+        }
+        
+        function removerConteudoTemporario(button) {
+            const conteudoItem = button.closest('.conteudo-item');
+            const index = Array.from(conteudoItem.parentNode.children).indexOf(conteudoItem);
+            
+            // Remover do array temporário
+            if (window.conteudosTemporarios && window.conteudosTemporarios[index]) {
+                window.conteudosTemporarios.splice(index, 1);
+            }
+            
+            // Remover da interface
+            conteudoItem.remove();
+        }
+        
+        async function processarConteudosTemporarios(trilhaId) {
+            console.log('Processando conteúdos temporários para trilha:', trilhaId);
+            
+            for (const conteudo of window.conteudosTemporarios) {
+                try {
+                    if (conteudo.arquivo) {
+                        // Criar conteúdo com upload
+                        await criarConteudoComUpload(trilhaId, conteudo.tipo, conteudo.arquivo);
+                    } else {
+                        // Criar conteúdo normal
+                        await criarConteudoNormal(trilhaId, conteudo.tipo, conteudo.url);
+                    }
+                    console.log('Conteúdo processado:', conteudo.titulo);
+                } catch (error) {
+                    console.error('Erro ao processar conteúdo:', conteudo.titulo, error);
+                }
+            }
+            
+            // Limpar conteúdos temporários após processamento
+            window.conteudosTemporarios = [];
+            
+            // Limpar lista visual
+            const conteudosList = document.getElementById('conteudos-list');
+            conteudosList.innerHTML = '';
         }
         
         async function criarConteudoComUpload(trilhaId, tipo, arquivo) {
