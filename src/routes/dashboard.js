@@ -398,6 +398,16 @@ router.post('/notifications/:notificationId/read', async (req, res) => {
 // FUNÇÃO AUXILIAR: Buscar dados reais para gráficos
 // ============================================
 async function getGraficosReais(tenantId, queryFn) {
+    // Dados padrão (fallback) para cada query
+    let trilhasPorCargo = { rows: [] };
+    let sentimentoPorCargo = { rows: [] };
+    let alertasPorSeveridade = { rows: [] };
+    let tendenciaEngajamento = { rows: [] };
+    let padroesIdentificados = { rows: [] };
+    let alertasCriticos = { rows: [] };
+    let acoesPendentes = { rows: [] };
+    let colaboradoresRisco = { rows: [] };
+    
     try {
         // 1. Trilhas por Cargo (dados reais - usando tabelas existentes)
         const trilhasPorCargoQuery = `
@@ -413,7 +423,11 @@ async function getGraficosReais(tenantId, queryFn) {
             GROUP BY p.name
             ORDER BY ativas DESC
         `;
-        const trilhasPorCargo = await queryFn(trilhasPorCargoQuery, [tenantId]);
+        try {
+            trilhasPorCargo = await queryFn(trilhasPorCargoQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em trilhasPorCargo:', e.message);
+        }
 
         // 2. Sentimento por Cargo (dados reais)
         const sentimentoPorCargoQuery = `
@@ -435,7 +449,11 @@ async function getGraficosReais(tenantId, queryFn) {
             GROUP BY p.name
             ORDER BY sentimento_medio DESC
         `;
-        const sentimentoPorCargo = await queryFn(sentimentoPorCargoQuery, [tenantId]);
+        try {
+            sentimentoPorCargo = await queryFn(sentimentoPorCargoQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em sentimentoPorCargo:', e.message);
+        }
 
         // 3. Alertas por Severidade (dados reais)
         const alertasPorSeveridadeQuery = `
@@ -456,7 +474,11 @@ async function getGraficosReais(tenantId, queryFn) {
                     ELSE 5
                 END
         `;
-        const alertasPorSeveridade = await queryFn(alertasPorSeveridadeQuery, [tenantId]);
+        try {
+            alertasPorSeveridade = await queryFn(alertasPorSeveridadeQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em alertasPorSeveridade:', e.message);
+        }
 
         // 4. Tendência de Engajamento (últimos 7 dias)
         const tendenciaEngajamentoQuery = `
@@ -469,7 +491,11 @@ async function getGraficosReais(tenantId, queryFn) {
             GROUP BY TO_CHAR(created_at, 'Dy'), TO_CHAR(created_at, 'D')
             ORDER BY TO_CHAR(created_at, 'D')
         `;
-        const tendenciaEngajamento = await queryFn(tendenciaEngajamentoQuery, [tenantId]);
+        try {
+            tendenciaEngajamento = await queryFn(tendenciaEngajamentoQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em tendenciaEngajamento:', e.message);
+        }
 
         // 5. Padrões Identificados (dados reais)
         const padroesIdentificadosQuery = `
@@ -489,7 +515,11 @@ async function getGraficosReais(tenantId, queryFn) {
             ORDER BY aa.created_at DESC
             LIMIT 10
         `;
-        const padroesIdentificados = await queryFn(padroesIdentificadosQuery, [tenantId]);
+        try {
+            padroesIdentificados = await queryFn(padroesIdentificadosQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em padroesIdentificados:', e.message);
+        }
 
         // 6. Alertas Críticos (dados reais)
         const alertasCriticosQuery = `
@@ -510,7 +540,11 @@ async function getGraficosReais(tenantId, queryFn) {
             ORDER BY aa.created_at DESC
             LIMIT 10
         `;
-        const alertasCriticos = await queryFn(alertasCriticosQuery, [tenantId]);
+        try {
+            alertasCriticos = await queryFn(alertasCriticosQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em alertasCriticos:', e.message);
+        }
 
         // 7. Ações Pendentes (dados reais)
         const acoesPendentesQuery = `
@@ -530,7 +564,11 @@ async function getGraficosReais(tenantId, queryFn) {
             ORDER BY oi.created_at DESC
             LIMIT 10
         `;
-        const acoesPendentes = await queryFn(acoesPendentesQuery, [tenantId]);
+        try {
+            acoesPendentes = await queryFn(acoesPendentesQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em acoesPendentes:', e.message);
+        }
 
         // 8. Colaboradores em Risco (dados reais)
         const colaboradoresRiscoQuery = `
@@ -549,47 +587,35 @@ async function getGraficosReais(tenantId, queryFn) {
             ORDER BY u.risk_score DESC
             LIMIT 10
         `;
-        const colaboradoresRisco = await queryFn(colaboradoresRiscoQuery, [tenantId]);
-
-        return {
-            trilhasPorCargo: trilhasPorCargo.rows.map(row => ({
-                cargo: row.cargo,
-                ativas: parseInt(row.ativas) || 0,
-                concluidas: parseInt(row.concluidas) || 0,
-                atrasadas: parseInt(row.atrasadas) || 0
-            })),
-            sentimentoPorCargo: sentimentoPorCargo.rows.map(row => ({
-                cargo: row.cargo,
-                sentimento: parseFloat(row.sentimento_medio) || 0
-            })),
-            alertasPorSeveridade: alertasPorSeveridade.rows.map(row => ({
-                severidade: row.severidade === 'critica' ? 'Crítico' : 
-                           row.severidade === 'alta' ? 'Alto' :
-                           row.severidade === 'media' ? 'Médio' : 'Baixo',
-                quantidade: parseInt(row.quantidade) || 0
-            })),
-            tendenciaEngajamento: tendenciaEngajamento.rows.map(row => ({
-                dia: row.dia,
-                engajamento: parseInt(row.engajamento) || 0
-            })),
-            padroesIdentificados: padroesIdentificados.rows,
-            alertasCriticos: alertasCriticos.rows,
-            acoesPendentes: acoesPendentes.rows,
-            colaboradoresRisco: colaboradoresRisco.rows
-        };
-
+        try {
+            colaboradoresRisco = await queryFn(colaboradoresRiscoQuery, [tenantId]);
+        } catch (e) {
+            console.error('Erro em colaboradoresRisco:', e.message);
+        }
+        
     } catch (error) {
         console.error('❌ Erro ao buscar dados reais dos gráficos:', error);
-        // Retornar dados mock em caso de erro
-        return {
-            trilhasPorCargo: [
-                { cargo: 'Desenvolvedor', ativas: 0, concluidas: 0, atrasadas: 0 },
-                { cargo: 'Designer', ativas: 0, concluidas: 0, atrasadas: 0 }
-            ],
-            sentimentoPorCargo: [
-                { cargo: 'Desenvolvedor', sentimento: 0 },
-                { cargo: 'Designer', sentimento: 0 }
-            ],
+        console.error('Stack trace:', error.stack);
+    }
+    
+    // Retornar os dados que conseguimos buscar, mesmo que parcialmente
+    return {
+        trilhasPorCargo: trilhasPorCargo.rows.length > 0 ? trilhasPorCargo.rows.map(row => ({
+            cargo: row.cargo,
+            ativas: parseInt(row.ativas) || 0,
+            concluidas: parseInt(row.concluidas) || 0,
+            atrasadas: parseInt(row.atrasadas) || 0
+        })) : [
+            { cargo: 'Desenvolvedor', ativas: 0, concluidas: 0, atrasadas: 0 },
+            { cargo: 'Designer', ativas: 0, concluidas: 0, atrasadas: 0 }
+        ],
+        sentimentoPorCargo: sentimentoPorCargo.rows.length > 0 ? sentimentoPorCargo.rows.map(row => ({
+            cargo: row.cargo,
+            sentimento: parseFloat(row.sentimento_medio) || 0
+        })) : [
+            { cargo: 'Desenvolvedor', sentimento: 0 },
+            { cargo: 'Designer', sentimento: 0 }
+        ],
             alertasPorSeveridade: [
                 { severidade: 'Crítico', quantidade: 0 },
                 { severidade: 'Alto', quantidade: 0 },
