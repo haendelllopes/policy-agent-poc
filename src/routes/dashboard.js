@@ -618,7 +618,13 @@ async function getGraficosReais(tenantId, queryFn) {
             cargo: row.cargo,
             sentimento: parseFloat(row.sentimento_medio) || 0
         })) : [],
-        alertasPorSeveridade: [],
+        alertasPorSeveridade: alertasPorSeveridade.rows.length > 0 ? 
+            alertasPorSeveridade.rows.map(row => ({
+                severidade: row.severidade === 'critica' ? 'Crítico' : 
+                           row.severidade === 'alta' ? 'Alto' :
+                           row.severidade === 'media' ? 'Médio' : 'Baixo',
+                quantidade: parseInt(row.quantidade) || 0
+            })) : [],
         tendenciaEngajamento: [],
         padroesIdentificados: [],
         alertasCriticos: [],
