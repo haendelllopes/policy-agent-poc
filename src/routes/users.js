@@ -157,6 +157,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({
       id: user.id,
+      tenant_id: user.tenant_id, // Adicionar tenant_id ao retorno
       name: user.name,
       email: user.email,
       phone: user.phone,
