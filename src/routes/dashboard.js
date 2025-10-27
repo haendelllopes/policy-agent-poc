@@ -415,11 +415,8 @@ async function getGraficosReais(tenantId, queryFn) {
                 p.name as cargo,
                 COUNT(DISTINCT t.id) as disponiveis
             FROM positions p
-            CROSS JOIN trilhas t
-            LEFT JOIN trilha_segmentacao ts ON ts.trilha_id = t.id AND ts.position_id = p.id AND ts.incluir = true
-            WHERE t.tenant_id = $1
-              AND t.ativo = true
-              AND (t.segmentacao_tipo = 'todos' OR ts.position_id IS NOT NULL)
+            INNER JOIN trilha_segmentacao ts ON ts.position_id = p.id AND ts.incluir = true
+            INNER JOIN trilhas t ON t.id = ts.trilha_id AND t.tenant_id = $1 AND t.ativo = true
             GROUP BY p.name, p.id
             ORDER BY p.name
         `;
@@ -600,12 +597,23 @@ async function getGraficosReais(tenantId, queryFn) {
     
     // Retornar os dados que conseguimos buscar, mesmo que parcialmente
     return {
-        trilhasPorCargo: trilhasPorCargo.rows.length > 0 ? trilhasPorCargo.rows.map(row => ({
-            cargo: row.cargo,
-            ativas: parseInt(row.disponiveis) || 0,
-            concluidas: 0,
-            atrasadas: 0
-        })) : [],
+        trilhasPorCargo: trilhasPorCargo.rows.length > 0 ? 
+            trilhasPorCargo.rows.reduce((acc, row) => {
+                const cargo = row.cargo;
+                const index = acc.findIndex(item => item.cargo === cargo);
+                
+                if (index >= 0) {
+                    acc[index].ativas += parseInt(row.disponiveis) || 0;
+                } else {
+                    acc.push({
+                        cargo: cargo,
+                        ativas: parseInt(row.disponiveis) || 0,
+                        concluidas: 0,
+                        atrasadas: 0
+                    });
+                }
+                return acc;
+            }, []) : [],
         sentimentoPorCargo: sentimentoPorCargo.rows.length > 0 ? sentimentoPorCargo.rows.map(row => ({
             cargo: row.cargo,
             sentimento: parseFloat(row.sentimento_medio) || 0
