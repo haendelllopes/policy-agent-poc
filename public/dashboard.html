@@ -3375,6 +3375,42 @@ a:hover {
             }
         }
         
+        // Mostrar alerta crítico recebido via Realtime
+        function showCriticalAlert(notification) {
+            console.log('🚨 Exibindo alerta crítico:', notification);
+            
+            // Criar elemento de notificação no chat flutuante
+            if (window.chatWidget && notification.colaborador_nome) {
+                const alertMessage = `
+🚨 **ALERTA CRÍTICO DETECTADO**
+
+👤 **Colaborador:** ${notification.colaborador_nome}
+⚠️ **Problema:** ${notification.problema || 'Não especificado'}
+🔴 **Urgência:** ${notification.urgencia}
+📂 **Categoria:** ${notification.categoria}
+
+💡 **Ação Sugerida:** ${notification.acao_sugerida || 'Verificar anotação'}
+
+⏰ **Detectado em:** ${new Date(notification.created_at).toLocaleString('pt-BR')}
+
+---
+*Este alerta foi gerado automaticamente pelo sistema de detecção de urgência.*
+                `;
+                
+                // Enviar mensagem para o chat widget
+                if (window.chatWidget.addSystemMessage) {
+                    window.chatWidget.addSystemMessage(alertMessage);
+                }
+            }
+            
+            // Atualizar contador de alertas
+            const alertasBadge = document.getElementById('alertasAtivos');
+            if (alertasBadge) {
+                const currentCount = parseInt(alertasBadge.textContent.replace(/\D/g, '')) || 0;
+                alertasBadge.textContent = currentCount + 1;
+            }
+        }
+        
         // Funções de paginação (implementação básica)
         function loadPadroesPage(direction) {
             console.log('📄 Carregando página de padrões:', direction);
@@ -4430,6 +4466,44 @@ a:hover {
                     }
                 } catch (error) {
                     console.error('❌ Falha crítica ao carregar chat widget:', error);
+                }
+                
+                // Inicializar Supabase Realtime para notificações de admin
+                if (typeof createClient !== 'undefined') {
+                    try {
+                        const supabaseUrl = window.location.origin.includes('vercel') 
+                            ? 'https://navigator-gules.vercel.app'
+                            : 'http://localhost:3000';
+                        
+                        const supabase = createClient(
+                            process.env.SUPABASE_URL || 'https://gxqwfltteimexngybwna.supabase.co',
+                            process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cXdmbHR0ZWltZXhuZ3lid25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2NTM1NDUsImV4cCI6MjA0NTIzMTU0NX0.iYGHXZpKhEfYEbwcMJttWiX6Go8k_9ULrNJ1LHWw1y0'
+                        );
+                        
+                        // Escutar notificações de urgência crítica em tempo real
+                        const currentAdminId = currentUser?.id;
+                        
+                        if (currentAdminId) {
+                            console.log('🔔 Configurando Realtime para admin:', currentAdminId);
+                            
+                            supabase
+                                .channel('admin-notifications')
+                                .on('postgres_changes', {
+                                    event: 'INSERT',
+                                    schema: 'public',
+                                    table: 'admin_notifications',
+                                    filter: `admin_id=eq.${currentAdminId}`
+                                }, (payload) => {
+                                    console.log('🚨 NOVA NOTIFICAÇÃO CRÍTICA RECEBIDA:', payload.new);
+                                    showCriticalAlert(payload.new);
+                                })
+                                .subscribe();
+                            
+                            console.log('✅ Realtime configurado com sucesso');
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro ao configurar Realtime:', error);
+                    }
                 }
                 
                 // Carregar chat-integration.js se disponível
