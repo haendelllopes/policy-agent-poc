@@ -602,9 +602,9 @@ async function getGraficosReais(tenantId, queryFn) {
     return {
         trilhasPorCargo: trilhasPorCargo.rows.length > 0 ? trilhasPorCargo.rows.map(row => ({
             cargo: row.cargo,
-            ativas: parseInt(row.ativas) || 0,
-            concluidas: parseInt(row.concluidas) || 0,
-            atrasadas: parseInt(row.atrasadas) || 0
+            ativas: parseInt(row.disponiveis) || 0,
+            concluidas: 0,
+            atrasadas: 0
         })) : [],
         sentimentoPorCargo: sentimentoPorCargo.rows.length > 0 ? sentimentoPorCargo.rows.map(row => ({
             cargo: row.cargo,
