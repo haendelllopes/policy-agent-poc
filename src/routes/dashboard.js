@@ -420,6 +420,7 @@ async function getGraficosReais(tenantId, queryFn) {
             LEFT JOIN positions p ON u.position_id = p.id
             LEFT JOIN colaborador_trilhas ct ON ct.colaborador_id = u.id
             WHERE u.tenant_id = $1
+              AND ct.colaborador_id IS NOT NULL
             GROUP BY p.name
             ORDER BY ativas DESC
         `;
