@@ -55,6 +55,29 @@ router.post('/anotacoes', authenticate, async (req, res) => {
       });
     }
 
+    // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
+    let userId = colaborador_id;
+    if (colaborador_id && /^\d+$/.test(colaborador_id)) {
+      // É um telefone, normalizar e buscar
+      const phoneNormalized = colaborador_id.replace(/\D/g, '');
+      
+      const userResult = await query(`
+        SELECT id FROM users 
+        WHERE tenant_id = $1 AND status = 'active' AND (
+          REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') LIKE '%$2%'
+        )
+      `, [req.tenantId, phoneNormalized]);
+      
+      if (userResult.rows.length > 0) {
+        userId = userResult.rows[0].id;
+        console.log(`📞 Lookup: Phone ${colaborador_id} → User ID ${userId}`);
+      } else {
+        console.log(`⚠️ Phone não encontrado: ${colaborador_id}`);
+        // Continuar com null se não encontrar
+        userId = null;
+      }
+    }
+
     // Inserir anotação com novos campos da Fase 4.5
     const result = await query(`
       INSERT INTO agente_anotacoes (
@@ -72,7 +95,7 @@ router.post('/anotacoes', authenticate, async (req, res) => {
       RETURNING *
     `, [
       req.tenantId,
-      colaborador_id,
+      userId,
       trilha_id,
       tipo,
       titulo,
