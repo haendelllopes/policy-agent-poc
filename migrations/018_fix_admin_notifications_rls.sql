@@ -10,8 +10,5 @@ CREATE POLICY "Allow public read access"
   FOR SELECT
   USING (true);
 
--- Garantir que Realtime está habilitado
-ALTER PUBLICATION supabase_realtime ADD TABLE IF NOT EXISTS admin_notifications;
-
 COMMENT ON POLICY "Allow public read access" ON admin_notifications IS 'Temporariamente permite leitura pública das notificações de admin até implementar autenticação Supabase no frontend';
 
