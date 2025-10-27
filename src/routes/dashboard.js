@@ -625,11 +625,40 @@ async function getGraficosReais(tenantId, queryFn) {
                            row.severidade === 'media' ? 'Médio' : 'Baixo',
                 quantidade: parseInt(row.quantidade) || 0
             })) : [],
-        tendenciaEngajamento: [],
-        padroesIdentificados: [],
-        alertasCriticos: [],
-        acoesPendentes: [],
-        colaboradoresRisco: []
+        tendenciaEngajamento: tendenciaEngajamento.rows.map(row => ({
+            dia: row.dia,
+            engajamento: parseInt(row.engajamento) || 0
+        })),
+        padroesIdentificados: padroesIdentificados.rows,
+        alertasCriticos: alertasCriticos.rows.map(row => ({
+            id: row.id,
+            titulo: row.titulo,
+            anotacao: row.anotacao,
+            severidade: row.severidade,
+            status: row.status,
+            proactive_score: row.proactive_score,
+            created_at: row.created_at,
+            colaborador_nome: row.colaborador_nome
+        })),
+        acoesPendentes: acoesPendentes.rows.map(row => ({
+            id: row.id,
+            titulo: row.titulo,
+            descricao: row.descricao,
+            status: row.status,
+            tipo_acao: row.tipo_acao,
+            justificativa_ia: row.justificativa_ia,
+            created_at: row.created_at,
+            colaborador_nome: row.colaborador_nome
+        })),
+        colaboradoresRisco: colaboradoresRisco.rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            risk_score: row.risk_score,
+            risk_score_atualizado_em: row.risk_score_atualizado_em,
+            ultima_atividade_em: row.ultima_atividade_em,
+            cargo: row.cargo
+        }))
     };
 }
 
