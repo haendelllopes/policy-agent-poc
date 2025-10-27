@@ -39,11 +39,20 @@ router.post('/notify-admin', async (req, res) => {
 
     if (adminConnections.length === 0) {
       console.log('⚠️ Admin não está conectado ao chat flutuante:', admin_id);
+      // Não é erro - apenas informar que o admin não está conectado
       return res.json({
-        success: false,
+        success: true,
         message: 'Admin não está conectado ao chat flutuante',
         admin_id,
-        connections_found: 0
+        connections_found: 0,
+        alert_saved: true,
+        data: {
+          colaborador_nome,
+          urgencia,
+          categoria,
+          problema,
+          acao_sugerida
+        }
       });
     }
 
@@ -150,3 +159,5 @@ router.get('/admin-connections/:admin_id', async (req, res) => {
 });
 
 module.exports = router;
+
+

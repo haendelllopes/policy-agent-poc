@@ -3537,6 +3537,9 @@ async function bootstrap() {
     // Inicializar WebSocket Server para Chat Flutuante
     const chatWebSocketServer = new ChatWebSocketServer(server);
     
+    // Expor chatServer para as rotas acessarem
+    app.locals.chatServer = chatWebSocketServer;
+    
     server.listen(port, () => {
       console.log(`🚀 Flowly API rodando em http://localhost:${port}`);
       console.log(`💬 WebSocket Chat disponível em ws://localhost:${port}/ws/chat`);
