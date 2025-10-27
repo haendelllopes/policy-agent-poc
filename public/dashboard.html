@@ -4427,13 +4427,13 @@ a:hover {
                     });
                 };
                 
-                // Tentar carregar Supabase primeiro (com timeout agressivo)
+                // Verificar se Supabase CDN carregou (com timeout agressivo)
                 try {
                     await Promise.race([
                         new Promise(resolve => {
                             const checkSupabase = () => {
-                                if (typeof createClient !== 'undefined' && typeof createClient === 'function') {
-                                    console.log('✅ Supabase JS carregado');
+                                if (typeof window.supabase !== 'undefined') {
+                                    console.log('✅ Supabase CDN carregado');
                                     resolve();
                                 } else {
                                     setTimeout(checkSupabase, 50);
@@ -4442,11 +4442,12 @@ a:hover {
                             checkSupabase();
                         }),
                         new Promise((_, reject) => {
-                            setTimeout(() => reject(new Error('Supabase timeout')), 2000); // Timeout de 2s
+                            setTimeout(() => reject(new Error('Supabase CDN timeout')), 2000);
                         })
                     ]);
-                    
-                // Supabase já carregado via CDN, não precisa carregar scripts adicionais
+                } catch (error) {
+                    console.warn('⚠️ Supabase CDN não carregou:', error.message);
+                }
                 
                 // SEMPRE carregar o chat widget (independente do Supabase)
                 try {
