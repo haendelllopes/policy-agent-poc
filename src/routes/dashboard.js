@@ -413,12 +413,12 @@ async function getGraficosReais(tenantId, queryFn) {
         const trilhasPorCargoQuery = `
             SELECT 
                 COALESCE(p.name, 'Sem Cargo') as cargo,
-                COUNT(DISTINCT t.id) as ativas,
-                COUNT(CASE WHEN t.status = 'concluido' THEN 1 END) as concluidas,
-                COUNT(CASE WHEN t.status = 'atrasado' THEN 1 END) as atrasadas
+                COUNT(DISTINCT ct.trilha_id) as ativas,
+                COUNT(CASE WHEN ct.status = 'concluida' THEN 1 END) as concluidas,
+                COUNT(CASE WHEN ct.status = 'atrasada' THEN 1 END) as atrasadas
             FROM users u
             LEFT JOIN positions p ON u.position_id = p.id
-            LEFT JOIN trilhas t ON t.tenant_id = u.tenant_id
+            LEFT JOIN colaborador_trilhas ct ON ct.colaborador_id = u.id
             WHERE u.tenant_id = $1
             GROUP BY p.name
             ORDER BY ativas DESC
