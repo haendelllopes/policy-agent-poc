@@ -16,6 +16,9 @@
     <!-- Chat Widget CSS -->
     <link rel="stylesheet" href="/css/chat-widget.css">
     
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <!-- Brand Manual CSS - Inline -->
     <style>
 /**
@@ -4443,15 +4446,7 @@ a:hover {
                         })
                     ]);
                     
-                    // Se Supabase carregou, carregar supabase-client.js
-                    try {
-                        await loadScript('/js/supabase-client.js', 2000);
-                    } catch (error) {
-                        console.warn('⚠️ Supabase client não carregou, continuando sem ele');
-                    }
-                } catch (error) {
-                    console.warn('⚠️ Supabase não carregou em 2s, continuando sem ele');
-                }
+                // Supabase já carregado via CDN, não precisa carregar scripts adicionais
                 
                 // SEMPRE carregar o chat widget (independente do Supabase)
                 try {
@@ -4469,21 +4464,21 @@ a:hover {
                 }
                 
                 // Inicializar Supabase Realtime para notificações de admin
-                if (typeof createClient !== 'undefined') {
-                    try {
-                        // Usar URLs fixas do Supabase
-                        const supabaseUrl = 'https://gxqwfltteimexngybwna.supabase.co';
-                        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cXdmbHR0ZWltZXhuZ3lid25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2NTM1NDUsImV4cCI6MjA0NTIzMTU0NX0.iYGHXZpKhEfYEbwcMJttWiX6Go8k_9ULrNJ1LHWw1y0';
+                try {
+                    // Usar URLs fixas do Supabase
+                    const supabaseUrl = 'https://gxqwfltteimexngybwna.supabase.co';
+                    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cXdmbHR0ZWltZXhuZ3lid25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjk2NTM1NDUsImV4cCI6MjA0NTIzMTU0NX0.iYGHXZpKhEfYEbwcMJttWiX6Go8k_9ULrNJ1LHWw1y0';
+                    
+                    // Supabase já carregado via CDN
+                    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+                    
+                    // Escutar notificações de urgência crítica em tempo real
+                    const currentAdminId = currentUser?.id;
+                    
+                    if (currentAdminId) {
+                        console.log('🔔 Configurando Realtime para admin:', currentAdminId);
                         
-                        const supabase = createClient(supabaseUrl, supabaseAnonKey);
-                        
-                        // Escutar notificações de urgência crítica em tempo real
-                        const currentAdminId = currentUser?.id;
-                        
-                        if (currentAdminId) {
-                            console.log('🔔 Configurando Realtime para admin:', currentAdminId);
-                            
-                            supabase
+                        supabaseClient
                                 .channel('admin-notifications')
                                 .on('postgres_changes', {
                                     event: 'INSERT',
@@ -4496,11 +4491,12 @@ a:hover {
                                 })
                                 .subscribe();
                             
-                            console.log('✅ Realtime configurado com sucesso');
-                        }
-                    } catch (error) {
-                        console.error('❌ Erro ao configurar Realtime:', error);
+                        console.log('✅ Realtime configurado com sucesso');
+                    } else {
+                        console.warn('⚠️ Usuário atual não é admin, pulando configuração de Realtime');
                     }
+                } catch (error) {
+                    console.error('❌ Erro ao configurar Realtime:', error);
                 }
                 
                 // Carregar chat-integration.js se disponível
