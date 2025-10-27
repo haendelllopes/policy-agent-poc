@@ -4520,6 +4520,39 @@ a:hover {
                                 .subscribe();
                             
                         console.log('✅ Realtime configurado com sucesso');
+                        
+                        // Fallback: Polling como backup (a cada 10 segundos)
+                        console.log('🔄 Iniciando polling de notificações (fallback)...');
+                        let lastChecked = new Date();
+                        
+                        setInterval(async () => {
+                            try {
+                                const { data, error } = await supabaseClient
+                                    .from('admin_notifications')
+                                    .select('*')
+                                    .eq('admin_id', currentAdminId)
+                                    .eq('lida', false)
+                                    .gte('created_at', lastChecked.toISOString())
+                                    .order('created_at', { ascending: false });
+                                
+                                if (error) {
+                                    console.error('❌ Erro no polling:', error);
+                                    return;
+                                }
+                                
+                                if (data && data.length > 0) {
+                                    console.log('🔔 Novas notificações encontradas:', data.length);
+                                    data.forEach(notif => {
+                                        console.log('🚨 NOVA NOTIFICAÇÃO CRÍTICA (Polling):', notif);
+                                        showCriticalAlert(notif);
+                                    });
+                                    lastChecked = new Date();
+                                }
+                            } catch (err) {
+                                console.error('❌ Erro no polling:', err);
+                            }
+                        }, 10000); // Polling a cada 10 segundos
+                        
                     } else {
                         console.warn('⚠️ Usuário atual não é admin, pulando configuração de Realtime');
                     }
