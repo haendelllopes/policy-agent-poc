@@ -1015,8 +1015,24 @@ a:hover {
 
         .tables-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        
+        /* Ajustar para 1 coluna em telas menores */
+        @media (max-width: 1200px) {
+            .tables-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+        
+        /* Permitir que os cards usem todo o espaço disponível */
+        @media (min-width: 1920px) {
+            .tables-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
         }
 
         .table-card {
@@ -1025,6 +1041,9 @@ a:hover {
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             border: 1px solid #e5e7eb;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
         }
 
         .table-header {
@@ -1059,6 +1078,7 @@ a:hover {
         .table-container {
             max-height: 400px;
             overflow-y: auto;
+            flex: 1;
         }
 
         .data-table {
@@ -1094,9 +1114,10 @@ a:hover {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.5rem;
+            padding: 0.75rem 1.5rem;
             background: #f9fafb;
             border-top: 1px solid #e5e7eb;
+            margin-top: auto;
         }
 
         .table-pagination button {
@@ -1144,12 +1165,12 @@ a:hover {
                 grid-template-columns: 1fr;
             }
             
-            .tables-grid {
-                grid-template-columns: 1fr;
-            }
-            
             .chart-container {
                 height: 250px;
+            }
+            
+            .table-card {
+                min-height: auto;
             }
         }
 
