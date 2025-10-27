@@ -3224,26 +3224,90 @@ a:hover {
             const tbody = document.getElementById('padroesTableBody');
             if (!tbody) return;
             
-            // Dados mock para demonstração
-            const padroes = [
-                { padrao: 'Dificuldade com documentação técnica', tipo: 'Dificuldade', frequencia: 'Alta', impacto: 'Médio' },
-                { padrao: 'Feedback positivo sobre onboarding', tipo: 'Positivo', frequencia: 'Média', impacto: 'Baixo' },
-                { padrao: 'Sugestões de melhoria em trilhas', tipo: 'Sugestão', frequencia: 'Alta', impacto: 'Alto' }
-            ];
-            
-            tbody.innerHTML = padroes.map(p => `
-                <tr>
-                    <td>${p.padrao}</td>
-                    <td><span class="badge badge-sm">${p.tipo}</span></td>
-                    <td>${p.frequencia}</td>
-                    <td>${p.impacto}</td>
-                    <td>
-                        <button class="btn-sm btn-outline" onclick="viewPadraoDetails('${p.padrao}')">
-                            <i data-feather="eye"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            try {
+                // Buscar dados reais da API
+                const tenantId = '5978f911-738b-4aae-802a-f037fdac2e64';
+                const response = await fetch(`/api/dashboard/metrics/${tenantId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const padroes = data.graficos?.padroesIdentificados || [];
+                    
+                    if (padroes.length > 0) {
+                        tbody.innerHTML = padroes.map(p => {
+                            // Mapear severidade para frequência visual
+                            const frequenciaMap = {
+                                'critica': 'Alta',
+                                'alta': 'Alta',
+                                'media': 'Média',
+                                'baixa': 'Baixa'
+                            };
+                            
+                            // Mapear sentimento para tipo
+                            const tipoMap = {
+                                'positivo': 'Positivo',
+                                'negativo': 'Negativo',
+                                'neutro': 'Neutro'
+                            };
+                            
+                            const sentimento = p.sentimento || 'neutro';
+                            const severidade = p.severidade || 'baixa';
+                            
+                            return `
+                                <tr>
+                                    <td>${p.titulo || 'Padrão sem título'}</td>
+                                    <td><span class="badge badge-sm">${tipoMap[sentimento] || 'Desconhecido'}</span></td>
+                                    <td>${frequenciaMap[severidade] || 'Média'}</td>
+                                    <td>${p.severidade === 'alta' || p.severidade === 'critica' ? 'Alto' : 'Médio'}</td>
+                                    <td>
+                                        <button class="btn-sm btn-outline" onclick="viewPadraoDetails('${p.id}')">
+                                            <i data-feather="eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: #6b7280;">
+                                    Nenhum padrão identificado ainda
+                                </td>
+                            </tr>
+                        `;
+                    }
+                } else {
+                    // Fallback com dados mock
+                    const padroes = [
+                        { padrao: 'Dificuldade com documentação técnica', tipo: 'Dificuldade', frequencia: 'Alta', impacto: 'Médio' },
+                        { padrao: 'Feedback positivo sobre onboarding', tipo: 'Positivo', frequencia: 'Média', impacto: 'Baixo' },
+                        { padrao: 'Sugestões de melhoria em trilhas', tipo: 'Sugestão', frequencia: 'Alta', impacto: 'Alto' }
+                    ];
+                    
+                    tbody.innerHTML = padroes.map(p => `
+                        <tr>
+                            <td>${p.padrao}</td>
+                            <td><span class="badge badge-sm">${p.tipo}</span></td>
+                            <td>${p.frequencia}</td>
+                            <td>${p.impacto}</td>
+                            <td>
+                                <button class="btn-sm btn-outline" onclick="viewPadraoDetails('${p.padrao}')">
+                                    <i data-feather="eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar padrões:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: #ef4444;">
+                            Erro ao carregar padrões identificados
+                        </td>
+                    </tr>
+                `;
+            }
             
             feather.replace();
         }
