@@ -3401,8 +3401,15 @@ a:hover {
                 `;
                 
                 // Enviar mensagem para o chat widget
-                if (window.chatWidget.addSystemMessage) {
-                    window.chatWidget.addSystemMessage(alertMessage);
+                if (window.chatWidget && typeof window.chatWidget.addMessage === 'function') {
+                    window.chatWidget.addMessage(alertMessage, 'system');
+                    console.log('✅ Alerta crítico adicionado ao chat');
+                } else {
+                    console.error('❌ Método addMessage não encontrado no chatWidget');
+                    // Fallback: mostrar toast
+                    if (typeof showToast === 'function') {
+                        showToast('🚨 Alerta Crítico: ' + notification.problema, 'error');
+                    }
                 }
             }
             
