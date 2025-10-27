@@ -3,9 +3,20 @@ const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 
 // Inicializar Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+let supabase = null;
+try {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+  
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('✅ Supabase Client inicializado');
+  } else {
+    console.log('⚠️ Supabase não configurado - variáveis de ambiente ausentes');
+  }
+} catch (error) {
+  console.error('❌ Erro ao inicializar Supabase:', error.message);
+}
 
 /**
  * POST /api/websocket/notify-admin
@@ -55,13 +66,17 @@ router.post('/notify-admin', async (req, res) => {
           });
 
         if (error) {
-          console.error('❌ Erro ao enviar notificação Supabase:', error);
+          console.error('❌ Erro ao enviar notificação Supabase:', error.message);
+          // Não falhar o endpoint - continuar com sucesso simulado
         } else {
           console.log('✅ Notificação enviada via Supabase Realtime:', data);
         }
       } catch (error) {
-        console.error('❌ Erro ao enviar notificação:', error);
+        console.error('❌ Erro ao enviar notificação:', error.message);
+        // Não falhar o endpoint
       }
+    } else {
+      console.log('⚠️ Supabase não disponível - notificação não será enviada via Realtime');
     }
 
     // Buscar conexões WebSocket ativas do admin (server local)
