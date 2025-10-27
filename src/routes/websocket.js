@@ -47,14 +47,21 @@ router.post('/notify-admin', async (req, res) => {
     if (supabase) {
       try {
         // Enviar notificação via Supabase Realtime
-        // Limpar anotacao_id se estiver vazio
-        const cleanAnotacaoId = anotacao_id && anotacao_id.trim() !== '' ? anotacao_id : null;
+        // Validar e limpar campos UUID que podem estar vazios
+        const cleanAnotacaoId = (anotacao_id && anotacao_id.trim() && anotacao_id.trim() !== '' && anotacao_id !== 'null' && anotacao_id !== 'undefined') ? anotacao_id : null;
+        const cleanAdminId = admin_id && admin_id.trim() && admin_id.trim() !== '' && admin_id !== 'null' && admin_id !== 'undefined' ? admin_id : null;
+        const cleanTenantId = tenant_id && tenant_id.trim() && tenant_id.trim() !== '' && tenant_id !== 'null' && tenant_id !== 'undefined' ? tenant_id : null;
+        
+        // Validar campos obrigatórios
+        if (!cleanAdminId || !cleanTenantId) {
+          throw new Error(`Campos obrigatórios inválidos: admin_id=${cleanAdminId}, tenant_id=${cleanTenantId}`);
+        }
         
         const { data, error } = await supabase
           .from('admin_notifications')
           .insert({
-            admin_id,
-            tenant_id,
+            admin_id: cleanAdminId,
+            tenant_id: cleanTenantId,
             tipo: tipo || 'urgencia_critica',
             colaborador_nome,
             colaborador_email: req.body.colaborador_email,
