@@ -606,38 +606,18 @@ async function getGraficosReais(tenantId, queryFn) {
             ativas: parseInt(row.ativas) || 0,
             concluidas: parseInt(row.concluidas) || 0,
             atrasadas: parseInt(row.atrasadas) || 0
-        })) : [
-            { cargo: 'Desenvolvedor', ativas: 0, concluidas: 0, atrasadas: 0 },
-            { cargo: 'Designer', ativas: 0, concluidas: 0, atrasadas: 0 }
-        ],
+        })) : [],
         sentimentoPorCargo: sentimentoPorCargo.rows.length > 0 ? sentimentoPorCargo.rows.map(row => ({
             cargo: row.cargo,
             sentimento: parseFloat(row.sentimento_medio) || 0
-        })) : [
-            { cargo: 'Desenvolvedor', sentimento: 0 },
-            { cargo: 'Designer', sentimento: 0 }
-        ],
-            alertasPorSeveridade: [
-                { severidade: 'Crítico', quantidade: 0 },
-                { severidade: 'Alto', quantidade: 0 },
-                { severidade: 'Médio', quantidade: 0 },
-                { severidade: 'Baixo', quantidade: 0 }
-            ],
-            tendenciaEngajamento: [
-                { dia: 'Seg', engajamento: 0 },
-                { dia: 'Ter', engajamento: 0 },
-                { dia: 'Qua', engajamento: 0 },
-                { dia: 'Qui', engajamento: 0 },
-                { dia: 'Sex', engajamento: 0 },
-                { dia: 'Sáb', engajamento: 0 },
-                { dia: 'Dom', engajamento: 0 }
-            ],
-            padroesIdentificados: [],
-            alertasCriticos: [],
-            acoesPendentes: [],
-            colaboradoresRisco: []
-        };
-    }
+        })) : [],
+        alertasPorSeveridade: [],
+        tendenciaEngajamento: [],
+        padroesIdentificados: [],
+        alertasCriticos: [],
+        acoesPendentes: [],
+        colaboradoresRisco: []
+    };
 }
 
 module.exports = router;
