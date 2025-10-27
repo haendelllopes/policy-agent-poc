@@ -55,6 +55,16 @@ router.post('/anotacoes', authenticate, async (req, res) => {
       });
     }
 
+    // Normalizar tags - aceitar string ou array
+    let tagsArray = tags;
+    if (typeof tags === 'string') {
+      // Se for string separada por vírgula, converter para array
+      tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    } else if (!Array.isArray(tags)) {
+      // Se não for array nem string, usar array vazio
+      tagsArray = [];
+    }
+
     // Se colaborador_id é um telefone (contém apenas números), buscar o usuário
     let userId = colaborador_id;
     if (colaborador_id && /^\d+$/.test(colaborador_id)) {
@@ -121,7 +131,7 @@ router.post('/anotacoes', authenticate, async (req, res) => {
         impacto_estimado,
         ...metadata
       }),
-      tags
+      tagsArray
     ]);
 
     console.log(`📝 Nova anotação criada: ${tipo} - ${titulo} (urgencia: ${urgencia}, categoria: ${categoria})`);
