@@ -64,7 +64,7 @@ router.post('/anotacoes', authenticate, async (req, res) => {
       const userResult = await query(`
         SELECT id FROM users 
         WHERE tenant_id = $1 AND status = 'active' AND (
-          REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') LIKE '%$2%'
+          REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') LIKE '%' || $2 || '%'
         )
       `, [req.tenantId, phoneNormalized]);
       
