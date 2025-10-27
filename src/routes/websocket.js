@@ -47,6 +47,9 @@ router.post('/notify-admin', async (req, res) => {
     if (supabase) {
       try {
         // Enviar notificação via Supabase Realtime
+        // Limpar anotacao_id se estiver vazio
+        const cleanAnotacaoId = anotacao_id && anotacao_id.trim() !== '' ? anotacao_id : null;
+        
         const { data, error } = await supabase
           .from('admin_notifications')
           .insert({
@@ -60,7 +63,7 @@ router.post('/notify-admin', async (req, res) => {
             urgencia,
             categoria,
             acao_sugerida,
-            anotacao_id,
+            anotacao_id: cleanAnotacaoId,
             lida: false,
             created_at: new Date().toISOString()
           });
