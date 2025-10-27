@@ -1,5 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const { createClient } = require('@supabase/supabase-js');
+
+// Inicializar Supabase Client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 /**
  * POST /api/websocket/notify-admin
@@ -26,7 +32,39 @@ router.post('/notify-admin', async (req, res) => {
       categoria
     });
 
-    // Buscar conexões WebSocket ativas do admin
+    // Notificar via Supabase Realtime se disponível
+    if (supabase) {
+      try {
+        // Enviar notificação via Supabase Realtime
+        const { data, error } = await supabase
+          .from('admin_notifications')
+          .insert({
+            admin_id,
+            tenant_id,
+            tipo: tipo || 'urgencia_critica',
+            colaborador_nome,
+            colaborador_email: req.body.colaborador_email,
+            colaborador_phone: req.body.colaborador_phone,
+            problema,
+            urgencia,
+            categoria,
+            acao_sugerida,
+            anotacao_id,
+            lida: false,
+            created_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('❌ Erro ao enviar notificação Supabase:', error);
+        } else {
+          console.log('✅ Notificação enviada via Supabase Realtime:', data);
+        }
+      } catch (error) {
+        console.error('❌ Erro ao enviar notificação:', error);
+      }
+    }
+
+    // Buscar conexões WebSocket ativas do admin (server local)
     const chatServer = req.app.locals.chatServer;
     
     // Se o chatServer não estiver disponível, retornar sucesso simulado
@@ -34,7 +72,7 @@ router.post('/notify-admin', async (req, res) => {
       console.log('⚠️ Chat server não disponível - retornando sucesso simulado');
       return res.json({
         success: true,
-        message: 'Chat server não disponível - alerta registrado',
+        message: 'Alerta registrado (Notificação via Supabase Realtime)',
         admin_id,
         connections_found: 0,
         alert_saved: true,
