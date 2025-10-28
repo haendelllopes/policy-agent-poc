@@ -1812,9 +1812,10 @@ a:hover {
                 cachedDepartments = departments;
                 (departments || []).forEach(dep => {
                     const option = document.createElement('option');
-                    const value = dep.name || dep.id;
+                    const value = dep.id || dep.name; // Usar ID primeiro
                     option.value = value;
                     option.textContent = dep.name;
+                    option.dataset.deptName = dep.name; // Salvar nome para referência
                     select.appendChild(option);
                 });
                 if (selectedValue) select.value = selectedValue;
@@ -1832,9 +1833,10 @@ a:hover {
                 cachedPositions = positions;
                 positions.forEach(pos => {
                     const option = document.createElement('option');
-                    const value = pos.name || pos.id;
+                    const value = pos.id || pos.name; // Usar ID primeiro
                     option.value = value;
                     option.textContent = pos.name;
+                    option.dataset.posName = pos.name; // Salvar nome para referência
                     select.appendChild(option);
                 });
                 if (selectedValue) select.value = selectedValue;
@@ -1956,12 +1958,21 @@ a:hover {
                 return;
             }
             
+            // Pegar position_id e department_id dos selects
+            const positionValue = formData.get('position');
+            const departmentValue = formData.get('department');
+            
+            // Verificar se é UUID (contém hífens) ou string (name)
+            const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+            
             const data = {
                 name: formData.get('name'),
                 email: formData.get('email'),
                 phone: formatPhoneForDatabase(phoneCountry, phoneDDD, phoneNumber),
-                position: formData.get('position'),
-                department: formData.get('department'),
+                position: positionValue,
+                position_id: isUUID(positionValue) ? positionValue : null,
+                department: departmentValue,
+                department_id: isUUID(departmentValue) ? departmentValue : null,
                 gestor_id: formData.get('gestor_id') || null,
                 buddy_id: formData.get('buddy_id') || null,
                 role: isAdmin ? 'admin' : 'colaborador',

@@ -426,7 +426,7 @@ router.put('/:id', async (req, res) => {
         parse.data.name, parse.data.email, normalizedPhone, 
         parse.data.position || null, parse.data.department || null,
         parse.data.position_id || null, parse.data.department_id || null,
-        parse.data.gestor_id, parse.data.buddy_id,
+        parse.data.gestor_id || null, parse.data.buddy_id || null,
         parse.data.start_date || null, parse.data.status || 'active',
         userId, tenant.id
       ]);
@@ -457,7 +457,7 @@ router.put('/:id', async (req, res) => {
           [parse.data.name, parse.data.email, normalizedPhone, 
            parse.data.position || null, parse.data.department || null,
            parse.data.position_id || null, parse.data.department_id || null,
-           parse.data.gestor_id, parse.data.buddy_id,
+           parse.data.gestor_id || null, parse.data.buddy_id || null,
            parse.data.start_date || null, parse.data.status || 'active',
            userId, tenant.id]);
       } finally {
