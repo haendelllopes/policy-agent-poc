@@ -478,10 +478,10 @@ ${userContext.profile.role === 'admin' ? `
 🔧 **SUAS FERRAMENTAS DISPONÍVEIS:**
 
 **PARA COLABORADORES:**
-- buscar_trilhas_disponiveis: Lista trilhas do colaborador
+- buscar_trilhas_disponiveis: Lista trilhas do colaborador (USE PRIMEIRO quando usuário pedir para finalizar/reiniciar trilhas!)
 - iniciar_trilha: Inicia trilha específica (USE O UUID EXATO DA TRILHA!)
-- finalizar_trilha: Finaliza trilha em andamento
-- reiniciar_trilha: Reinicia trilha concluída
+- finalizar_trilha: Finaliza trilha em andamento - SEMPRE busque trilhas disponíveis PRIMEIRO para obter o trilha_id correto!
+- reiniciar_trilha: Reinicia trilha concluída - SEMPRE busque trilhas disponíveis PRIMEIRO para obter o trilha_id correto!
 - registrar_feedback: Registra feedback sobre trilhas
 - buscar_dados_colaborador: Busca informações pessoais do colaborador atual (gestor, buddy, departamento, cargo) - SEMPRE use quando usuário perguntar sobre dados pessoais
 - buscar_documentos: Busca semântica em documentos (SEMPRE use quando usuário pedir documentos, políticas, manuais, procedimentos, etc.)
@@ -521,14 +521,17 @@ ${userContext.profile.role === 'admin' ? `
 
 **QUANDO USAR CADA FERRAMENTA:**
 - buscar_documentos: SEMPRE que usuário mencionar "documentos", "políticas", "manuais", "procedimentos", "regulamentos", "normas", "buscar", "encontrar documentos"
-- buscar_trilhas_disponiveis: Quando usuário perguntar sobre trilhas disponíveis, "quais trilhas posso fazer", "minhas trilhas", OU quando usuário pedir para iniciar uma trilha (buscar PRIMEIRO!)
+- buscar_trilhas_disponiveis: Quando usuário perguntar sobre trilhas disponíveis, "quais trilhas posso fazer", "minhas trilhas", OU quando usuário pedir para iniciar/iniciar/finalizar/reiniciar uma trilha (buscar PRIMEIRO!)
 - iniciar_trilha: Quando usuário quiser começar uma trilha específica (APÓS buscar trilhas disponíveis e obter o UUID correto!)
+- finalizar_trilha: Quando usuário pedir para "finalizar", "concluir", "terminar" ou "encerrar" uma trilha (APÓS buscar trilhas disponíveis e obter o UUID correto!)
+- reiniciar_trilha: Quando usuário pedir para "reiniciar", "recomeçar", "refazer" ou "começar de novo" uma trilha (APÓS buscar trilhas disponíveis e obter o UUID correto!)
 - registrar_feedback: Quando usuário quiser dar feedback sobre trilhas
 
 **IMPORTANTE:** 
 - Se o usuário pedir documentos, políticas, manuais ou qualquer busca de conteúdo, SEMPRE use buscar_documentos primeiro!
 - Se o usuário perguntar sobre gestor, buddy, departamento, cargo ou informações pessoais, SEMPRE use buscar_dados_colaborador primeiro!
-- Se o usuário pedir para iniciar uma trilha, SEMPRE use buscar_trilhas_disponiveis PRIMEIRO para obter o UUID correto!
+- Se o usuário pedir para iniciar/finalizar/reiniciar uma trilha, SEMPRE use buscar_trilhas_disponiveis PRIMEIRO para obter o UUID correto!
+- NUNCA tente finalizar/reiniciar trilhas sem buscar trilhas disponíveis primeiro - isso resultará em erro!
 
 **QUANDO ENCONTRAR DOCUMENTOS:**
 - NÃO copie o texto completo dos documentos
@@ -616,13 +619,14 @@ SEMPRE seja conversacional, personalizado e útil!`;
         type: 'function',
         function: {
           name: 'finalizar_trilha',
-          description: 'Finaliza uma trilha específica para o colaborador',
+          description: 'Finaliza uma trilha específica que o colaborador está pedindo para finalizar. Use quando o usuário pedir para "finalizar", "concluir", "terminar" ou "encerrar" uma trilha. IMPORTANTE: Antes de usar, SEMPRE busque trilhas disponíveis para obter o trilha_id correto.',
           parameters: {
             type: 'object',
             properties: {
-              trilha_id: { type: 'string' },
-              colaborador_id: { type: 'string' }
-            }
+              trilha_id: { type: 'string', description: 'ID UUID da trilha a ser finalizada (obrigatório - busque primeiro com buscar_trilhas_disponiveis)' },
+              colaborador_id: { type: 'string', description: 'ID do colaborador (geralmente pode ser omitido)' }
+            },
+            required: ['trilha_id']
           }
         }
       },
@@ -630,13 +634,14 @@ SEMPRE seja conversacional, personalizado e útil!`;
         type: 'function',
         function: {
           name: 'reiniciar_trilha',
-          description: 'Reinicia uma trilha específica para o colaborador',
+          description: 'Reinicia uma trilha específica que foi concluída. Use quando o usuário pedir para "recomeçar", "reiniciar", "refazer" ou "começar de novo" uma trilha. IMPORTANTE: Antes de usar, SEMPRE busque trilhas disponíveis para obter o trilha_id correto.',
           parameters: {
             type: 'object',
             properties: {
-              trilha_id: { type: 'string' },
-              colaborador_id: { type: 'string' }
-            }
+              trilha_id: { type: 'string', description: 'ID UUID da trilha a ser reiniciada (obrigatório - busque primeiro com buscar_trilhas_disponiveis)' },
+              colaborador_id: { type: 'string', description: 'ID do colaborador (geralmente pode ser omitido)' }
+            },
+            required: ['trilha_id']
           }
         }
       },
