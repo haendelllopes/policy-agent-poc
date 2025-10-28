@@ -1195,6 +1195,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
           },
           ...toolResults
         ],
+        tools: tools, // ✅ ADICIONAR FERRAMENTAS NO SEGUNDO REQUEST
         temperature: 0.7,
         max_tokens: 500
       });
