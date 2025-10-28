@@ -799,10 +799,13 @@ SEMPRE seja conversacional, personalizado e útil!`;
             case 'buscar_trilhas_disponiveis':
               // Buscar trilhas REAIS do colaborador
               try {
-                console.log('🔍 DEBUG: Buscando trilhas reais para colaborador:', functionArgs.colaborador_id);
+                // Usar colaborador_id dos args ou o realUserId do contexto
+                const colaboradorParaBusca = functionArgs.colaborador_id || realUserId;
+                console.log('🔍 DEBUG: Buscando trilhas reais para colaborador:', colaboradorParaBusca);
+                
                 const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
-                const trilhasResponse = await axios.get(`${baseUrl}/api/agent-n8n/trilhas/disponiveis/${functionArgs.colaborador_id}`, {
-                  params: { tenant_id: tenantId || 'demo' },
+                const trilhasResponse = await axios.get(`${baseUrl}/api/agent-n8n/trilhas/disponiveis/${colaboradorParaBusca}`, {
+                  params: { tenant_id: context?.tenant_id || 'demo' },
                   timeout: 5000
                 });
                 
@@ -830,12 +833,30 @@ SEMPRE seja conversacional, personalizado e útil!`;
               }
               break;
             case 'iniciar_trilha':
-              // Simular início de trilha
-              toolResult = {
-                status: 'sucesso',
-                mensagem: `Trilha ${functionArgs.trilha_id} iniciada com sucesso!`,
-                trilha_iniciada: functionArgs.trilha_id
-              };
+              // Iniciar trilha real
+              try {
+                const colaboradorParaInicio = functionArgs.colaborador_id || realUserId;
+                console.log('🔍 DEBUG: Iniciando trilha:', functionArgs.trilha_id, 'para colaborador:', colaboradorParaInicio);
+                
+                const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                const initResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar`, {
+                  trilha_id: functionArgs.trilha_id,
+                  colaborador_id: colaboradorParaInicio
+                });
+                
+                toolResult = {
+                  status: 'sucesso',
+                  mensagem: `Trilha iniciada com sucesso!`,
+                  trilha_iniciada: functionArgs.trilha_id,
+                  dados: initResponse.data
+                };
+              } catch (error) {
+                console.error('❌ Erro ao iniciar trilha:', error.message);
+                toolResult = {
+                  status: 'erro',
+                  mensagem: 'Não foi possível iniciar a trilha no momento'
+                };
+              }
               break;
             case 'buscar_documentos':
               // Buscar documentos reais usando o endpoint existente
