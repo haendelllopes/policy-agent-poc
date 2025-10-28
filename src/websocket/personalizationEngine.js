@@ -62,6 +62,8 @@ class PersonalizationEngine {
         name: 'Usuário',
         position: 'N/A',
         department: 'N/A',
+        gestor_nome: null,
+        buddy_nome: null,
         sentimento_atual: 'neutro',
         sentimento_intensidade: 0.5
       };
@@ -287,7 +289,7 @@ class PersonalizationEngine {
   }
 
   async generateSystemMessage(userContext, pageContext) {
-    const { name, position, department, sentimento_atual, sentimento_intensidade, id } = userContext;
+    const { name, position, department, sentimento_atual, sentimento_intensidade, id, gestor_nome, buddy_nome } = userContext;
     
     // Carregar análise histórica
     const historicalPatterns = await this.analyzeHistoricalPatterns(id);
@@ -314,6 +316,8 @@ class PersonalizationEngine {
 - **Colaborador:** ${name}
 - **Cargo:** ${position}
 - **Departamento:** ${department}
+${gestor_nome ? `- **Gestor:** ${gestor_nome}` : ''}
+${buddy_nome ? `- **Buddy:** ${buddy_nome}` : ''}
 - **Sentimento:** ${sentimento_atual} (${sentimento_intensidade}%)
 - **Página atual:** ${pageContext?.page || 'Dashboard'}
 - **Nível de engajamento:** ${historicalPatterns.engagementLevel}

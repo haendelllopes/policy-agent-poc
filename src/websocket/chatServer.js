@@ -182,7 +182,7 @@ class ChatWebSocketServer {
   }
 
   generateSystemMessage(userContext, pageContext) {
-    const { name, position, department, sentimento_atual, sentimento_intensidade } = userContext;
+    const { name, position, department, sentimento_atual, sentimento_intensidade, gestor_nome, buddy_nome } = userContext;
     
     // Determinar tom baseado no sentimento
     const toneConfig = this.getToneBySentiment(sentimento_atual);
@@ -193,6 +193,8 @@ class ChatWebSocketServer {
 - **Colaborador:** ${name}
 - **Cargo:** ${position}
 - **Departamento:** ${department}
+${gestor_nome ? `- **Gestor:** ${gestor_nome}` : ''}
+${buddy_nome ? `- **Buddy:** ${buddy_nome}` : ''}
 - **Sentimento:** ${sentimento_atual} (${sentimento_intensidade}%)
 - **Página atual:** ${pageContext?.page || 'Dashboard'}
 
