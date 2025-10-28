@@ -177,17 +177,30 @@ class GPTChatService {
     // Extrair tenant_id do contexto do usuário
     const tenantId = userContext?.tenant_id || '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant padrão
     
+    // Adicionar colaborador_id se não fornecido
+    if (!parameters.colaborador_id && userContext?.id) {
+      parameters.colaborador_id = userContext.id;
+    }
+    
     switch (toolName) {
       case 'buscar_trilhas_disponiveis':
         const trilhasResponse = await axios.get(`${baseUrl}/api/agent/trilhas/disponiveis/${parameters.colaborador_id}?tenant_id=${tenantId}`);
         return trilhasResponse.data;
         
       case 'iniciar_trilha':
-        const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
-          trilha_id: parameters.trilha_id,
-          colaborador_id: parameters.colaborador_id
-        });
-        return iniciarResponse.data;
+        try {
+          const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
+            trilha_id: parameters.trilha_id,
+            colaborador_id: parameters.colaborador_id
+          });
+          return iniciarResponse.data;
+        } catch (error) {
+          console.error('❌ Erro ao iniciar trilha:', error.response?.data || error.message);
+          return {
+            status: 'erro',
+            mensagem: 'Não foi possível iniciar a trilha no momento'
+          };
+        }
         
       case 'registrar_feedback':
         const feedbackResponse = await axios.post(`${baseUrl}/api/agent/trilhas/feedback`, {

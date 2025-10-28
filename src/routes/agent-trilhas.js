@@ -219,7 +219,9 @@ router.get('/colaborador/:colaboradorId', async (req, res) => {
     }
 
     console.log(`✅ Dados do colaborador retornados: ${result.rows[0].nome}`);
-    res.json(result.rows[0]);
+    // Adicionar tenant_id ao contexto retornado
+    const response = { ...result.rows[0], tenant_id: tenantId };
+    res.json(response);
   } catch (error) {
     console.error('❌ Erro ao buscar colaborador:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
@@ -233,13 +235,20 @@ router.get('/colaborador/:colaboradorId', async (req, res) => {
  */
 router.post('/iniciar', requireTenant, async (req, res) => {
   try {
-    const { getTenantBySubdomain } = req.app.locals;
+    // O requireTenant já validou e colocou req.tenantId no request
+    const tenantId = req.tenantId;
     const { colaborador_id, trilha_id } = req.body;
-    const tenant = await getTenantBySubdomain(req.tenantSubdomain);
     
-    if (!tenant) {
-      return res.status(404).json({ error: 'Tenant não encontrado' });
+    if (!tenantId) {
+      return res.status(400).json({ error: 'tenant_id é obrigatório' });
     }
+    
+    // Buscar subdomain do tenant para usar nos webhooks e URLs
+    const tenantResult = await query(`
+      SELECT subdomain FROM tenants WHERE id = $1
+    `, [tenantId]);
+    
+    const tenantSubdomain = tenantResult.rows[0]?.subdomain || 'demo';
 
     if (!colaborador_id || !trilha_id) {
       return res.status(400).json({ error: 'colaborador_id e trilha_id são obrigatórios' });
@@ -258,7 +267,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
           REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $2 OR
           REPLACE(REPLACE(REPLACE(phone, '+', ''), '-', ''), ' ', '') = $3
         )
-      `, [tenant.id, phoneNormalized, phoneWithBrazilDigit]);
+      `, [tenantId, phoneNormalized, phoneWithBrazilDigit]);
       
       if (userResult.rows.length === 0) {
         console.log(`❌ Phone ${colaborador_id} not found (tried: ${phoneNormalized}, ${phoneWithBrazilDigit})`);
@@ -296,7 +305,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
         FROM trilhas 
         WHERE LOWER(nome) = LOWER($1) AND tenant_id = $2 AND ativo = true
         LIMIT 1
-      `, [trilha_id, tenant.id]);
+      `, [trilha_id, tenantId]);
       
       // Se não encontrou, tentar com slug normalizado
       if (trilhaByNameResult.rows.length === 0) {
@@ -307,7 +316,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
           FROM trilhas 
           WHERE LOWER(nome) = LOWER($1) AND tenant_id = $2 AND ativo = true
           LIMIT 1
-        `, [normalizedName, tenant.id]);
+        `, [normalizedName, tenantId]);
       }
       
       // Se ainda não encontrou, fazer busca parcial (ILIKE)
@@ -322,16 +331,16 @@ router.post('/iniciar', requireTenant, async (req, res) => {
                  WHEN LOWER(nome) LIKE LOWER($4) THEN 2
                  ELSE 3 END
           LIMIT 1
-        `, [`%${trilha_id}%`, tenant.id, trilha_id, `${trilha_id}%`]);
+        `, [`%${trilha_id}%`, tenantId, trilha_id, `${trilha_id}%`]);
       }
       
       if (trilhaByNameResult.rows.length === 0) {
-        console.log(`❌ Trilha não encontrada: "${trilha_id}" no tenant ${tenant.id}`);
+        console.log(`❌ Trilha não encontrada: "${trilha_id}" no tenant ${tenantId}`);
         return res.status(404).json({ 
           error: 'Trilha não encontrada',
           trilha_procurado: trilha_id,
           tentativas: ['nome exato', 'slug normalizado', 'busca parcial'],
-          tenant_id: tenant.id,
+          tenant_id: tenantId,
           dica: 'Use o UUID da trilha ou o nome exato'
         });
       }
@@ -345,7 +354,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
       SELECT id, nome, descricao, prazo_dias
       FROM trilhas 
       WHERE id = $1 AND tenant_id = $2 AND ativo = true
-    `, [trilhaUuid, tenant.id]);
+    `, [trilhaUuid, tenantId]);
 
     if (trilhaResult.rows.length === 0) {
       return res.status(404).json({ error: 'Trilha não encontrada ou inativa' });
@@ -405,7 +414,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
 
     // Disparar webhook para n8n
     try {
-      await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${req.tenantSubdomain}`, {
+      await fetch(`${req.protocol}://${req.get('host')}/webhook/onboarding?tenant=${tenantSubdomain}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -426,7 +435,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
     }
 
     // ✅ NOVO: Preparar links formatados para diferentes canais
-    const dashboardUrl = `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${userId}&tenant=${req.tenantSubdomain}`;
+    const dashboardUrl = `${req.protocol}://${req.get('host')}/colaborador-dashboard.html?colaborador_id=${userId}&tenant=${tenantSubdomain}`;
     
     // Links formatados para diferentes canais
     const linksFormatados = {
