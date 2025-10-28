@@ -383,11 +383,17 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
             trilhasInfo += '\n';
           });
           
-          trilhasInfo += '\n**IMPORTANTE:** Você conhece estas trilhas e pode usá-las para responder perguntas e iniciar trilhas quando solicitado.';
+          trilhasInfo += '\n⚠️ **REGRAS CRÍTICAS PARA INICIAR TRILHAS:**';
+          trilhasInfo += '\n- NUNCA use IDs como "1", "2", "3" ou o nome da trilha';
+          trilhasInfo += '\n- SEMPRE use o UUID completo da trilha da lista acima';
+          trilhasInfo += '\n- Quando iniciar uma trilha, copie o UUID EXATO que está no "(ID: ...)"';
+          trilhasInfo += '\n- Exemplo: Se a trilha mostra "(ID: a1b2c3d4-e5f6-7890-abcd)", use EXATAMENTE esse UUID';
+          trilhasInfo += '\n- NUNCA invente IDs!';
           
           console.log('✅ Trilhas encontradas:', trilhas.length);
         } else {
           trilhasInfo = '\n\n⚠️ **NOTA:** Use a ferramenta buscar_trilhas_disponiveis quando o usuário perguntar sobre trilhas.';
+          trilhasInfo += '\n⚠️ **IMPORTANTE:** Antes de iniciar qualquer trilha, busque trilhas disponíveis para obter o UUID correto!';
         }
       }
     } catch (error) {
@@ -473,7 +479,7 @@ ${userContext.profile.role === 'admin' ? `
 
 **PARA COLABORADORES:**
 - buscar_trilhas_disponiveis: Lista trilhas do colaborador
-- iniciar_trilha: Inicia trilha específica
+- iniciar_trilha: Inicia trilha específica (USE O UUID EXATO DA TRILHA!)
 - registrar_feedback: Registra feedback sobre trilhas
 - buscar_dados_colaborador: Busca informações pessoais do colaborador atual (gestor, buddy, departamento, cargo) - SEMPRE use quando usuário perguntar sobre dados pessoais
 - buscar_documentos: Busca semântica em documentos (SEMPRE use quando usuário pedir documentos, políticas, manuais, procedimentos, etc.)
@@ -484,6 +490,27 @@ ${userContext.profile.role === 'admin' ? `
 - criar_alertas_personalizados: Sistema de alertas inteligentes
 - identificar_gargalos_trilhas: Detecta problemas em trilhas
 
+**REGRAS CRÍTICAS PARA INICIAR TRILHAS:**
+⚠️ **IMPORTANTE: SEMPRE BUSQUE TRILHAS DISPONÍVEIS ANTES DE INICIAR!**
+1. Quando o usuário pedir para iniciar uma trilha:
+   - PRIMEIRO: Chame buscar_trilhas_disponiveis para obter a lista de trilhas
+   - SEGUNDO: Use o UUID EXATO da trilha retornado por buscar_trilhas_disponiveis
+   - NUNCA adivinhe ou invente IDs como "1", "2", "3"
+   - SEMPRE use UUIDs completos como "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+2. Se o usuário disser "inicie a trilha X" sem você ter a lista:
+   - PRIMEIRO busque trilhas disponíveis
+   - Depois identifique o UUID correto na lista retornada
+   - Só então inicie a trilha com esse UUID específico
+3. Exemplo CORRETO:
+   - Usuário: "inicie a trilha de onboarding"
+   - Você: [chama buscar_trilhas_disponiveis primeiro]
+   - Recebe: [{id: "abc-123", nome: "Onboarding"}, {id: "def-456", nome: "Segurança"}]
+   - Você: [usa o UUID "abc-123" para iniciar_trilha]
+4. Exemplo ERRADO:
+   - Usuário: "inicie a trilha de onboarding"
+   - Você: [tenta iniciar_trilha com trilha_id="1" ou trilha_id="onboarding"]
+   - ❌ ISSO VAI FALHAR!
+
 **INSTRUÇÕES IMPORTANTES:**
 - SEMPRE use as ferramentas quando apropriado
 - Para administradores, seja proativo em usar as ferramentas de análise
@@ -492,13 +519,14 @@ ${userContext.profile.role === 'admin' ? `
 
 **QUANDO USAR CADA FERRAMENTA:**
 - buscar_documentos: SEMPRE que usuário mencionar "documentos", "políticas", "manuais", "procedimentos", "regulamentos", "normas", "buscar", "encontrar documentos"
-- buscar_trilhas_disponiveis: Quando usuário perguntar sobre trilhas disponíveis, "quais trilhas posso fazer", "minhas trilhas"
-- iniciar_trilha: Quando usuário quiser começar uma trilha específica
+- buscar_trilhas_disponiveis: Quando usuário perguntar sobre trilhas disponíveis, "quais trilhas posso fazer", "minhas trilhas", OU quando usuário pedir para iniciar uma trilha (buscar PRIMEIRO!)
+- iniciar_trilha: Quando usuário quiser começar uma trilha específica (APÓS buscar trilhas disponíveis e obter o UUID correto!)
 - registrar_feedback: Quando usuário quiser dar feedback sobre trilhas
 
 **IMPORTANTE:** 
 - Se o usuário pedir documentos, políticas, manuais ou qualquer busca de conteúdo, SEMPRE use buscar_documentos primeiro!
 - Se o usuário perguntar sobre gestor, buddy, departamento, cargo ou informações pessoais, SEMPRE use buscar_dados_colaborador primeiro!
+- Se o usuário pedir para iniciar uma trilha, SEMPRE use buscar_trilhas_disponiveis PRIMEIRO para obter o UUID correto!
 
 **QUANDO ENCONTRAR DOCUMENTOS:**
 - NÃO copie o texto completo dos documentos
@@ -839,7 +867,10 @@ SEMPRE seja conversacional, personalizado e útil!`;
                 console.log('🔍 DEBUG: Iniciando trilha:', functionArgs.trilha_id, 'para colaborador:', colaboradorParaInicio);
                 
                 const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
-                const initResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar`, {
+                
+                // ✅ CORREÇÃO: Adicionar tenant_id à URL
+                const tenantId = context?.tenant_id || 'demo';
+                const initResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
                   trilha_id: functionArgs.trilha_id,
                   colaborador_id: colaboradorParaInicio
                 });
@@ -851,10 +882,13 @@ SEMPRE seja conversacional, personalizado e útil!`;
                   dados: initResponse.data
                 };
               } catch (error) {
-                console.error('❌ Erro ao iniciar trilha:', error.message);
+                console.error('❌ Erro ao iniciar trilha:', error.response?.data || error.message);
+                console.error('❌ Status code:', error.response?.status);
+                console.error('❌ Trilha ID usado:', functionArgs.trilha_id);
                 toolResult = {
                   status: 'erro',
-                  mensagem: 'Não foi possível iniciar a trilha no momento'
+                  mensagem: 'Não foi possível iniciar a trilha no momento',
+                  detalhes: error.response?.data || error.message
                 };
               }
               break;
