@@ -273,12 +273,38 @@ router.post('/iniciar', requireTenant, async (req, res) => {
       console.log(`📞 Lookup: Phone ${colaborador_id} → Normalized ${phoneNormalized} / ${phoneWithBrazilDigit} → User ID ${userId}`);
     }
 
-    // Verificar se a trilha existe e está ativa
+    // ✅ NOVO: Validar se trilha_id é UUID válido ou nome de trilha
+    let trilhaUuid = trilha_id;
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    // Se não for UUID válido, buscar trilha pelo nome
+    if (!uuidPattern.test(trilha_id)) {
+      console.log(`📝 Trilha ID não é UUID válido, buscando por nome: "${trilha_id}"`);
+      const trilhaByNameResult = await query(`
+        SELECT id, nome, descricao, prazo_dias
+        FROM trilhas 
+        WHERE nome = $1 AND tenant_id = $2 AND ativo = true
+        LIMIT 1
+      `, [trilha_id, tenant.id]);
+      
+      if (trilhaByNameResult.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'Trilha não encontrada pelo nome',
+          trilha_nome_procurado: trilha_id,
+          tenant_id: tenant.id
+        });
+      }
+      
+      trilhaUuid = trilhaByNameResult.rows[0].id;
+      console.log(`✅ Trilha encontrada pelo nome: "${trilha_id}" → UUID: ${trilhaUuid}`);
+    }
+
+    // Verificar se a trilha existe e está ativa (agora usando o UUID correto)
     const trilhaResult = await query(`
       SELECT id, nome, descricao, prazo_dias
       FROM trilhas 
       WHERE id = $1 AND tenant_id = $2 AND ativo = true
-    `, [trilha_id, tenant.id]);
+    `, [trilhaUuid, tenant.id]);
 
     if (trilhaResult.rows.length === 0) {
       return res.status(404).json({ error: 'Trilha não encontrada ou inativa' });
@@ -288,7 +314,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
     const progressoResult = await query(`
       SELECT id, status FROM colaborador_trilhas 
       WHERE colaborador_id = $1 AND trilha_id = $2
-    `, [userId, trilha_id]);
+    `, [userId, trilhaUuid]);
 
     if (progressoResult.rows.length > 0) {
       const progresso = progressoResult.rows[0];
@@ -325,7 +351,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
       INSERT INTO colaborador_trilhas (colaborador_id, trilha_id, status, data_inicio, data_limite)
       VALUES ($1, $2, 'em_andamento', NOW(), $3)
       RETURNING id
-    `, [userId, trilha_id, dataLimite]);
+    `, [userId, trilhaUuid, dataLimite]);
 
     // Buscar primeiro conteúdo da trilha
     const primeiroConteudo = await query(`
@@ -334,7 +360,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
       WHERE trilha_id = $1 
       ORDER BY ordem 
       LIMIT 1
-    `, [trilha_id]);
+    `, [trilhaUuid]);
 
     // Disparar webhook para n8n
     try {
@@ -348,7 +374,7 @@ router.post('/iniciar', requireTenant, async (req, res) => {
           colaborador_nome: colaboradorResult.rows[0].name,
           colaborador_email: colaboradorResult.rows[0].email,
           colaborador_phone: colaboradorResult.rows[0].phone,
-          trilha_id,
+          trilha_id: trilhaUuid,
           trilha_nome: trilhaResult.rows[0].nome,
           prazo_dias: trilhaResult.rows[0].prazo_dias,
           data_limite: dataLimite.toISOString()
