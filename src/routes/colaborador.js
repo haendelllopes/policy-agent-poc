@@ -21,7 +21,7 @@ router.get('/trilhas', async (req, res) => {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }
 
-    // Buscar trilhas ativas com progresso do colaborador
+    // Buscar trilhas ativas com progresso do colaborador (com segregação por cargo/departamento)
     const result = await query(`
       SELECT 
         t.id, t.nome, t.descricao, t.prazo_dias, t.ordem,
@@ -34,7 +34,9 @@ router.get('/trilhas', async (req, res) => {
       LEFT JOIN colaborador_trilhas ct ON ct.trilha_id = t.id AND ct.colaborador_id = $2
       LEFT JOIN trilha_conteudos tc ON tc.trilha_id = t.id
       LEFT JOIN conteudo_aceites ca ON ca.conteudo_id = tc.id AND ca.colaborador_trilha_id = ct.id
-      WHERE t.tenant_id = $1 AND t.ativo = true
+      WHERE t.tenant_id = $1 
+        AND t.ativo = true
+        AND colaborador_tem_acesso_trilha($2, t.id) = true
       GROUP BY t.id, ct.id
       ORDER BY t.ordem, t.nome
     `, [tenant.id, colaboradorId]);
