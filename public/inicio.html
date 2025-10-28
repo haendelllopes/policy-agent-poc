@@ -1510,8 +1510,9 @@ textarea:focus {
                 // Preencher formulário com dados existentes
                 document.getElementById('userName').value = userData.name || '';
                 document.getElementById('userEmail').value = userData.email || '';
-                document.getElementById('userDepartment').value = userData.department || '';
-                document.getElementById('userPosition').value = userData.position || '';
+                // Usar *_id se disponível (UUID), senão usar o nome (legado)
+                document.getElementById('userDepartment').value = userData.department_id || userData.department || '';
+                document.getElementById('userPosition').value = userData.position_id || userData.position || '';
                 document.getElementById('userStartDate').value = userData.start_date || '';
                 document.getElementById('userStatus').value = userData.status || 'active';
                 
