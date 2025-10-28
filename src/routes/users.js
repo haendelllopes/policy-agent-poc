@@ -25,6 +25,8 @@ router.get('/', async (req, res) => {
 
     if (await usePostgres()) {
       // PostgreSQL com JOIN para pegar nomes de cargo e departamento
+      // IMPORTANTE: Se houver FK (position_id/department_id), usa SOMENTE o nome da tabela relacionada
+      // Evita retornar UUIDs dos campos legados
       const result = await query(`
         SELECT 
           u.id, 
@@ -35,8 +37,14 @@ router.get('/', async (req, res) => {
           u.department_id,
           u.gestor_id, 
           u.buddy_id,
-          COALESCE(p.name, u.position) as position,
-          COALESCE(d.name, u.department) as department,
+          CASE 
+            WHEN u.position_id IS NOT NULL THEN COALESCE(p.name, 'Não definido')
+            ELSE COALESCE(NULLIF(u.position, ''), 'Não definido')
+          END as position,
+          CASE 
+            WHEN u.department_id IS NOT NULL THEN COALESCE(d.name, 'Não definido')
+            ELSE COALESCE(NULLIF(u.department, ''), 'Não definido')
+          END as department,
           u.status, 
           u.start_date,
           u.onboarding_status, 
