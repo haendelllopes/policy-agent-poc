@@ -425,6 +425,10 @@ class HybridChatWidget {
   formatMessage(text) {
     if (!text) return '<em>Mensagem vazia</em>';
     
+    // Detectar e converter URLs em links clicáveis
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #17A2B8; text-decoration: underline;">$1</a>');
+    
     // Formatação básica de markdown
     return text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
