@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
     }
 
     if (await usePostgres()) {
-      // PostgreSQL com JOIN - Retorna APENAS os nomes das tabelas relacionadas
+      // PostgreSQL com JOIN - Usa COALESCE para pegar nome da tabela OU campo legado
       const result = await query(`
         SELECT 
           u.id, 
@@ -35,8 +35,8 @@ router.get('/', async (req, res) => {
           u.department_id,
           u.gestor_id, 
           u.buddy_id,
-          p.name as position,    -- Nome do cargo da tabela positions
-          d.name as department,   -- Nome do departamento da tabela departments
+          COALESCE(p.name, u.position) as position,    -- Nome da tabela OU campo legado
+          COALESCE(d.name, u.department) as department, -- Nome da tabela OU campo legado
           u.status, 
           u.start_date,
           u.onboarding_status, 
