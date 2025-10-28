@@ -248,8 +248,14 @@ router.post('/', async (req, res) => {
       userId = uuidv4();
       const onboardingInicio = parse.data.start_date || new Date().toISOString().split('T')[0];
       
+      // Verificar se position/department são UUIDs (não devem ser)
+      const isUUID = (str) => str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const safePosition = parse.data.position && !isUUID(parse.data.position) ? parse.data.position : null;
+      const safeDepartment = parse.data.department && !isUUID(parse.data.department) ? parse.data.department : null;
+      
       console.log('🔧 Executando INSERT para userId:', userId, 'tenantId:', tenant.id);
       console.log('🔧 Valores INSERT: gestor_id =', parse.data.gestor_id, 'buddy_id =', parse.data.buddy_id);
+      console.log('🔧 Position safe:', safePosition, 'Department safe:', safeDepartment);
       
       const insertResult = await query(`
         INSERT INTO users (
@@ -261,7 +267,7 @@ router.post('/', async (req, res) => {
         RETURNING id, name, gestor_id, buddy_id
       `, [
         userId, tenant.id, parse.data.name, parse.data.email, normalizedPhone,
-        parse.data.position || null, parse.data.department || null, 
+        safePosition, safeDepartment, 
         parse.data.position_id || null, parse.data.department_id || null,
         parse.data.gestor_id || null, parse.data.buddy_id || null,
         onboardingInicio, parse.data.status || 'active',
@@ -419,6 +425,11 @@ router.put('/:id', async (req, res) => {
         return res.status(400).json({ error: { formErrors: ['Email já cadastrado neste tenant'] } });
       }
 
+      // Verificar se position/department são UUIDs (não devem ser)
+      const isUUID = (str) => str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      const safePosition = parse.data.position && !isUUID(parse.data.position) ? parse.data.position : null;
+      const safeDepartment = parse.data.department && !isUUID(parse.data.department) ? parse.data.department : null;
+      
       // UPDATE simples e direto
       const result = await query(`
         UPDATE users SET 
@@ -432,7 +443,7 @@ router.put('/:id', async (req, res) => {
         RETURNING id, name, gestor_id, buddy_id
       `, [
         parse.data.name, parse.data.email, normalizedPhone, 
-        parse.data.position || null, parse.data.department || null,
+        safePosition, safeDepartment,
         parse.data.position_id || null, parse.data.department_id || null,
         parse.data.gestor_id || null, parse.data.buddy_id || null,
         parse.data.start_date || null, parse.data.status || 'active',
