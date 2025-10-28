@@ -797,15 +797,37 @@ SEMPRE seja conversacional, personalizado e útil!`;
           let toolResult;
           switch (functionName) {
             case 'buscar_trilhas_disponiveis':
-              // Simular busca de trilhas
-              toolResult = {
-                status: 'sucesso',
-                trilhas: [
-                  { id: 'trilha-1', nome: 'Trilha 2', status: 'disponivel' },
-                  { id: 'trilha-2', nome: 'Cultura Organizacional', status: 'disponivel' },
-                  { id: 'trilha-3', nome: 'Trilha de Liderança', status: 'disponivel' }
-                ]
-              };
+              // Buscar trilhas REAIS do colaborador
+              try {
+                console.log('🔍 DEBUG: Buscando trilhas reais para colaborador:', functionArgs.colaborador_id);
+                const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                const trilhasResponse = await axios.get(`${baseUrl}/api/agent-n8n/trilhas/disponiveis/${functionArgs.colaborador_id}`, {
+                  params: { tenant_id: tenantId || 'demo' },
+                  timeout: 5000
+                });
+                
+                console.log('🔍 DEBUG: Trilhas encontradas:', trilhasResponse.data);
+                
+                const trilhasEncontradas = trilhasResponse.data?.disponiveis || trilhasResponse.data?.trilhas || [];
+                
+                toolResult = {
+                  status: 'sucesso',
+                  trilhas_encontradas: trilhasEncontradas.length,
+                  trilhas: trilhasEncontradas.map(t => ({
+                    id: t.id,
+                    nome: t.nome,
+                    descricao: t.descricao,
+                    status: t.status_colaborador || 'disponivel',
+                    conteudos: t.conteudos_count || 0
+                  }))
+                };
+              } catch (error) {
+                console.error('❌ Erro ao buscar trilhas:', error.message);
+                toolResult = {
+                  status: 'erro',
+                  mensagem: 'Não foi possível buscar trilhas no momento'
+                };
+              }
               break;
             case 'iniciar_trilha':
               // Simular início de trilha
