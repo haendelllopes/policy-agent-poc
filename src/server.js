@@ -867,10 +867,9 @@ SEMPRE seja conversacional, personalizado e útil!`;
                 console.log('🔍 DEBUG: Iniciando trilha:', functionArgs.trilha_id, 'para colaborador:', colaboradorParaInicio);
                 
                 // ✅ BUSCAR TENANT_ID DO COLABORADOR
-                const { query: queryDB } = require('../db-pg');
                 let tenantId;
                 try {
-                  const userResult = await queryDB('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaInicio]);
+                  const userResult = await query('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaInicio]);
                   if (userResult.rows.length === 0) {
                     throw new Error('Colaborador não encontrado');
                   }
