@@ -287,6 +287,12 @@ app.get('/api/debug-env', (req, res) => {
 
 // Endpoint HTTP para chat (compatível com Vercel)
 app.post('/api/chat', async (req, res) => {
+  console.log('\n\n');
+  console.log('========================================');
+  console.log('🎯 === NOVA REQUISIÇÃO DE CHAT ===');
+  console.log('========================================');
+  console.log(`📅 Timestamp: ${new Date().toISOString()}`);
+  
   try {
     const { message, userId, context } = req.body;
     
@@ -847,15 +853,20 @@ SEMPRE seja conversacional, personalizado e útil!`;
     // Se o modelo quer usar ferramentas
     if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
       console.log('🔧 GPT quer usar ferramentas:', responseMessage.tool_calls.length);
+      console.log('📋 Lista completa de tool_calls:', JSON.stringify(responseMessage.tool_calls, null, 2));
       const toolCalls = responseMessage.tool_calls;
       const toolResults = [];
+      console.log(`🔄 Iniciando loop de execução para ${toolCalls.length} ferramentas`);
 
       for (const toolCall of toolCalls) {
         const functionName = toolCall.function.name;
         const functionArgs = JSON.parse(toolCall.function.arguments);
 
         try {
-          console.log(`🔧 Executando ferramenta: ${functionName}`, functionArgs);
+          console.log(`\n🔧 === INICIANDO EXECUÇÃO DE FERRAMENTA ===`);
+          console.log(`🔧 Nome: ${functionName}`);
+          console.log(`🔧 Args: ${JSON.stringify(functionArgs)}`);
+          console.log(`🔧 Tool Call ID: ${toolCall.id}`);
           
           let toolResult;
           switch (functionName) {
@@ -1115,14 +1126,24 @@ SEMPRE seja conversacional, personalizado e útil!`;
               toolResult = { error: `Ferramenta não encontrada: ${functionName}` };
           }
 
+          console.log(`\n✅ === FERRAMENTA EXECUTADA COM SUCESSO ===`);
+          console.log(`✅ Nome: ${functionName}`);
+          console.log(`✅ Resultado: ${JSON.stringify(toolResult).substring(0, 200)}...`);
+          
           toolResults.push({
             tool_call_id: toolCall.id,
             role: "tool",
             name: functionName,
             content: JSON.stringify(toolResult)
           });
+          
+          console.log(`✅ Tool result adicionado ao array. Total: ${toolResults.length}`);
         } catch (error) {
-          console.error(`❌ Erro ao executar ferramenta ${functionName}:`, error);
+          console.error(`\n❌ === ERRO AO EXECUTAR FERRAMENTA ===`);
+          console.error(`❌ Nome: ${functionName}`);
+          console.error(`❌ Erro: ${error.message}`);
+          console.error(`❌ Stack: ${error.stack?.substring(0, 200)}`);
+          
           toolResults.push({
             tool_call_id: toolCall.id,
             role: "tool",
@@ -1133,7 +1154,9 @@ SEMPRE seja conversacional, personalizado e útil!`;
       }
 
       // Gerar resposta final com os resultados das ferramentas
-      console.log('🔍 DEBUG: Tool results sendo enviados para GPT:', JSON.stringify(toolResults, null, 2));
+      console.log(`\n📦 === PREPARANDO SEGUNDO REQUEST AO GPT ===`);
+      console.log(`📦 Total de tool results: ${toolResults.length}`);
+      console.log(`📦 Tool results sendo enviados para GPT:`, JSON.stringify(toolResults, null, 2));
       
       // Preparar mensagens finais com histórico
       const finalMessages = [
@@ -1153,6 +1176,14 @@ SEMPRE seja conversacional, personalizado e útil!`;
       // Adicionar mensagem atual e resposta com ferramentas
       finalMessages.push({ role: 'user', content: message });
       
+      console.log('\n🚀 === ENVIANDO SEGUNDO REQUEST AO GPT ===');
+      console.log('🚀 Numero de mensagens:', finalMessages.length + 2 + toolResults.length);
+      const messagesSummary = finalMessages.map(m => ({
+        role: m.role, 
+        content: m.content?.substring(0, 50)
+      }));
+      console.log('🚀 Mensagens preparadas:', JSON.stringify(messagesSummary, null, 2));
+      
       const finalResponseGPT = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -1168,8 +1199,10 @@ SEMPRE seja conversacional, personalizado e útil!`;
         max_tokens: 500
       });
 
-      console.log('🔍 DEBUG: Resposta final do GPT:', finalResponseGPT.choices[0].message.content);
-      finalResponse = finalResponseGPT.choices[0].message.content || 'Ferramentas executadas com sucesso!';
+      console.log('\n✅ === RESPOSTA FINAL DO GPT RECEBIDA ===');
+      const finalContent = finalResponseGPT.choices[0].message.content;
+      console.log('✅ Resposta:', finalContent);
+      finalResponse = finalContent || 'Ferramentas executadas com sucesso!';
     }
     
     // 4. SALVAR CONVERSAS NO BANCO DE DADOS
@@ -1181,6 +1214,11 @@ SEMPRE seja conversacional, personalizado e útil!`;
       sentimentAnalysis.sentimento, 
       sentimentAnalysis.intensidade
     );
+    
+    console.log('\n✅ === FINALIZANDO REQUISIÇÃO ===');
+    console.log('✅ Resposta final:', finalResponse.substring(0, 100) + '...');
+    console.log('✅ Status: success');
+    console.log('========================================\n\n');
     
     res.json({
       message: finalResponse,
