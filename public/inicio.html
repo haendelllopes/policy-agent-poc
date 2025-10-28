@@ -1066,7 +1066,9 @@ textarea:focus {
                     </div>
                     <div>
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: #374151;">Cargo *</label>
-                        <input type="text" id="userPosition" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;" placeholder="Digite o cargo">
+                        <select id="userPosition" required style="width: 100%; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; background: white;">
+                            <option value="">Selecione um cargo</option>
+                        </select>
                     </div>
                 </div>
 
@@ -1510,9 +1512,6 @@ textarea:focus {
                 // Preencher formulário com dados existentes
                 document.getElementById('userName').value = userData.name || '';
                 document.getElementById('userEmail').value = userData.email || '';
-                // Usar *_id se disponível (UUID), senão usar o nome (legado)
-                document.getElementById('userDepartment').value = userData.department_id || userData.department || '';
-                document.getElementById('userPosition').value = userData.position_id || userData.position || '';
                 document.getElementById('userStartDate').value = userData.start_date || '';
                 document.getElementById('userStatus').value = userData.status || 'active';
                 
@@ -1530,8 +1529,13 @@ textarea:focus {
                 }
                 document.getElementById('userPhone').value = displayPhone;
                 
-                // Popular dropdown de departamentos
-                populateDepartmentDropdown();
+                // Usar *_id se disponível (UUID), senão usar o nome (legado)
+                const departmentValue = userData.department_id || userData.department || '';
+                const positionValue = userData.position_id || userData.position || '';
+                
+                // Popular dropdowns de departamentos e cargos
+                await populateDepartmentDropdown(departmentValue);
+                await populatePositionDropdown(positionValue);
                 
                 // Popular gestor e buddy com valores atuais
                 populateGestorBuddyDropdowns(userData.gestor_id || '', userData.buddy_id || '');
@@ -1595,8 +1599,9 @@ textarea:focus {
             document.querySelector('#addUserModal button[type="submit"]').textContent = 'Adicionar Funcionário';
             document.getElementById('addUserForm').removeAttribute('data-editing-user-id');
             
-            // Popular dropdown de departamentos
+            // Popular dropdowns de departamentos e cargos
             populateDepartmentDropdown();
+            populatePositionDropdown();
             
             // Popular dropdowns de gestor e buddy
             populateGestorBuddyDropdowns();
@@ -1617,22 +1622,55 @@ textarea:focus {
             document.getElementById('addUserModal').style.display = 'none';
         }
 
-        function populateDepartmentDropdown() {
+        async function populateDepartmentDropdown(selectedValue = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
             const departmentSelect = document.getElementById('userDepartment');
-            const departmentFilter = document.getElementById('departmentFilter');
             
             // Limpar opções existentes (exceto a primeira)
             departmentSelect.innerHTML = '<option value="">Selecione um departamento</option>';
             
-            // Adicionar departamentos do filtro (que já foram carregados)
-            if (departmentFilter && departmentFilter.options.length > 1) {
-                for (let i = 1; i < departmentFilter.options.length; i++) {
-                    const option = departmentFilter.options[i];
-                    const newOption = document.createElement('option');
-                    newOption.value = option.value;
-                    newOption.textContent = option.textContent;
-                    departmentSelect.appendChild(newOption);
+            try {
+                const departments = await fetchData(`/api/departments?tenant=${tenant}`);
+                (departments || []).forEach(dep => {
+                    const option = document.createElement('option');
+                    const value = dep.id || dep.name; // Usar ID primeiro
+                    option.value = value;
+                    option.textContent = dep.name;
+                    departmentSelect.appendChild(option);
+                });
+                
+                // Definir valor selecionado se fornecido
+                if (selectedValue) {
+                    departmentSelect.value = selectedValue;
                 }
+            } catch (e) {
+                console.error('❌ Erro ao carregar departamentos:', e);
+            }
+        }
+
+        async function populatePositionDropdown(selectedValue = '') {
+            const tenant = new URLSearchParams(window.location.search).get('tenant') || 'demo';
+            const positionSelect = document.getElementById('userPosition');
+            
+            // Limpar opções existentes (exceto a primeira)
+            positionSelect.innerHTML = '<option value="">Selecione um cargo</option>';
+            
+            try {
+                const positions = await fetchData(`/api/positions?tenant=${tenant}`);
+                (positions || []).forEach(pos => {
+                    const option = document.createElement('option');
+                    const value = pos.id || pos.name; // Usar ID primeiro
+                    option.value = value;
+                    option.textContent = pos.name;
+                    positionSelect.appendChild(option);
+                });
+                
+                // Definir valor selecionado se fornecido
+                if (selectedValue) {
+                    positionSelect.value = selectedValue;
+                }
+            } catch (e) {
+                console.error('❌ Erro ao carregar cargos:', e);
             }
         }
 
