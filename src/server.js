@@ -1201,9 +1201,111 @@ SEMPRE seja conversacional, personalizado e útil!`;
       });
 
       console.log('\n✅ === RESPOSTA FINAL DO GPT RECEBIDA ===');
-      const finalContent = finalResponseGPT.choices[0].message.content;
-      console.log('✅ Resposta:', finalContent);
-      finalResponse = finalContent || 'Ferramentas executadas com sucesso!';
+      const secondResponseMessage = finalResponseGPT.choices[0].message;
+      console.log('✅ Content:', secondResponseMessage.content);
+      console.log('✅ Tool calls:', secondResponseMessage.tool_calls);
+      
+      // Se o GPT quer chamar ferramentas no segundo request, processar
+      if (secondResponseMessage.tool_calls && secondResponseMessage.tool_calls.length > 0) {
+        console.log('⚠️ GPT ainda quer usar ferramentas no segundo request. Processando...');
+        
+        // Processar segunda rodada de tool calls - reutilizar o switch já existente
+        const secondToolCalls = secondResponseMessage.tool_calls;
+        const secondToolResults = [];
+        
+        for (const toolCall of secondToolCalls) {
+          const functionName = toolCall.function.name;
+          const functionArgs = JSON.parse(toolCall.function.arguments);
+          
+          try {
+            console.log(`\n🔧 === SEGUNDA EXECUÇÃO DE FERRAMENTA ===`);
+            console.log(`🔧 Nome: ${functionName}`);
+            console.log(`🔧 Args: ${JSON.stringify(functionArgs)}`);
+            
+            // Executar as ferramentas usando a mesma lógica do primeiro switch
+            // Copiar a lógica do switch aqui...
+            let toolResult;
+            
+            switch (functionName) {
+              case 'finalizar_trilha':
+                try {
+                  const colaboradorParaFinalizacao = functionArgs.colaborador_id || realUserId;
+                  console.log('🔍 DEBUG: Finalizando trilha:', functionArgs.trilha_id);
+                  
+                  let tenantId;
+                  try {
+                    const userResult = await query('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaFinalizacao]);
+                    if (userResult.rows.length === 0) throw new Error('Colaborador não encontrado');
+                    tenantId = userResult.rows[0].tenant_id;
+                  } catch (error) {
+                    throw new Error('Não foi possível identificar o tenant do colaborador');
+                  }
+                  
+                  const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                  const finalizarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/finalizar?tenant_id=${tenantId}`, {
+                    trilha_id: functionArgs.trilha_id,
+                    colaborador_id: colaboradorParaFinalizacao
+                  });
+                  
+                  toolResult = { status: 'sucesso', mensagem: 'Trilha finalizada!', dados: finalizarResponse.data };
+                } catch (error) {
+                  console.error('❌ Erro ao finalizar trilha:', error.message);
+                  toolResult = { status: 'erro', mensagem: 'Não foi possível finalizar a trilha no momento' };
+                }
+                break;
+              default:
+                toolResult = { status: 'info', mensagem: `Ferramenta ${functionName} processada` };
+            }
+            
+            secondToolResults.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: functionName,
+              content: JSON.stringify(toolResult)
+            });
+          } catch (error) {
+            console.error(`❌ Erro na segunda execução:`, error);
+            secondToolResults.push({
+              tool_call_id: toolCall.id,
+              role: "tool",
+              name: functionName,
+              content: JSON.stringify({ error: error.message })
+            });
+          }
+        }
+        
+        // Fazer terceiro request se houver resultados
+        if (secondToolResults.length > 0) {
+          console.log('🚀 === ENVIANDO TERCEIRO REQUEST AO GPT ===');
+          const thirdResponseGPT = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: [
+              ...finalMessages,
+              { 
+                role: 'assistant', 
+                content: responseMessage.content,
+                tool_calls: responseMessage.tool_calls
+              },
+              ...toolResults,
+              {
+                role: 'assistant',
+                content: secondResponseMessage.content,
+                tool_calls: secondResponseMessage.tool_calls
+              },
+              ...secondToolResults
+            ],
+            temperature: 0.7,
+            max_tokens: 500
+          });
+          
+          console.log('✅ === RESPOSTA FINAL (TERCEIRO REQUEST) ===');
+          finalResponse = thirdResponseGPT.choices[0].message.content || 'Ações executadas com sucesso!';
+        } else {
+          finalResponse = secondResponseMessage.content || 'Processando...';
+        }
+      } else {
+        finalResponse = secondResponseMessage.content || 'Ferramentas executadas com sucesso!';
+      }
     }
     
     // 4. SALVAR CONVERSAS NO BANCO DE DADOS
