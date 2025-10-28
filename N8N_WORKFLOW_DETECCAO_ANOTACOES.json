@@ -56,51 +56,13 @@
             },
             {
               "name": "x-tenant-id",
-              "value": "{{ $json.tenantId || '5978f911-738b-4aae-802a-f037fdac2e64' }}"
+              "value": "={{ $json.tenantId || '5978f911-738b-4aae-802a-f037fdac2e64' }}"
             }
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.userId }}"
-            },
-            {
-              "name": "trilha_id",
-              "value": "={{ $json.trilhaId || null }}"
-            },
-            {
-              "name": "tipo",
-              "value": "={{ $json.analysis.tipo }}"
-            },
-            {
-              "name": "titulo",
-              "value": "={{ $json.analysis.titulo }}"
-            },
-            {
-              "name": "anotacao",
-              "value": "={{ $json.message }}"
-            },
-            {
-              "name": "sentimento",
-              "value": "={{ $json.sentiment?.sentimento || 'neutro' }}"
-            },
-            {
-              "name": "intensidade_sentimento",
-              "value": "={{ $json.sentiment?.intensidade || 0.5 }}"
-            },
-            {
-              "name": "contexto",
-              "value": "={{ JSON.stringify({ categoria: $json.analysis.categoria, relevancia: $json.analysis.relevancia, contexto_original: $json.context }) }}"
-            },
-            {
-              "name": "tags",
-              "value": "={{ $json.analysis.tags }}"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"colaborador_id\": $json.userId,\n  \"trilha_id\": $json.trilhaId || null,\n  \"tipo\": $json.analysis.tipo,\n  \"titulo\": $json.analysis.titulo,\n  \"anotacao\": $json.message,\n  \"sentimento\": $json.sentiment?.sentimento || 'neutro',\n  \"intensidade_sentimento\": $json.sentiment?.intensidade || 0.5,\n  \"contexto\": {\n    \"categoria\": $json.analysis.categoria,\n    \"relevancia\": $json.analysis.relevancia,\n    \"contexto_original\": $json.context\n  },\n  \"tags\": $json.analysis.tags\n}",
         "options": {}
       },
       "id": "save-annotation",
@@ -166,34 +128,8 @@
           ]
         },
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "anotacao_id",
-              "value": "={{ $json.id }}"
-            },
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.colaborador_id }}"
-            },
-            {
-              "name": "tipo",
-              "value": "={{ $json.tipo }}"
-            },
-            {
-              "name": "titulo",
-              "value": "={{ $json.titulo }}"
-            },
-            {
-              "name": "relevancia",
-              "value": "alta"
-            },
-            {
-              "name": "tags",
-              "value": "={{ $json.tags }}"
-            }
-          ]
-        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"anotacao_id\": $json.id,\n  \"colaborador_id\": $json.colaborador_id,\n  \"tipo\": $json.tipo,\n  \"titulo\": $json.titulo,\n  \"relevancia\": 'alta',\n  \"tags\": $json.tags\n}",
         "options": {}
       },
       "id": "alert-admin",

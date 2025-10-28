@@ -103,70 +103,9 @@
             "Content-Type": "application/json"
           }
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.colaborador_id }}"
-            },
-            {
-              "name": "tipo",
-              "value": "={{ $json.tipo }}"
-            },
-            {
-              "name": "titulo",
-              "value": "={{ $json.titulo }}"
-            },
-            {
-              "name": "anotacao",
-              "value": "={{ $json.descricao }}"
-            },
-            {
-              "name": "tags",
-              "value": "={{ JSON.stringify($json.tags) }}"
-            },
-            {
-              "name": "urgencia",
-              "value": "={{ $json.urgencia }}"
-            },
-            {
-              "name": "categoria",
-              "value": "={{ $json.categoria }}"
-            },
-            {
-              "name": "subcategoria",
-              "value": "={{ $json.subcategoria }}"
-            },
-            {
-              "name": "acao_sugerida",
-              "value": "={{ $json.acao_sugerida }}"
-            },
-            {
-              "name": "impacto_estimado",
-              "value": "={{ $json.impacto_estimado }}"
-            },
-            {
-              "name": "insights",
-              "value": "={{ $json.insights }}"
-            },
-            {
-              "name": "acoes_especificas",
-              "value": "={{ JSON.stringify($json.acoes_especificas) }}"
-            },
-            {
-              "name": "prioridade_revisao",
-              "value": "={{ $json.prioridade_revisao }}"
-            },
-            {
-              "name": "metadata",
-              "value": "={{ JSON.stringify($json.metadata) }}"
-            },
-            {
-              "name": "gerado_automaticamente",
-              "value": "true"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"colaborador_id\": $json.colaborador_id,\n  \"tipo\": $json.tipo,\n  \"titulo\": $json.titulo,\n  \"anotacao\": $json.descricao,\n  \"tags\": $json.tags,\n  \"urgencia\": $json.urgencia,\n  \"categoria\": $json.categoria,\n  \"subcategoria\": $json.subcategoria,\n  \"acao_sugerida\": $json.acao_sugerida,\n  \"impacto_estimado\": $json.impacto_estimado,\n  \"insights\": $json.insights,\n  \"acoes_especificas\": $json.acoes_especificas,\n  \"prioridade_revisao\": $json.prioridade_revisao,\n  \"metadata\": $json.metadata,\n  \"gerado_automaticamente\": true\n}"
       },
       "id": "salvar-anotacao-proativa",
       "name": "💾 Salvar Anotação Proativa",
@@ -202,42 +141,9 @@
             "Content-Type": "application/json"
           }
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "anotacao_id",
-              "value": "={{ $json.id }}"
-            },
-            {
-              "name": "tipo",
-              "value": "={{ $json.tipo }}"
-            },
-            {
-              "name": "urgencia",
-              "value": "critica"
-            },
-            {
-              "name": "categoria",
-              "value": "={{ $json.categoria }}"
-            },
-            {
-              "name": "mensagem",
-              "value": "={{ $json.anotacao }}"
-            },
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.colaborador_id }}"
-            },
-            {
-              "name": "acao_sugerida",
-              "value": "={{ $json.acao_sugerida }}"
-            },
-            {
-              "name": "timestamp",
-              "value": "={{ new Date().toISOString() }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"anotacao_id\": $json.id,\n  \"tipo\": $json.tipo,\n  \"urgencia\": 'critica',\n  \"categoria\": $json.categoria,\n  \"mensagem\": $json.anotacao,\n  \"colaborador_id\": $json.colaborador_id,\n  \"acao_sugerida\": $json.acao_sugerida,\n  \"timestamp\": new Date().toISOString()\n}"
       },
       "id": "alertar-urgencia-proativa",
       "name": "🔔 Alertar Urgência Proativa",

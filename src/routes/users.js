@@ -427,8 +427,15 @@ router.put('/:id', async (req, res) => {
 
       // Verificar se position/department são UUIDs (não devem ser)
       const isUUID = (str) => str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      
+      console.log('🔍 UPDATE - Position recebido:', parse.data.position, 'É UUID?', isUUID(parse.data.position));
+      console.log('🔍 UPDATE - Department recebido:', parse.data.department, 'É UUID?', isUUID(parse.data.department));
+      
       const safePosition = parse.data.position && !isUUID(parse.data.position) ? parse.data.position : null;
       const safeDepartment = parse.data.department && !isUUID(parse.data.department) ? parse.data.department : null;
+      
+      console.log('✅ UPDATE - Safe position:', safePosition);
+      console.log('✅ UPDATE - Safe department:', safeDepartment);
       
       // UPDATE simples e direto
       const result = await query(`

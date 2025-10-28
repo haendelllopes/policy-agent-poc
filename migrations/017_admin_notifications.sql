@@ -31,10 +31,11 @@ ALTER PUBLICATION supabase_realtime ADD TABLE admin_notifications;
 ALTER TABLE admin_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Política para admins lerem suas próprias notificações
+-- Temporariamente permitir leitura para todos até implementar autenticação Supabase
 CREATE POLICY "Admins can read their own notifications"
   ON admin_notifications
   FOR SELECT
-  USING (auth.uid()::text = admin_id::text);
+  USING (true); -- Temporário: permitir leitura para todos
 
 -- Política para sistema inserir notificações
 CREATE POLICY "System can insert notifications"

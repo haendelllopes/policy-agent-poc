@@ -47,42 +47,9 @@
             "Content-Type": "application/json"
           }
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "anotacao_id",
-              "value": "={{ $('💾 Salvar Anotação').item.json.id }}"
-            },
-            {
-              "name": "tipo",
-              "value": "={{ $json.tipo }}"
-            },
-            {
-              "name": "urgencia",
-              "value": "critica"
-            },
-            {
-              "name": "categoria",
-              "value": "={{ $json.categoria }}"
-            },
-            {
-              "name": "mensagem",
-              "value": "={{ $json.mensagem }}"
-            },
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.from }}"
-            },
-            {
-              "name": "acao_sugerida",
-              "value": "={{ $json.acao_sugerida }}"
-            },
-            {
-              "name": "timestamp",
-              "value": "={{ new Date().toISOString() }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"anotacao_id\": $('💾 Salvar Anotação').item.json.id,\n  \"tipo\": $json.tipo,\n  \"urgencia\": 'critica',\n  \"categoria\": $json.categoria,\n  \"mensagem\": $json.mensagem,\n  \"colaborador_id\": $json.from,\n  \"acao_sugerida\": $json.acao_sugerida,\n  \"timestamp\": new Date().toISOString()\n}"
       },
       "id": "notificar-admin-critica",
       "name": "🔔 Notificar Admin (CRÍTICA)",
@@ -110,38 +77,9 @@
             "Content-Type": "application/json"
           }
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "titulo",
-              "value": "={{ $json.titulo }}"
-            },
-            {
-              "name": "descricao",
-              "value": "={{ $json.descricao }}"
-            },
-            {
-              "name": "urgencia",
-              "value": "={{ $json.urgencia }}"
-            },
-            {
-              "name": "categoria",
-              "value": "={{ $json.categoria }}"
-            },
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.colaborador_id }}"
-            },
-            {
-              "name": "prioridade",
-              "value": "={{ $json.prioridade }}"
-            },
-            {
-              "name": "anotacao_id",
-              "value": "={{ $json.anotacao_id }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"titulo\": $json.titulo,\n  \"descricao\": $json.descricao,\n  \"urgencia\": $json.urgencia,\n  \"categoria\": $json.categoria,\n  \"colaborador_id\": $json.colaborador_id,\n  \"prioridade\": $json.prioridade,\n  \"anotacao_id\": $json.anotacao_id\n}"
       },
       "id": "criar-ticket-critica",
       "name": "🎫 Criar Ticket (CRÍTICA)",
@@ -159,42 +97,9 @@
             "Content-Type": "application/json"
           }
         },
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "anotacao_id",
-              "value": "={{ $('💾 Salvar Anotação').item.json.id }}"
-            },
-            {
-              "name": "tipo",
-              "value": "={{ $json.tipo }}"
-            },
-            {
-              "name": "urgencia",
-              "value": "alta"
-            },
-            {
-              "name": "categoria",
-              "value": "={{ $json.categoria }}"
-            },
-            {
-              "name": "mensagem",
-              "value": "={{ $json.mensagem }}"
-            },
-            {
-              "name": "colaborador_id",
-              "value": "={{ $json.from }}"
-            },
-            {
-              "name": "acao_sugerida",
-              "value": "={{ $json.acao_sugerida }}"
-            },
-            {
-              "name": "timestamp",
-              "value": "={{ new Date().toISOString() }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"anotacao_id\": $('💾 Salvar Anotação').item.json.id,\n  \"tipo\": $json.tipo,\n  \"urgencia\": 'alta',\n  \"categoria\": $json.categoria,\n  \"mensagem\": $json.mensagem,\n  \"colaborador_id\": $json.from,\n  \"acao_sugerida\": $json.acao_sugerida,\n  \"timestamp\": new Date().toISOString()\n}"
       },
       "id": "notificar-admin-alta",
       "name": "📧 Notificar Admin (ALTA)",
