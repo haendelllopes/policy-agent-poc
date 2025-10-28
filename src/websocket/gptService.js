@@ -176,6 +176,7 @@ class GPTChatService {
     
     // Extrair tenant_id do contexto do usuário
     const tenantId = userContext?.tenant_id || '5978f911-738b-4aae-802a-f037fdac2e64'; // Tenant padrão
+    console.log('🔍 DEBUG gptService.executeTool - tenantId:', tenantId, 'userContext:', JSON.stringify(userContext, null, 2));
     
     // Adicionar colaborador_id se não fornecido
     if (!parameters.colaborador_id && userContext?.id) {

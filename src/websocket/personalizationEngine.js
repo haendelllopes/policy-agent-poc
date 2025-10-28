@@ -40,6 +40,7 @@ class PersonalizationEngine {
       console.log('🌐 Fazendo requisição para:', fullUrl);
       
       const response = await axios.get(fullUrl);
+      console.log('📦 Contexto carregado:', JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao carregar contexto:', error);
@@ -64,6 +65,7 @@ class PersonalizationEngine {
         department: 'N/A',
         gestor_nome: null,
         buddy_nome: null,
+        tenant_id: '5978f911-738b-4aae-802a-f037fdac2e64', // Tenant padrão quando há erro
         sentimento_atual: 'neutro',
         sentimento_intensidade: 0.5
       };
