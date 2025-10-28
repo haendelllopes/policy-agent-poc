@@ -2055,22 +2055,23 @@ textarea:focus {
                 const departmentValue = document.getElementById('userDepartment').value;
                 
                 // Verificar se é UUID (contém hífens) ou string (name)
-                const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+                const isUUID = (str) => str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
                 
                 // Buscar o texto do option selecionado para obter o nome correto
                 const positionSelect = document.getElementById('userPosition');
                 const departmentSelect = document.getElementById('userDepartment');
                 
-                // Se for UUID, buscar o texto do option; se não, usar o próprio valor
-                let positionName = positionValue;
-                let departmentName = departmentValue;
+                let positionName = null;
+                let departmentName = null;
                 
-                if (isUUID(positionValue)) {
+                // Para position: sempre usar o texto do option
+                if (positionSelect && positionSelect.selectedIndex >= 0) {
                     const selectedOption = positionSelect.options[positionSelect.selectedIndex];
                     positionName = selectedOption ? selectedOption.text : null;
                 }
                 
-                if (isUUID(departmentValue)) {
+                // Para department: sempre usar o texto do option
+                if (departmentSelect && departmentSelect.selectedIndex >= 0) {
                     const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
                     departmentName = selectedOption ? selectedOption.text : null;
                 }
