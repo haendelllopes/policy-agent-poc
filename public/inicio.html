@@ -2011,12 +2011,21 @@ textarea:focus {
                 const isEditing = document.getElementById('addUserForm').dataset.editingUserId;
                 console.log(isEditing ? ' Processando edição de usuário...' : ' Processando adição de usuário...');
                 
+                // Pegar position_id e department_id dos selects
+                const positionValue = document.getElementById('userPosition').value;
+                const departmentValue = document.getElementById('userDepartment').value;
+                
+                // Verificar se é UUID (contém hífens) ou string (name)
+                const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+                
                 // Coletar dados do formulário
                 const userData = {
                     name: document.getElementById('userName').value.trim(),
                     email: document.getElementById('userEmail').value.trim(),
-                    department: document.getElementById('userDepartment').value,
-                    position: document.getElementById('userPosition').value.trim(),
+                    position: positionValue,
+                    position_id: isUUID(positionValue) ? positionValue : null,
+                    department: departmentValue,
+                    department_id: isUUID(departmentValue) ? departmentValue : null,
                     start_date: document.getElementById('userStartDate').value,
                     phone: formatPhoneForDatabase(document.getElementById('userPhone').value),
                     status: document.getElementById('userStatus').value,
