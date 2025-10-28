@@ -25,8 +25,8 @@ router.get('/', async (req, res) => {
 
     if (await usePostgres()) {
       // PostgreSQL com JOIN para pegar nomes de cargo e departamento
-      // IMPORTANTE: Se houver FK (position_id/department_id), usa SOMENTE o nome da tabela relacionada
-      // NUNCA usa campos legados quando há FK definida para evitar UUIDs
+      // IMPORTANTE: Retorna APENAS o nome da tabela relacionada (p.name, d.name)
+      // NUNCA retorna campos legados (u.position, u.department) que podem conter UUIDs
       const result = await query(`
         SELECT 
           u.id, 
@@ -37,22 +37,8 @@ router.get('/', async (req, res) => {
           u.department_id,
           u.gestor_id, 
           u.buddy_id,
-          CASE 
-            -- Se tem FK, usa SOMENTE o nome da tabela relacionada
-            WHEN u.position_id IS NOT NULL THEN p.name
-            -- Se não tem FK e o campo legado não é UUID, usa ele
-            WHEN u.position IS NOT NULL AND NOT (u.position ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-            THEN u.position
-            ELSE NULL
-          END as position,
-          CASE 
-            -- Se tem FK, usa SOMENTE o nome da tabela relacionada
-            WHEN u.department_id IS NOT NULL THEN d.name
-            -- Se não tem FK e o campo legado não é UUID, usa ele
-            WHEN u.department IS NOT NULL AND NOT (u.department ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-            THEN u.department
-            ELSE NULL
-          END as department,
+          p.name as position,     -- SEMPRE retorna apenas o nome da tabela
+          d.name as department,   -- SEMPRE retorna apenas o nome da tabela
           u.status, 
           u.start_date,
           u.onboarding_status, 
