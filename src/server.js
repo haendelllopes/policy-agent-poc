@@ -480,6 +480,8 @@ ${userContext.profile.role === 'admin' ? `
 **PARA COLABORADORES:**
 - buscar_trilhas_disponiveis: Lista trilhas do colaborador
 - iniciar_trilha: Inicia trilha específica (USE O UUID EXATO DA TRILHA!)
+- finalizar_trilha: Finaliza trilha em andamento
+- reiniciar_trilha: Reinicia trilha concluída
 - registrar_feedback: Registra feedback sobre trilhas
 - buscar_dados_colaborador: Busca informações pessoais do colaborador atual (gestor, buddy, departamento, cargo) - SEMPRE use quando usuário perguntar sobre dados pessoais
 - buscar_documentos: Busca semântica em documentos (SEMPRE use quando usuário pedir documentos, políticas, manuais, procedimentos, etc.)
@@ -601,6 +603,34 @@ SEMPRE seja conversacional, personalizado e útil!`;
         function: {
           name: 'iniciar_trilha',
           description: 'Inicia uma trilha específica para o colaborador',
+          parameters: {
+            type: 'object',
+            properties: {
+              trilha_id: { type: 'string' },
+              colaborador_id: { type: 'string' }
+            }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'finalizar_trilha',
+          description: 'Finaliza uma trilha específica para o colaborador',
+          parameters: {
+            type: 'object',
+            properties: {
+              trilha_id: { type: 'string' },
+              colaborador_id: { type: 'string' }
+            }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'reiniciar_trilha',
+          description: 'Reinicia uma trilha específica para o colaborador',
           parameters: {
             type: 'object',
             properties: {
@@ -900,6 +930,94 @@ SEMPRE seja conversacional, personalizado e útil!`;
                 toolResult = {
                   status: 'erro',
                   mensagem: 'Não foi possível iniciar a trilha no momento',
+                  detalhes: error.response?.data || error.message
+                };
+              }
+              break;
+            case 'finalizar_trilha':
+              // Finalizar trilha real
+              try {
+                const colaboradorParaFinalizacao = functionArgs.colaborador_id || realUserId;
+                console.log('🔍 DEBUG: Finalizando trilha:', functionArgs.trilha_id, 'para colaborador:', colaboradorParaFinalizacao);
+                
+                // ✅ BUSCAR TENANT_ID DO COLABORADOR
+                let tenantId;
+                try {
+                  const userResult = await query('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaFinalizacao]);
+                  if (userResult.rows.length === 0) {
+                    throw new Error('Colaborador não encontrado');
+                  }
+                  tenantId = userResult.rows[0].tenant_id;
+                  console.log('🔍 DEBUG: Tenant ID encontrado:', tenantId);
+                } catch (error) {
+                  console.error('❌ Erro ao buscar tenant_id do colaborador:', error);
+                  throw new Error('Não foi possível identificar o tenant do colaborador');
+                }
+                
+                const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                
+                const finalizarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/finalizar?tenant_id=${tenantId}`, {
+                  trilha_id: functionArgs.trilha_id,
+                  colaborador_id: colaboradorParaFinalizacao
+                });
+                
+                toolResult = {
+                  status: 'sucesso',
+                  mensagem: `Trilha finalizada com sucesso!`,
+                  trilha_finalizada: functionArgs.trilha_id,
+                  dados: finalizarResponse.data
+                };
+              } catch (error) {
+                console.error('❌ Erro ao finalizar trilha:', error.response?.data || error.message);
+                console.error('❌ Status code:', error.response?.status);
+                console.error('❌ Trilha ID usado:', functionArgs.trilha_id);
+                toolResult = {
+                  status: 'erro',
+                  mensagem: 'Não foi possível finalizar a trilha no momento',
+                  detalhes: error.response?.data || error.message
+                };
+              }
+              break;
+            case 'reiniciar_trilha':
+              // Reiniciar trilha real
+              try {
+                const colaboradorParaReinicio = functionArgs.colaborador_id || realUserId;
+                console.log('🔍 DEBUG: Reiniciando trilha:', functionArgs.trilha_id, 'para colaborador:', colaboradorParaReinicio);
+                
+                // ✅ BUSCAR TENANT_ID DO COLABORADOR
+                let tenantId;
+                try {
+                  const userResult = await query('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaReinicio]);
+                  if (userResult.rows.length === 0) {
+                    throw new Error('Colaborador não encontrado');
+                  }
+                  tenantId = userResult.rows[0].tenant_id;
+                  console.log('🔍 DEBUG: Tenant ID encontrado:', tenantId);
+                } catch (error) {
+                  console.error('❌ Erro ao buscar tenant_id do colaborador:', error);
+                  throw new Error('Não foi possível identificar o tenant do colaborador');
+                }
+                
+                const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                
+                const reiniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/reativar?tenant_id=${tenantId}`, {
+                  trilha_id: functionArgs.trilha_id,
+                  colaborador_id: colaboradorParaReinicio
+                });
+                
+                toolResult = {
+                  status: 'sucesso',
+                  mensagem: `Trilha reiniciada com sucesso!`,
+                  trilha_reiniciada: functionArgs.trilha_id,
+                  dados: reiniciarResponse.data
+                };
+              } catch (error) {
+                console.error('❌ Erro ao reiniciar trilha:', error.response?.data || error.message);
+                console.error('❌ Status code:', error.response?.status);
+                console.error('❌ Trilha ID usado:', functionArgs.trilha_id);
+                toolResult = {
+                  status: 'erro',
+                  mensagem: 'Não foi possível reiniciar a trilha no momento',
                   detalhes: error.response?.data || error.message
                 };
               }
