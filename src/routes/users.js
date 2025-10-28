@@ -27,16 +27,24 @@ router.get('/', async (req, res) => {
       // PostgreSQL com JOIN para pegar nomes de cargo e departamento
       const result = await query(`
         SELECT 
-          u.id, u.name, u.email, u.phone, 
-          u.position, u.department, 
-          u.position_id, u.department_id,
-          u.gestor_id, u.buddy_id,
-          p.name as position_name,
-          d.name as department_name,
-          u.status, u.start_date,
-          u.onboarding_status, u.onboarding_inicio, u.onboarding_fim,
+          u.id, 
+          u.name, 
+          u.email, 
+          u.phone, 
+          u.position_id, 
+          u.department_id,
+          u.gestor_id, 
+          u.buddy_id,
+          COALESCE(p.name, u.position) as position,
+          COALESCE(d.name, u.department) as department,
+          u.status, 
+          u.start_date,
+          u.onboarding_status, 
+          u.onboarding_inicio, 
+          u.onboarding_fim,
           u.pontuacao_total,
-          u.created_at, u.updated_at
+          u.created_at, 
+          u.updated_at
         FROM users u
         LEFT JOIN positions p ON u.position_id = p.id
         LEFT JOIN departments d ON u.department_id = d.id
