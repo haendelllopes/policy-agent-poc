@@ -277,26 +277,67 @@ router.post('/iniciar', requireTenant, async (req, res) => {
     let trilhaUuid = trilha_id;
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     
-    // Se não for UUID válido, buscar trilha pelo nome
+    // Se não for UUID válido, buscar trilha pelo nome (exato, slug, ou similar)
     if (!uuidPattern.test(trilha_id)) {
       console.log(`📝 Trilha ID não é UUID válido, buscando por nome: "${trilha_id}"`);
-      const trilhaByNameResult = await query(`
+      
+      // Helper para normalizar slug para nome (troca hífens por espaços)
+      const normalizeSlugToName = (slug) => {
+        return slug.replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase()); // Capitaliza primeira letra de cada palavra
+      };
+      
+      // Tentar múltiplas variações:
+      // 1. Nome exato
+      // 2. Slug normalizado
+      // 3. Busca case-insensitive
+      let trilhaByNameResult = await query(`
         SELECT id, nome, descricao, prazo_dias
         FROM trilhas 
-        WHERE nome = $1 AND tenant_id = $2 AND ativo = true
+        WHERE LOWER(nome) = LOWER($1) AND tenant_id = $2 AND ativo = true
         LIMIT 1
       `, [trilha_id, tenant.id]);
       
+      // Se não encontrou, tentar com slug normalizado
       if (trilhaByNameResult.rows.length === 0) {
+        const normalizedName = normalizeSlugToName(trilha_id);
+        console.log(`🔄 Tentando buscar com slug normalizado: "${normalizedName}"`);
+        trilhaByNameResult = await query(`
+          SELECT id, nome, descricao, prazo_dias
+          FROM trilhas 
+          WHERE LOWER(nome) = LOWER($1) AND tenant_id = $2 AND ativo = true
+          LIMIT 1
+        `, [normalizedName, tenant.id]);
+      }
+      
+      // Se ainda não encontrou, fazer busca parcial (ILIKE)
+      if (trilhaByNameResult.rows.length === 0) {
+        console.log(`🔍 Tentando busca parcial: "%${trilha_id}%"`);
+        trilhaByNameResult = await query(`
+          SELECT id, nome, descricao, prazo_dias
+          FROM trilhas 
+          WHERE LOWER(nome) ILIKE LOWER($1) AND tenant_id = $2 AND ativo = true
+          ORDER BY 
+            CASE WHEN LOWER(nome) = LOWER($3) THEN 1
+                 WHEN LOWER(nome) LIKE LOWER($4) THEN 2
+                 ELSE 3 END
+          LIMIT 1
+        `, [`%${trilha_id}%`, tenant.id, trilha_id, `${trilha_id}%`]);
+      }
+      
+      if (trilhaByNameResult.rows.length === 0) {
+        console.log(`❌ Trilha não encontrada: "${trilha_id}" no tenant ${tenant.id}`);
         return res.status(404).json({ 
-          error: 'Trilha não encontrada pelo nome',
-          trilha_nome_procurado: trilha_id,
-          tenant_id: tenant.id
+          error: 'Trilha não encontrada',
+          trilha_procurado: trilha_id,
+          tentativas: ['nome exato', 'slug normalizado', 'busca parcial'],
+          tenant_id: tenant.id,
+          dica: 'Use o UUID da trilha ou o nome exato'
         });
       }
       
       trilhaUuid = trilhaByNameResult.rows[0].id;
-      console.log(`✅ Trilha encontrada pelo nome: "${trilha_id}" → UUID: ${trilhaUuid}`);
+      console.log(`✅ Trilha encontrada: "${trilha_id}" → nome: "${trilhaByNameResult.rows[0].nome}" → UUID: ${trilhaUuid}`);
     }
 
     // Verificar se a trilha existe e está ativa (agora usando o UUID correto)
