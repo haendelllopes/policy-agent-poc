@@ -2018,13 +2018,31 @@ textarea:focus {
                 // Verificar se é UUID (contém hífens) ou string (name)
                 const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
                 
+                // Buscar o texto do option selecionado para obter o nome correto
+                const positionSelect = document.getElementById('userPosition');
+                const departmentSelect = document.getElementById('userDepartment');
+                
+                // Se for UUID, buscar o texto do option; se não, usar o próprio valor
+                let positionName = positionValue;
+                let departmentName = departmentValue;
+                
+                if (isUUID(positionValue)) {
+                    const selectedOption = positionSelect.options[positionSelect.selectedIndex];
+                    positionName = selectedOption ? selectedOption.text : null;
+                }
+                
+                if (isUUID(departmentValue)) {
+                    const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+                    departmentName = selectedOption ? selectedOption.text : null;
+                }
+                
                 // Coletar dados do formulário
                 const userData = {
                     name: document.getElementById('userName').value.trim(),
                     email: document.getElementById('userEmail').value.trim(),
-                    position: positionValue,
+                    position: positionName,
                     position_id: isUUID(positionValue) ? positionValue : null,
-                    department: departmentValue,
+                    department: departmentName,
                     department_id: isUUID(departmentValue) ? departmentValue : null,
                     start_date: document.getElementById('userStartDate').value,
                     phone: formatPhoneForDatabase(document.getElementById('userPhone').value),
