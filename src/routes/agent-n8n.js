@@ -162,7 +162,7 @@ router.get('/trilhas/disponiveis/:colaborador_id', deriveTenantFromCollaborator,
 
     console.log(`🔍 N8N Buscando trilhas para colaborador ${colaboradorId} (tenant: ${tenantId})`);
 
-    // Buscar trilhas disponíveis para o colaborador
+    // Buscar trilhas disponíveis para o colaborador (com segregação por cargo/departamento)
     const trilhasResult = await query(`
       SELECT 
         t.id,
@@ -177,20 +177,24 @@ router.get('/trilhas/disponiveis/:colaborador_id', deriveTenantFromCollaborator,
         END as status_colaborador,
         ct.data_inicio as data_inscricao,
         ct.data_limite,
-        ct.pontuacao_final as progresso_percentual
+        ct.pontuacao_final as progresso_percentual,
+        (SELECT COUNT(*) FROM trilha_conteudos WHERE trilha_id = t.id) as conteudos_count
       FROM trilhas t
       LEFT JOIN colaborador_trilhas ct ON t.id = ct.trilha_id AND ct.colaborador_id = $1
-      WHERE t.tenant_id = $2 AND t.ativo = true
+      WHERE t.tenant_id = $2 
+        AND t.ativo = true
+        AND colaborador_tem_acesso_trilha($1, t.id) = true
       ORDER BY t.ordem ASC, t.nome ASC
     `, [colaboradorId, tenantId]);
 
     console.log(`✅ N8N Encontradas ${trilhasResult.rows.length} trilhas para colaborador ${colaboradorId}`);
 
+    // Formatar resposta com 'disponiveis'
     res.json({
       success: true,
       colaborador_id: colaboradorId,
       tenant_id: tenantId,
-      trilhas: trilhasResult.rows,
+      disponiveis: trilhasResult.rows,
       total: trilhasResult.rows.length
     });
 

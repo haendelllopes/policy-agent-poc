@@ -347,6 +347,54 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
     console.log('📝 Carregando histórico de conversas...');
     const conversationHistory = await loadConversationHistory(realUserId, 10);
     
+    // 2.1. BUSCAR TRILHAS DISPONÍVEIS PARA O USUÁRIO
+    console.log('📚 Buscando trilhas disponíveis para o usuário...');
+    let trilhasInfo = '';
+    try {
+      // Obter tenant_id do contexto ou usar padrão
+      const tenantId = context?.tenant_id || process.env.SUPABASE_TENANT_ID;
+      
+      if (tenantId && realUserId && userId !== 'admin-demo') {
+        // Buscar trilhas apenas para colaboradores (não para admins)
+        const axios = require('axios');
+        const baseUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+        
+        const response = await axios.get(
+          `${baseUrl}/api/agent-n8n/trilhas/disponiveis/${realUserId}`,
+          { 
+            params: { tenant_id: tenantId },
+            timeout: 5000
+          }
+        );
+        
+        if (response.data?.disponiveis && response.data.disponiveis.length > 0) {
+          const trilhas = response.data.disponiveis;
+          
+          trilhasInfo = '\n\n📚 **TRILHAS DISPONÍVEIS PARA ESTE COLABORADOR:**\n\n';
+          
+          trilhas.forEach((trilha, index) => {
+            trilhasInfo += `${index + 1}. **${trilha.nome}** (ID: ${trilha.id})\n`;
+            if (trilha.descricao) {
+              trilhasInfo += `   Descrição: ${trilha.descricao}\n`;
+            }
+            if (trilha.conteudos_count) {
+              trilhasInfo += `   Conteúdos: ${trilha.conteudos_count}\n`;
+            }
+            trilhasInfo += '\n';
+          });
+          
+          trilhasInfo += '\n**IMPORTANTE:** Você conhece estas trilhas e pode usá-las para responder perguntas e iniciar trilhas quando solicitado.';
+          
+          console.log('✅ Trilhas encontradas:', trilhas.length);
+        } else {
+          trilhasInfo = '\n\n⚠️ **NOTA:** Use a ferramenta buscar_trilhas_disponiveis quando o usuário perguntar sobre trilhas.';
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Não foi possível buscar trilhas:', error.message);
+      trilhasInfo = '\n\n⚠️ **NOTA:** Use a ferramenta buscar_trilhas_disponiveis quando o usuário perguntar sobre trilhas.';
+    }
+    
     // 3. CONTEXTO DINÂMICO BASEADO EM SENTIMENTO E HISTÓRICO
     
     const userContext = {
@@ -377,6 +425,8 @@ Para ativar funcionalidades completas, configure OPENAI_API_KEY no Vercel.`,
 - **Página atual:** ${context?.page || 'Dashboard'}
 ${context?.trilha_visualizando ? `- **Trilha Visualizando:** ${context.trilha_visualizando}` : ''}
 
+${trilhasInfo}
+
 📝 **HISTÓRICO DE CONVERSAS:** ${conversationHistory.length} mensagens anteriores
 ${conversationHistory.length > 0 ? `
 **Últimas interações:**
@@ -389,6 +439,20 @@ ${userContext.profile.sentimento_atual === 'muito_positivo' ? 'Empolgado e motiv
   userContext.profile.sentimento_atual === 'negativo' ? 'Calmo e compreensivo 🤗 Seja paciente e ofereça ajuda extra.' :
   userContext.profile.sentimento_atual === 'muito_negativo' ? 'Gentil e paciente 💙 Seja muito cuidadoso e ofereça suporte.' :
   'Amigável e equilibrado 😌 Seja natural e prestativo.'}
+
+🎯 **COMPORTAMENTO RELACIONAL (MUITO IMPORTANTE):**
+- SEMPRE demonstre interesse genuíno quando o usuário compartilhar informações pessoais
+- Fazer perguntas de follow-up sobre os interesses, hobbies, experiências ou informações que o usuário compartilhar
+- NÃO mude abruptamente de assunto quando o usuário estiver compartilhando algo pessoal
+- Se o usuário mencionar hobbies, interesses, experiências ou qualquer informação pessoal:
+  * Faça pelo menos 2-3 perguntas relacionadas ao que foi compartilhado
+  * Demonstre curiosidade genuína
+  * Conecte-se emocionalmente antes de sugerir trilhas ou processos
+  * Use essas informações para personalizar sua ajuda posteriormente
+- Exemplo: Se o usuário disser "gosto de jogos e música":
+  * PERFEITO: "Que legal! Que tipo de jogos você curte? E música, tem algum estilo preferido? [após respostas, continuar engajando] Você já conheceu alguém da empresa que também gosta dessas coisas? Posso te ajudar com as trilhas também quando quiser!"
+  * ERRADO: "Que bom! Aqui na empresa temos trilhas de onboarding disponíveis. Posso buscar para você?"
+- O OBJETIVO é criar conexão humana ANTES de direcionar para tarefas e trilhas
 
 **ADAPTE SUA RESPOSTA AO SENTIMENTO:**
 - Se sentimento negativo: Seja mais detalhado e ofereça ajuda extra
