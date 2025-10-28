@@ -1965,13 +1965,30 @@ a:hover {
             // Verificar se é UUID (contém hífens) ou string (name)
             const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
             
+            // Buscar o TEXTO do option selecionado (NUNCA UUID no campo position/department)
+            const positionSelect = document.getElementById('userPosition');
+            const departmentSelect = document.getElementById('userDepartment');
+            
+            let positionName = null;
+            let departmentName = null;
+            
+            if (positionSelect && positionSelect.selectedIndex >= 0) {
+                const selectedOption = positionSelect.options[positionSelect.selectedIndex];
+                positionName = selectedOption ? selectedOption.text : null;
+            }
+            
+            if (departmentSelect && departmentSelect.selectedIndex >= 0) {
+                const selectedOption = departmentSelect.options[departmentSelect.selectedIndex];
+                departmentName = selectedOption ? selectedOption.text : null;
+            }
+            
             const data = {
                 name: formData.get('name'),
                 email: formData.get('email'),
                 phone: formatPhoneForDatabase(phoneCountry, phoneDDD, phoneNumber),
-                position: positionValue,
+                position: positionName,
                 position_id: isUUID(positionValue) ? positionValue : null,
-                department: departmentValue,
+                department: departmentName,
                 department_id: isUUID(departmentValue) ? departmentValue : null,
                 gestor_id: formData.get('gestor_id') || null,
                 buddy_id: formData.get('buddy_id') || null,
