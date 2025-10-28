@@ -866,10 +866,23 @@ SEMPRE seja conversacional, personalizado e útil!`;
                 const colaboradorParaInicio = functionArgs.colaborador_id || realUserId;
                 console.log('🔍 DEBUG: Iniciando trilha:', functionArgs.trilha_id, 'para colaborador:', colaboradorParaInicio);
                 
+                // ✅ BUSCAR TENANT_ID DO COLABORADOR
+                const { query: queryDB } = require('../db-pg');
+                let tenantId;
+                try {
+                  const userResult = await queryDB('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaInicio]);
+                  if (userResult.rows.length === 0) {
+                    throw new Error('Colaborador não encontrado');
+                  }
+                  tenantId = userResult.rows[0].tenant_id;
+                  console.log('🔍 DEBUG: Tenant ID encontrado:', tenantId);
+                } catch (error) {
+                  console.error('❌ Erro ao buscar tenant_id do colaborador:', error);
+                  throw new Error('Não foi possível identificar o tenant do colaborador');
+                }
+                
                 const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
                 
-                // ✅ CORREÇÃO: Adicionar tenant_id à URL
-                const tenantId = context?.tenant_id || 'demo';
                 const initResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
                   trilha_id: functionArgs.trilha_id,
                   colaborador_id: colaboradorParaInicio
