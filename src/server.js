@@ -1245,6 +1245,9 @@ SEMPRE seja conversacional, personalizado e útil!`;
                   const finalizarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/finalizar?tenant_id=${tenantId}`, {
                     trilha_id: functionArgs.trilha_id,
                     colaborador_id: colaboradorParaFinalizacao
+                  }, {
+                    timeout: 10000,
+                    headers: { 'Content-Type': 'application/json' }
                   });
                   
                   toolResult = { status: 'sucesso', mensagem: 'Trilha finalizada!', dados: finalizarResponse.data };
@@ -1271,6 +1274,9 @@ SEMPRE seja conversacional, personalizado e útil!`;
                   const reiniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/reativar?tenant_id=${tenantId}`, {
                     trilha_id: functionArgs.trilha_id,
                     colaborador_id: colaboradorParaReinicio
+                  }, {
+                    timeout: 10000,
+                    headers: { 'Content-Type': 'application/json' }
                   });
                   
                   toolResult = { status: 'sucesso', mensagem: 'Trilha reiniciada!', dados: reiniciarResponse.data };
@@ -1294,10 +1300,15 @@ SEMPRE seja conversacional, personalizado e útil!`;
                   }
                   
                   const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                  console.log('🌐 URL chamada:', `${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`);
                   const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
                     trilha_id: functionArgs.trilha_id,
                     colaborador_id: colaboradorParaInicio
+                  }, {
+                    timeout: 10000,
+                    headers: { 'Content-Type': 'application/json' }
                   });
+                  console.log('✅ Resposta iniciar_trilha:', iniciarResponse.data);
                   
                   toolResult = { status: 'sucesso', mensagem: 'Trilha iniciada!', dados: iniciarResponse.data };
                 } catch (error) {
