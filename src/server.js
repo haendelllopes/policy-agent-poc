@@ -1226,7 +1226,7 @@ SEMPRE seja conversacional, personalizado e útil!`;
             // Copiar a lógica do switch aqui...
             let toolResult;
             
-            switch (functionName) {
+              switch (functionName) {
               case 'finalizar_trilha':
                 try {
                   const colaboradorParaFinalizacao = functionArgs.colaborador_id || realUserId;
@@ -1251,6 +1251,58 @@ SEMPRE seja conversacional, personalizado e útil!`;
                 } catch (error) {
                   console.error('❌ Erro ao finalizar trilha:', error.message);
                   toolResult = { status: 'erro', mensagem: 'Não foi possível finalizar a trilha no momento' };
+                }
+                break;
+              case 'reiniciar_trilha':
+                try {
+                  const colaboradorParaReinicio = functionArgs.colaborador_id || realUserId;
+                  console.log('🔍 DEBUG: Reiniciando trilha:', functionArgs.trilha_id);
+                  
+                  let tenantId;
+                  try {
+                    const userResult = await query('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaReinicio]);
+                    if (userResult.rows.length === 0) throw new Error('Colaborador não encontrado');
+                    tenantId = userResult.rows[0].tenant_id;
+                  } catch (error) {
+                    throw new Error('Não foi possível identificar o tenant do colaborador');
+                  }
+                  
+                  const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                  const reiniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/reativar?tenant_id=${tenantId}`, {
+                    trilha_id: functionArgs.trilha_id,
+                    colaborador_id: colaboradorParaReinicio
+                  });
+                  
+                  toolResult = { status: 'sucesso', mensagem: 'Trilha reiniciada!', dados: reiniciarResponse.data };
+                } catch (error) {
+                  console.error('❌ Erro ao reiniciar trilha:', error.message);
+                  toolResult = { status: 'erro', mensagem: 'Não foi possível reiniciar a trilha no momento' };
+                }
+                break;
+              case 'iniciar_trilha':
+                try {
+                  const colaboradorParaInicio = functionArgs.colaborador_id || realUserId;
+                  console.log('🔍 DEBUG: Iniciando trilha:', functionArgs.trilha_id);
+                  
+                  let tenantId;
+                  try {
+                    const userResult = await query('SELECT tenant_id FROM users WHERE id = $1 AND status = \'active\'', [colaboradorParaInicio]);
+                    if (userResult.rows.length === 0) throw new Error('Colaborador não encontrado');
+                    tenantId = userResult.rows[0].tenant_id;
+                  } catch (error) {
+                    throw new Error('Não foi possível identificar o tenant do colaborador');
+                  }
+                  
+                  const baseUrl = req.headers.host.includes('localhost') ? 'http://localhost:3000' : `https://${req.headers.host}`;
+                  const iniciarResponse = await axios.post(`${baseUrl}/api/agent/trilhas/iniciar?tenant_id=${tenantId}`, {
+                    trilha_id: functionArgs.trilha_id,
+                    colaborador_id: colaboradorParaInicio
+                  });
+                  
+                  toolResult = { status: 'sucesso', mensagem: 'Trilha iniciada!', dados: iniciarResponse.data };
+                } catch (error) {
+                  console.error('❌ Erro ao iniciar trilha:', error.message);
+                  toolResult = { status: 'erro', mensagem: 'Não foi possível iniciar a trilha no momento' };
                 }
                 break;
               default:
