@@ -2071,8 +2071,12 @@ a:hover {
                 // Preencher formulário
                 document.getElementById('userName').value = user.name || '';
                 document.getElementById('userEmail').value = user.email || '';
-                await populatePositionDropdown(user.position || '');
-                await populateDepartmentDropdown(user.department || '');
+                // Usar position_id se disponível, senão usar position
+                const positionValue = user.position_id || user.position || '';
+                await populatePositionDropdown(positionValue);
+                // Usar department_id se disponível, senão usar department
+                const deptValue = user.department_id || user.department || '';
+                await populateDepartmentDropdown(deptValue);
                 // Popular gestor e buddy com valores atuais
                 populateGestorBuddyDropdowns(user.gestor_id || '', user.buddy_id || '');
                 // Corrigir formato da data para yyyy-MM-dd
